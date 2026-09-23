@@ -1,4 +1,4 @@
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { HashRouter, Navigate, Route, Routes } from 'react-router-dom'
 import HomePage from '../pages/Home/HomePage'
 import LobbyPage from '../pages/Lobby/LobbyPage'
 import ChallengePage from '../pages/Challenge/ChallengePage'
@@ -12,7 +12,7 @@ import AdminPage from '../pages/Admin/AdminPage';
 
 const AppRouter = () => {
   return (
-    <BrowserRouter>
+    <HashRouter>
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/lobby" element={<LobbyPage />} />
@@ -26,7 +26,7 @@ const AppRouter = () => {
         <Route path="/admin" element={<AdminPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-    </BrowserRouter>
+    </HashRouter>
   )
 }
 

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowRight, CheckCircle2, Flame, HeartHandshake, PenTool, Share2, ShieldAlert, Sparkles, Trophy } from 'lucide-react';
+import { ArrowRight, CheckCircle2, Flame, HeartHandshake, PenTool, ShieldAlert, Sparkles, Trophy } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useGame } from '../../context/GameContext';
 import { PUNISHMENTS, type Punishment } from '../../data/gameData';
