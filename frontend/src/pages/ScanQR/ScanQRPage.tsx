@@ -333,43 +333,38 @@ const ScanQRPage = () => {
 
         scanner = new Html5Qrcode(qrReaderId, { verbose: false });
         scannerRef.current = scanner;
-        const videoConfig = {
-          fps: 10,
-          qrbox: (viewWidth: number, viewHeight: number) => {
-            const size = Math.floor(Math.min(viewWidth, viewHeight, 280));
-            return { width: size, height: size };
-          },
-        };
-        const onDecoded = (decodedText: string) => { void handleDecodedQr(decodedText, session); };
-        const onDecodeError = () => {};
+        const videoInputs = (await navigator.mediaDevices.enumerateDevices())
+          .filter((device) => device.kind === 'videoinput');
 
+        const preferredCamera =
+          videoInputs.find((device) =>
+            /back|rear|environment|sau/i.test(device.label)
+          ) ?? videoInputs[0];
+
+        const camera = cameraId ?? preferredCamera?.deviceId;
+
+        if (!camera) {
+          throw new Error(
+            'Không tìm thấy camera. Hãy kiểm tra thiết bị và quyền truy cập camera.'
+          );
+        }
         try {
-          // iOS Safari can return camera devices with empty labels before permission
-          // is granted. Prefer the standard rear-camera constraint first.
-          if (cameraId) {
-            await scanner.start(cameraId, videoConfig, onDecoded, onDecodeError);
-          } else {
-            try {
-              await scanner.start({ facingMode: 'environment' }, videoConfig, onDecoded, onDecodeError);
-            } catch (environmentError) {
-              // Fall back to a concrete device ID for browsers that do not support
-              // facingMode constraints in html5-qrcode.
-              const videoInputs = (await navigator.mediaDevices.enumerateDevices())
-                .filter((device) => device.kind === 'videoinput');
-              const preferredCamera =
-                videoInputs.find((device) => /back|rear|environment|sau/i.test(device.label))
-                ?? videoInputs[0];
-              if (!preferredCamera?.deviceId) throw environmentError;
-              await scanner.start(preferredCamera.deviceId, videoConfig, onDecoded, onDecodeError);
-            }
-          }
+          await scanner.start(
+            camera,
+            {
+              fps: 10,
+              qrbox: (viewWidth, viewHeight) => {
+                const size = Math.floor(Math.min(viewWidth, viewHeight, 280));
+                return { width: size, height: size };
+              },
+            },
+            (decodedText) => { void handleDecodedQr(decodedText, session); },
+            () => { },
+          );
         } catch (error) {
           startFailed = true;
           throw error;
         }
-        const runningDeviceId = (() => {
-          try { return scanner?.getRunningTrackSettings().deviceId ?? null; } catch { return null; }
-        })();
 
         if (session !== sessionRef.current) {
           await disposeScanner(scanner);
