@@ -433,7 +433,7 @@ const ScanQRPage = () => {
     if (isFromHomeScan) return;
     const params = new URLSearchParams(location.search);
     const cardCode = params.get('cardCode')?.trim().toUpperCase();
-    if (!cardCode || !/^PC-CARD-\\d{3}$/.test(cardCode)) return;
+    if (!cardCode || !/^PC-CARD-\d{3}$/.test(cardCode)) return;
     const card = DECK_CARDS.find((item) => item.code === cardCode);
     if (!card || handledQrRef.current) return;
     handledQrRef.current = true;
