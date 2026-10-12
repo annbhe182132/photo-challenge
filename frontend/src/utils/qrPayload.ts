@@ -71,11 +71,12 @@ export const parseQRCodePayload = (rawValue: string): QRCodePayload | null => {
     }
   }
 
-  const roomQueryCode = url.searchParams.get('roomCode');
+  const hashQuery = url.hash.includes('?') ? new URLSearchParams(url.hash.slice(url.hash.indexOf('?') + 1)) : null;
+  const roomQueryCode = url.searchParams.get('roomCode') ?? hashQuery?.get('roomCode');
   if (roomQueryCode && ROOM_CODE_PATTERN.test(roomQueryCode.toUpperCase())) {
     return { type: 'room', code: roomQueryCode.toUpperCase() };
   }
-  const cardQueryCode = url.searchParams.get('cardCode');
+  const cardQueryCode = url.searchParams.get('cardCode') ?? hashQuery?.get('cardCode');
   if (cardQueryCode && CARD_CODE_PATTERN.test(cardQueryCode.toUpperCase())) {
     return { type: 'card', code: cardQueryCode.toUpperCase() };
   }
@@ -83,7 +84,7 @@ export const parseQRCodePayload = (rawValue: string): QRCodePayload | null => {
 };
 
 export const roomQrValue = (roomCode: string) => `PHOTO-CHALLENGE:ROOM:${roomCode.toUpperCase()}`;
-export const cardQrValue = (cardCode: string) => `PHOTO-CHALLENGE:CARD:${cardCode.toUpperCase()}`;
+export const cardQrValue = (cardCode: string) => `https://annbhe182132.github.io/photo-challenge/#/scan?cardCode=${encodeURIComponent(cardCode.toUpperCase())}`;
 
 export const downloadCardQrSheet = async (cards: PhysicalCard[]) => {
   const cellWidth = 300;
