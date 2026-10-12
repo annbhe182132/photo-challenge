@@ -370,7 +370,6 @@ const ScanQRPage = () => {
         const runningDeviceId = (() => {
           try { return scanner?.getRunningTrackSettings().deviceId ?? null; } catch { return null; }
         })();
-        const camera = cameraId ?? runningDeviceId;
 
         if (session !== sessionRef.current) {
           await disposeScanner(scanner);
