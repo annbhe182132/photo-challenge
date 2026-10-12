@@ -7,7 +7,8 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
-    "seed": "node src/scripts/seed.js"
+    "seed": "node src/scripts/seed.js",
+    "seed:v2": "node src/scripts/seed-v2.js"
   },
   "keywords": ["photo-challenge", "express", "mongodb", "phygital"],
   "author": "",

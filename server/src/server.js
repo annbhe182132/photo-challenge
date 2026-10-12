@@ -10,6 +10,7 @@ import punishmentRoutes from './routes/punishmentRoutes.js';
 import roomRoutes from './routes/roomRoutes.js';
 import galleryRoutes from './routes/galleryRoutes.js';
 import aiRoutes from './routes/aiRoutes.js';
+import missionRoutes from './routes/missionRoutes.js';  
 
 dotenv.config();
 
@@ -32,6 +33,7 @@ app.use('/api/punishments', punishmentRoutes);
 app.use('/api/rooms', roomRoutes);
 app.use('/api/gallery', galleryRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/missions', missionRoutes);
 
 // Root & Health check
 app.get('/api/health', (req, res) => {

@@ -6,6 +6,24 @@ import { useGame } from '../../context/GameContext';
 import { DECK_CARDS, type PhysicalCard } from '../../data/gameData';
 import { sound } from '../../utils/soundEngine';
 
+interface MissionApiResponse {
+  success: boolean;
+  card?: {
+    code?: string;
+    title?: string;
+    themeId?: string;
+  };
+  mission?: {
+    cardCode?: string;
+    title?: string;
+    instruction?: string;
+    difficulty?: number;
+    xp?: number;
+  };
+}
+
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000').replace(/\/+$/, '');
+
 const ScanQRPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -16,21 +34,63 @@ const ScanQRPage = () => {
 
   const [mode, setMode] = useState<'camera' | 'deck'>(isFromHomeScan ? 'camera' : 'deck');
   const [scanning, setScanning] = useState(false);
+  const [isLoadingMission, setIsLoadingMission] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
 
   // Flow 2: Card selection (after Host prepared Lobby)
-  const handleSelectCard = (card: PhysicalCard) => {
+  const handleSelectCard = async (card: PhysicalCard) => {
+    if (isLoadingMission) return;
+
     sound.playCardFlip();
     setSelectedCardId(card.id);
-    setActiveCard(card);
     setScanning(true);
+    setIsLoadingMission(true);
+    setErrorMessage(null);
 
-    setTimeout(() => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/missions/qr/${encodeURIComponent(card.code)}`);
+      const data = await response.json() as MissionApiResponse;
+
+      if (!response.ok || data.success !== true) {
+        throw new Error('API_ERROR');
+      }
+
+      const mission = data.mission;
+      if (
+        data.card?.code !== card.code ||
+        mission?.cardCode !== card.code ||
+        typeof mission.title !== 'string' ||
+        typeof mission.instruction !== 'string' ||
+        typeof mission.difficulty !== 'number' ||
+        typeof mission.xp !== 'number'
+      ) {
+        throw new Error('CARD_MISMATCH');
+      }
+
+      setActiveCard({
+        ...card,
+        code: card.code,
+        theme: data.card.themeId || card.theme,
+        title: mission.title,
+        mission: mission.instruction,
+        difficulty: mission.difficulty,
+        xp: mission.xp,
+      });
+      await new Promise((resolve) => window.setTimeout(resolve, 1500));
       sound.playScanBeep();
       navigate('/challenge', {
         state: { round: currentRound },
       });
-    }, 1500);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '';
+      setErrorMessage(message === 'CARD_MISMATCH'
+        ? 'Dữ liệu thử thách không khớp với lá bài đã chọn.'
+        : `Không thể tải thử thách cho lá bài ${card.code}. Vui lòng kiểm tra kết nối và thử lại.`);
+      setScanning(false);
+    } finally {
+      setIsLoadingMission(false);
+    }
   };
 
   // Flow 1: Quick QR scan from Home page -> Joins Lobby with room code!
@@ -137,10 +197,11 @@ const ScanQRPage = () => {
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
                   onClick={isFromHomeScan ? handleScanRoomQRFromHome : () => handleSelectCard(DECK_CARDS[0])}
+                  disabled={scanning}
                   className="w-full max-w-md mx-auto rounded-2xl bg-gradient-to-r from-violet-600 via-fuchsia-500 to-cyan-500 py-4 font-bold text-white shadow-xl shadow-fuchsia-500/20"
                 >
                   {scanning
-                    ? 'Đang Giải Mã QR...'
+                    ? isLoadingMission ? 'Đang Tải Thử Thách...' : 'Đang Giải Mã QR...'
                     : isFromHomeScan
                       ? 'Bật Camera & Quét Mã QR Phòng'
                       : 'Kích Hoạt Quét QR Bài Thật'
@@ -166,8 +227,8 @@ const ScanQRPage = () => {
                         key={card.id}
                         whileHover={{ scale: 1.03, y: -4 }}
                         whileTap={{ scale: 0.96 }}
-                        onClick={() => handleSelectCard(card)}
-                        className={`cursor-pointer rounded-2xl border p-5 transition backdrop-blur-xl relative overflow-hidden ${isSelected
+                        onClick={() => { void handleSelectCard(card); }}
+                        className={`${isLoadingMission ? 'cursor-wait opacity-70' : 'cursor-pointer'} rounded-2xl border p-5 transition backdrop-blur-xl relative overflow-hidden ${isSelected
                             ? 'border-cyan-400 bg-gradient-to-br from-cyan-950/80 to-slate-900 shadow-[0_0_30px_rgba(34,211,238,0.4)] ring-2 ring-cyan-400'
                             : 'border-white/15 bg-slate-950/60 hover:border-cyan-500/40 hover:bg-white/10'
                           }`}
@@ -188,7 +249,7 @@ const ScanQRPage = () => {
                         </div>
 
                         <div className="mt-3 flex items-center justify-center gap-2 rounded-xl border border-cyan-400/30 bg-cyan-500/10 py-2 text-xs font-bold text-cyan-300">
-                          <QrCode size={14} /> CHỌN RÚT BÀI NÀY
+                          <QrCode size={14} /> {isLoadingMission && isSelected ? 'ĐANG TẢI...' : 'CHỌN RÚT BÀI NÀY'}
                         </div>
                       </motion.div>
                     );
@@ -204,10 +265,18 @@ const ScanQRPage = () => {
                   <Zap className="h-4 w-4 animate-bounce text-amber-400" />
                   {isFromHomeScan
                     ? 'Đã nhận diện mã phòng ROOM-8899! Đang chuyển vào Phòng Chờ...'
-                    : 'Đã quét mã QR thành công! Đang giải mã bài thử thách...'
+                    : isLoadingMission
+                      ? `Đang tải thử thách cho lá bài ${DECK_CARDS.find((card) => card.id === selectedCardId)?.code ?? ''}...`
+                      : 'Đã tải thử thách thành công! Đang chuyển tiếp...'
                   }
                 </p>
               </motion.div>
+            )}
+
+            {errorMessage && (
+              <div role="alert" className="mt-4 rounded-xl border border-red-400/40 bg-red-500/10 px-4 py-3 text-center text-sm font-semibold text-red-200">
+                {errorMessage}
+              </div>
             )}
           </motion.div>
         </div>
