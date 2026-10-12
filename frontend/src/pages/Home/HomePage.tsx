@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   Brain,
@@ -13,7 +14,18 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useGame } from '../../context/GameContext';
+import { apiRequest } from '../../services/api';
+import type { Player } from '../../data/gameData';
 import { sound } from '../../utils/soundEngine';
+
+interface CreatedRoomResponse {
+  success: boolean;
+  data?: {
+    roomCode?: string;
+    players?: Player[];
+  };
+  message?: string;
+}
 
 const featureCards = [
   {
@@ -45,12 +57,38 @@ const particles = Array.from({ length: 16 }, (_, index) => ({
 
 const HomePage = () => {
   const navigate = useNavigate();
-  const { soundEnabled, toggleSound, investorMode, toggleInvestorMode } = useGame();
+  const { soundEnabled, toggleSound, investorMode, toggleInvestorMode, theme, mode, setRoomCode, setPlayers } = useGame();
+  const [isCreatingRoom, setIsCreatingRoom] = useState(false);
+  const [roomError, setRoomError] = useState<string | null>(null);
 
   // Flow 2: Host Creates Room -> Configure Lobby first -> Pick Card later
-  const handleStartGame = () => {
+  const handleStartGame = async () => {
     sound.playClick();
-    navigate('/lobby', { state: { isHost: true } });
+    setIsCreatingRoom(true);
+    setRoomError(null);
+    try {
+      const response = await apiRequest<CreatedRoomResponse>('/api/rooms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ theme: theme.id, mode, hostName: 'Host' }),
+      });
+      if (
+        response.success !== true ||
+        !response.data?.roomCode ||
+        !Array.isArray(response.data.players)
+      ) {
+        throw new Error(response.message || 'Máy chủ không xác nhận được phòng mới.');
+      }
+      setRoomCode(response.data.roomCode);
+      setPlayers(response.data.players);
+      navigate('/lobby', { state: { isHost: true } });
+    } catch (error) {
+      setRoomError(error instanceof Error
+        ? error.message
+        : 'Không thể tạo phòng chơi. Vui lòng kiểm tra kết nối và thử lại.');
+    } finally {
+      setIsCreatingRoom(false);
+    }
   };
 
   // Flow 1: Quick QR Scan from Home -> Open Camera QR Scanner -> Join Room Lobby
@@ -178,11 +216,12 @@ const HomePage = () => {
                 <motion.button
                   whileHover={{ scale: 1.04, y: -2 }}
                   whileTap={{ scale: 0.96 }}
-                  onClick={handleStartGame}
-                  className="group inline-flex items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-violet-600 via-fuchsia-500 to-cyan-500 px-7 py-4 font-bold text-white shadow-2xl shadow-fuchsia-500/30 transition hover:shadow-cyan-500/40"
+                  onClick={() => { void handleStartGame(); }}
+                  disabled={isCreatingRoom}
+                  className="group inline-flex items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-violet-600 via-fuchsia-500 to-cyan-500 px-7 py-4 font-bold text-white shadow-2xl shadow-fuchsia-500/30 transition hover:shadow-cyan-500/40 disabled:cursor-wait disabled:opacity-70"
                 >
                   <PlayCircle className="h-6 w-6 transition group-hover:rotate-12" />
-                  Vào Phòng Chơi Phygital
+                  {isCreatingRoom ? 'Đang tạo phòng...' : 'Vào Phòng Chơi Phygital'}
                 </motion.button>
                 <motion.button
                   whileHover={{ scale: 1.04, y: -2 }}
@@ -194,6 +233,11 @@ const HomePage = () => {
                   Quét QR Tham Gia Phòng
                 </motion.button>
               </div>
+              {roomError && (
+                <p role="alert" className="mx-auto max-w-2xl rounded-xl border border-red-400/40 bg-red-500/10 px-4 py-3 text-center text-sm font-semibold text-red-200">
+                  {roomError}
+                </p>
+              )}
             </motion.div>
 
             {/* Interactive Showcase Card */}

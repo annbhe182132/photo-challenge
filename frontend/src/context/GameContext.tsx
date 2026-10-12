@@ -146,7 +146,8 @@ interface GameContextType {
   activeCard: PhysicalCard;
   setActiveCard: (card: PhysicalCard) => void;
   albums: GalleryAlbum[];
-  addPhotoToCurrentAlbum: (photo: Omit<GalleryPhoto, 'id'>) => void;
+  addPhotoToCurrentAlbum: (photo: Omit<GalleryPhoto, 'id'>) => string;
+  updateGalleryPhotoScore: (photoId: string, score: number) => void;
   resetGame: () => void;
 }
 
@@ -188,8 +189,9 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const addPhotoToCurrentAlbum = (photoData: Omit<GalleryPhoto, 'id'>) => {
+    const photoId = `p-${Date.now()}`;
     const newPhoto: GalleryPhoto = {
-      id: `p-${Date.now()}`,
+      id: photoId,
       ...photoData,
     };
 
@@ -217,6 +219,16 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return [newAlbum, ...prev];
       }
     });
+    return photoId;
+  };
+
+  const updateGalleryPhotoScore = (photoId: string, score: number) => {
+    setAlbums((prev) => prev.map((album) => ({
+      ...album,
+      photos: album.photos.map((photo) => (
+        photo.id === photoId ? { ...photo, score } : photo
+      )),
+    })));
   };
 
   const resetGame = () => {
@@ -248,6 +260,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setActiveCard,
         albums,
         addPhotoToCurrentAlbum,
+        updateGalleryPhotoScore,
         resetGame,
       }}
     >

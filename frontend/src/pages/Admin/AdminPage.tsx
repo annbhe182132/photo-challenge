@@ -23,6 +23,8 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { DECK_CARDS, type PhysicalCard } from '../../data/gameData';
+import QRCodeImage from '../../components/QRCodeImage';
+import { cardQrValue, downloadCardQrSheet } from '../../utils/qrPayload';
 import { sound } from '../../utils/soundEngine';
 
 const pressArticles = [
@@ -79,6 +81,15 @@ const AdminPage = () => {
   const handleToggleExplainer = () => {
     sound.playClick();
     setShowAiExplainer(!showAiExplainer);
+  };
+
+  const handleExportCardQrCodes = async () => {
+    sound.playClick();
+    try {
+      await downloadCardQrSheet(cards);
+    } catch {
+      window.alert('Không thể tạo bộ mã QR. Vui lòng thử lại.');
+    }
   };
 
   return (
@@ -225,14 +236,11 @@ const AdminPage = () => {
               </div>
               <div className="flex gap-3">
                 <button
-                  onClick={() => {
-                    sound.playClick();
-                    alert('Đã xuất file 24 Mã QR dạng Vector SVG ready for printing!');
-                  }}
+                  onClick={() => { void handleExportCardQrCodes(); }}
                   className="flex items-center gap-2 rounded-xl border border-cyan-400/40 bg-cyan-500/10 px-4 py-2 text-sm font-bold text-cyan-300 transition hover:bg-cyan-500/20"
                 >
                   <Download size={16} />
-                  Xuất QR Bộ Bài 24 Lá (PDF/SVG)
+                  Tải bộ QR 24 lá (SVG)
                 </button>
                 <button
                   onClick={() => {
@@ -274,9 +282,12 @@ const AdminPage = () => {
                       <td className="p-4 text-center text-amber-400 font-bold">{'⭐'.repeat(card.difficulty)}</td>
                       <td className="p-4 text-center font-bold text-emerald-400">+{card.xp} XP</td>
                       <td className="p-4 text-center">
-                        <span className="inline-flex items-center gap-1 text-xs font-bold text-cyan-300 border border-cyan-500/40 rounded-lg px-2.5 py-1 bg-cyan-500/10">
-                          <QrCode size={14} /> ACTIVE
-                        </span>
+                        <div className="flex flex-col items-center gap-1">
+                          <QRCodeImage value={cardQrValue(card.code)} size={64} alt={`Mã QR cho lá bài ${card.code}`} />
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-cyan-300">
+                            <QrCode size={12} /> {card.code}
+                          </span>
+                        </div>
                       </td>
                     </tr>
                   ))}

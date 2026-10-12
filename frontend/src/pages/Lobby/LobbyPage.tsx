@@ -4,6 +4,8 @@ import { ArrowLeft, CheckCircle2, Copy, PlayCircle, Sparkles, UserPlus, Users } 
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useGame } from '../../context/GameContext';
 import { THEMES } from '../../data/gameData';
+import QRCodeImage from '../../components/QRCodeImage';
+import { roomQrValue } from '../../utils/qrPayload';
 import { sound } from '../../utils/soundEngine';
 
 const LobbyPage = () => {
@@ -106,9 +108,9 @@ const LobbyPage = () => {
                   </p>
                 </div>
 
-                <div className="rounded-2xl border border-cyan-400/30 bg-slate-950/80 p-4 text-center">
+                <div className="flex flex-col items-center gap-4 rounded-2xl border border-cyan-400/30 bg-slate-950/80 p-4 text-center sm:flex-row sm:justify-center">
                   <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Mã Phòng Chơi</p>
-                  <div className="mt-2 flex items-center justify-center gap-3">
+                  <div className="flex items-center justify-center gap-3">
                     <span className="text-2xl font-black tracking-[0.25em] text-cyan-300">{roomCode}</span>
                     <button
                       onClick={handleCopy}
@@ -117,6 +119,10 @@ const LobbyPage = () => {
                     >
                       {copied ? <CheckCircle2 className="h-4 w-4 text-emerald-400" /> : <Copy className="h-4 w-4" />}
                     </button>
+                  </div>
+                  <div className="flex flex-col items-center gap-2">
+                    <QRCodeImage value={roomQrValue(roomCode)} size={112} alt={`Mã QR tham gia phòng ${roomCode}`} />
+                    <span className="max-w-36 text-[10px] text-slate-400">Quét QR này để tham gia đúng phòng</span>
                   </div>
                 </div>
               </div>

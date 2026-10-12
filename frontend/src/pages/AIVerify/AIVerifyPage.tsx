@@ -10,11 +10,12 @@ const steps = ['Đang tải dữ liệu ảnh...', 'Quét lưới khuôn mặt (
 const AIVerifyPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { currentRound, addPhotoToCurrentAlbum, activeCard, getCurrentPlayer, addScoreToPlayer } = useGame();
+  const { currentRound, addPhotoToCurrentAlbum, updateGalleryPhotoScore, activeCard, getCurrentPlayer, addScoreToPlayer } = useGame();
 
   const round = location.state?.round ?? currentRound;
   const currentPlayer = getCurrentPlayer(round);
   const capturedImage = location.state?.image || 'https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=800&auto=format&fit=crop&q=80';
+  const galleryPhotoId = location.state?.galleryPhotoId as string | undefined;
 
   const [step, setStep] = useState(0);
   const [progress, setProgress] = useState(0);
@@ -27,6 +28,8 @@ const AIVerifyPage = () => {
   const totalScore = Math.round((expressionScore + poseScore + syncScore) / 3);
 
   useEffect(() => {
+    if (finished) return;
+
     let current = 0;
     const interval = window.setInterval(() => {
       current += 25;
@@ -40,14 +43,17 @@ const AIVerifyPage = () => {
         setFinished(true);
         sound.playSuccess();
 
-        // Save to active album context
-        addPhotoToCurrentAlbum({
-          round,
-          image: capturedImage,
-          cardTitle: activeCard?.title || 'Thử thách',
-          score: totalScore,
-          mission: activeCard?.mission || '',
-        });
+        if (galleryPhotoId) {
+          updateGalleryPhotoScore(galleryPhotoId, totalScore);
+        } else {
+          addPhotoToCurrentAlbum({
+            round,
+            image: capturedImage,
+            cardTitle: activeCard?.title || 'Thử thách',
+            score: totalScore,
+            mission: activeCard?.mission || '',
+          });
+        }
 
         // Award score XP to active player for this round
         addScoreToPlayer(currentPlayer.id, totalScore * 2);
@@ -55,7 +61,7 @@ const AIVerifyPage = () => {
     }, 600);
 
     return () => window.clearInterval(interval);
-  }, [capturedImage, round, activeCard, addPhotoToCurrentAlbum, totalScore, currentPlayer, addScoreToPlayer]);
+  }, [finished, capturedImage, round, activeCard, addPhotoToCurrentAlbum, updateGalleryPhotoScore, galleryPhotoId, totalScore, currentPlayer.id, addScoreToPlayer]);
 
   const handleContinue = () => {
     sound.playClick();
