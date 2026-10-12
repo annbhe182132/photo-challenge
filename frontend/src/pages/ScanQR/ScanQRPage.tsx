@@ -83,7 +83,9 @@ const ScanQRPage = () => {
   } = useGame();
 
   const isFromHomeScan = location.state?.fromHomeScan ?? false;
-  const [mode, setScanMode] = useState<'camera' | 'deck'>(isFromHomeScan ? 'camera' : 'deck');
+  const directCardCode = new URLSearchParams(location.search).get('cardCode')?.trim().toUpperCase() ?? null;
+  const isDirectCardQr = !isFromHomeScan && Boolean(directCardCode && /^PC-CARD-\d{3}$/.test(directCardCode));
+  const [mode, setScanMode] = useState<'camera' | 'deck'>(isFromHomeScan || isDirectCardQr ? 'camera' : 'deck');
   const [scanStatus, setScanStatus] = useState<ScanStatus>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
@@ -484,16 +486,18 @@ const ScanQRPage = () => {
                   Mô Hình Phygital: Lá Bài Thật + WebApp
                 </span>
                 <h1 className="mt-2 text-2xl font-black text-white sm:text-4xl">
-                  {isFromHomeScan ? 'Quét QR Tham Gia Phòng' : 'Quét & Chọn Lá Bài Thử Thách'}
+                  {isFromHomeScan ? 'Quét QR Tham Gia Phòng' : isDirectCardQr ? `Đang mở lá bài ${directCardCode}` : 'Quét & Chọn Lá Bài Thử Thách'}
                 </h1>
                 <p className="mt-1 text-sm text-slate-300">
                   {isFromHomeScan
                     ? 'Quét mã phòng đang hoạt động để tham gia qua máy chủ.'
-                    : `Vòng ${currentRound} — Quét mã QR trên lá bài hoặc chọn bài demo.`}
+                    : isDirectCardQr
+                      ? 'Đang tải đúng nhiệm vụ được liên kết với mã QR này.'
+                      : `Vòng ${currentRound} — Quét mã QR trên lá bài hoặc chọn bài demo.`}
                 </p>
               </div>
 
-              {!isFromHomeScan && (
+              {!isFromHomeScan && !isDirectCardQr && (
                 <div className="flex rounded-2xl border border-white/15 bg-slate-950 p-1.5">
                   <button
                     onClick={() => {
@@ -524,7 +528,16 @@ const ScanQRPage = () => {
               )}
             </div>
 
-            {mode === 'camera' && (
+            {isDirectCardQr ? (
+              <div className="space-y-4 py-10 text-center">
+                <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-cyan-400/30 bg-cyan-400/10">
+                  {scanStatus === 'success' ? <CheckCircle2 size={42} className="text-emerald-400" /> : <QrCode size={42} className="animate-pulse text-cyan-300" />}
+                </div>
+                <h2 className="text-xl font-bold text-white">{scanStatus === 'error' ? 'Không tải được nhiệm vụ' : scanStatus === 'success' ? 'Đã tải nhiệm vụ' : 'Đang tải nhiệm vụ...'}</h2>
+                <p className="text-sm text-slate-300">{scanStatus === 'error' ? (errorMessage ?? 'Vui lòng thử lại sau.') : `Mã lá bài: ${directCardCode}`}</p>
+                {scanStatus === 'error' && <button onClick={() => { handledQrRef.current = false; const card = DECK_CARDS.find((item) => item.code === directCardCode); if (card) { const requestSession = ++sessionRef.current; handledQrRef.current = true; void loadCardMission(card.code, card, requestSession); } }} className="rounded-xl bg-cyan-600 px-5 py-3 font-bold text-white hover:bg-cyan-500">Thử tải lại</button>}
+              </div>
+            ) : mode === 'camera' && (
               <div className="space-y-4 text-center">
                 <div className="relative mx-auto min-h-[280px] w-full max-w-lg overflow-hidden rounded-3xl border-2 border-cyan-400/40 bg-slate-950 shadow-2xl sm:min-h-[360px]">
                   <div id={qrReaderId} className="min-h-[280px] w-full overflow-hidden sm:min-h-[360px]" />
@@ -595,7 +608,7 @@ const ScanQRPage = () => {
               </div>
             )}
 
-            {mode === 'deck' && !isFromHomeScan && (
+            {mode === 'deck' && !isFromHomeScan && !isDirectCardQr && (
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
