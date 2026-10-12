@@ -428,6 +428,22 @@ const ScanQRPage = () => {
     await loadCardMission(card.code, card, requestSession);
   };
 
+  // QR in each printed card opens this page directly and loads that card's mission.
+  useEffect(() => {
+    if (isFromHomeScan) return;
+    const params = new URLSearchParams(location.search);
+    const cardCode = params.get('cardCode')?.trim().toUpperCase();
+    if (!cardCode || !/^PC-CARD-\\d{3}$/.test(cardCode)) return;
+    const card = DECK_CARDS.find((item) => item.code === cardCode);
+    if (!card || handledQrRef.current) return;
+    handledQrRef.current = true;
+    const requestSession = ++sessionRef.current;
+    setSelectedCardId(card.id);
+    void loadCardMission(card.code, card, requestSession);
+  // Only handle the initial cardCode query when a printed-card URL is opened.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.search, isFromHomeScan]);
+
   const scanButtonLabel = () => {
     switch (scanStatus) {
       case 'starting': return 'Đang khởi động camera...';
