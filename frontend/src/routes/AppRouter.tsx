@@ -9,12 +9,14 @@ import CameraPage from '../pages/Camera/CameraPage';
 import AIVerifyPage from '../pages/AIVerify/AIVerifyPage';
 import GalleryPage from "../pages/Gallery/GalleryPage";
 import AdminPage from '../pages/Admin/AdminPage';
+import JoinRoomPage from '../pages/JoinRoom/JoinRoomPage';
 
 const AppRouter = () => {
   return (
     <HashRouter>
       <Routes>
         <Route path="/" element={<HomePage />} />
+        <Route path="/join" element={<JoinRoomPage />} />
         <Route path="/lobby" element={<LobbyPage />} />
         <Route path="/challenge" element={<ChallengePage />} />
         <Route path="/result" element={<ResultPage />} />
