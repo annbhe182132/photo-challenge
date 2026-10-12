@@ -201,15 +201,17 @@ const ScanQRPage = () => {
       }
 
       const matchingDeckCard = manualCard ?? DECK_CARDS.find((card) => card.code === code);
+      // Ưu tiên nội dung 24 lá bài đã chốt trong gameData.ts để QR không hiển thị
+      // nhiệm vụ cũ từ dữ liệu backend chưa được seed lại.
       const activeCard: PhysicalCard = {
         id: matchingDeckCard?.id ?? mission.missionCode ?? `qr-${code}`,
         code,
         category: matchingDeckCard?.category ?? 'Creative',
-        theme: data.card.themeId ?? matchingDeckCard?.theme ?? 'party',
-        title: mission.title,
-        mission: mission.instruction,
-        difficulty: mission.difficulty,
-        xp: mission.xp,
+        theme: matchingDeckCard?.theme ?? data.card.themeId ?? 'pose',
+        title: matchingDeckCard?.title ?? mission.title,
+        mission: matchingDeckCard?.mission ?? mission.instruction,
+        difficulty: matchingDeckCard?.difficulty ?? mission.difficulty,
+        xp: matchingDeckCard?.xp ?? mission.xp,
         tags: matchingDeckCard?.tags ?? [],
         ...(matchingDeckCard?.arOverlay ? { arOverlay: matchingDeckCard.arOverlay } : {}),
       };
