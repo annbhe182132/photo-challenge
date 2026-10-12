@@ -91,10 +91,10 @@ const HomePage = () => {
     }
   };
 
-  // Flow 1: Quick QR Scan from Home -> Open Camera QR Scanner -> Join Room Lobby
+  // QR cố định trên bộ bài mở trang tham gia phòng; camera chỉ dùng để quét QR lá bài.
   const handleScanQR = () => {
     sound.playClick();
-    navigate('/scan', { state: { fromHomeScan: true } });
+    navigate('/join');
   };
 
   const handleAdmin = () => {
