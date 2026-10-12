@@ -47,19 +47,19 @@ const LeaderboardPage = () => {
             </div>
 
             {/* 3D Podium for Top 3 */}
-            <div className="grid grid-cols-3 gap-4 items-end max-w-2xl mx-auto pt-8">
+            <div className="grid grid-cols-3 gap-2 sm:gap-4 items-end max-w-2xl mx-auto pt-6 sm:pt-8">
               {/* 2nd Place */}
               {top2 && (
                 <motion.div initial={{ y: 30, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="flex flex-col items-center">
                   <div className="relative mb-2">
-                    <img src={top2.avatar} alt={top2.name} className="h-16 w-16 rounded-full border-2 border-slate-300 object-cover shadow-lg" />
-                    <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 rounded-full bg-slate-400 px-2 py-0.5 text-[10px] font-black text-slate-950">
+                    <img src={top2.avatar} alt={top2.name} className="h-12 w-12 sm:h-16 sm:w-16 rounded-full border-2 border-slate-300 object-cover shadow-lg" />
+                    <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 rounded-full bg-slate-400 px-1.5 sm:px-2 py-0.5 text-[9px] sm:text-[10px] font-black text-slate-950 whitespace-nowrap">
                       🥈 2ND
                     </span>
                   </div>
-                  <div className="w-full rounded-t-2xl border border-slate-400/30 bg-slate-800/80 p-4 text-center h-36 flex flex-col justify-center">
-                    <div className="font-bold text-white text-sm truncate">{top2.name}</div>
-                    <div className="text-xl font-black text-slate-300 mt-1">{top2.score} XP</div>
+                  <div className="w-full rounded-t-2xl border border-slate-400/30 bg-slate-800/80 p-2 sm:p-4 text-center h-28 sm:h-36 flex flex-col justify-center">
+                    <div className="font-bold text-white text-xs sm:text-sm truncate">{top2.name}</div>
+                    <div className="text-base sm:text-xl font-black text-slate-300 mt-0.5 sm:mt-1">{top2.score} XP</div>
                   </div>
                 </motion.div>
               )}
@@ -68,15 +68,15 @@ const LeaderboardPage = () => {
               {top1 && (
                 <motion.div initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="flex flex-col items-center">
                   <div className="relative mb-3">
-                    <Crown className="h-8 w-8 text-amber-400 absolute -top-8 left-1/2 -translate-x-1/2 animate-bounce" />
-                    <img src={top1.avatar} alt={top1.name} className="h-20 w-20 rounded-full border-4 border-amber-400 object-cover shadow-2xl shadow-amber-500/30" />
-                    <span className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 rounded-full bg-amber-400 px-3 py-0.5 text-xs font-black text-slate-950 shadow-lg">
+                    <Crown className="h-6 w-6 sm:h-8 sm:w-8 text-amber-400 absolute -top-6 sm:-top-8 left-1/2 -translate-x-1/2 animate-bounce" />
+                    <img src={top1.avatar} alt={top1.name} className="h-16 w-16 sm:h-20 sm:w-20 rounded-full border-4 border-amber-400 object-cover shadow-2xl shadow-amber-500/30" />
+                    <span className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 rounded-full bg-amber-400 px-2 sm:px-3 py-0.5 text-[10px] sm:text-xs font-black text-slate-950 shadow-lg whitespace-nowrap">
                       👑 1ST MVP
                     </span>
                   </div>
-                  <div className="w-full rounded-t-2xl border border-amber-400/40 bg-gradient-to-b from-amber-950/60 to-slate-900 p-4 text-center h-48 flex flex-col justify-center">
-                    <div className="font-black text-white text-base truncate">{top1.name}</div>
-                    <div className="text-2xl font-black text-amber-400 mt-1">{top1.score} XP</div>
+                  <div className="w-full rounded-t-2xl border border-amber-400/40 bg-gradient-to-b from-amber-950/60 to-slate-900 p-2 sm:p-4 text-center h-36 sm:h-48 flex flex-col justify-center">
+                    <div className="font-black text-white text-xs sm:text-base truncate">{top1.name}</div>
+                    <div className="text-lg sm:text-2xl font-black text-amber-400 mt-0.5 sm:mt-1">{top1.score} XP</div>
                   </div>
                 </motion.div>
               )}
@@ -85,14 +85,14 @@ const LeaderboardPage = () => {
               {top3 && (
                 <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="flex flex-col items-center">
                   <div className="relative mb-2">
-                    <img src={top3.avatar} alt={top3.name} className="h-16 w-16 rounded-full border-2 border-amber-700 object-cover shadow-lg" />
-                    <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 rounded-full bg-amber-700 px-2 py-0.5 text-[10px] font-black text-white">
+                    <img src={top3.avatar} alt={top3.name} className="h-12 w-12 sm:h-16 sm:w-16 rounded-full border-2 border-amber-700 object-cover shadow-lg" />
+                    <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 rounded-full bg-amber-700 px-1.5 sm:px-2 py-0.5 text-[9px] sm:text-[10px] font-black text-white whitespace-nowrap">
                       🥉 3RD
                     </span>
                   </div>
-                  <div className="w-full rounded-t-2xl border border-amber-700/30 bg-slate-900/80 p-4 text-center h-28 flex flex-col justify-center">
-                    <div className="font-bold text-white text-sm truncate">{top3.name}</div>
-                    <div className="text-lg font-black text-amber-500 mt-1">{top3.score} XP</div>
+                  <div className="w-full rounded-t-2xl border border-amber-700/30 bg-slate-900/80 p-2 sm:p-4 text-center h-24 sm:h-28 flex flex-col justify-center">
+                    <div className="font-bold text-white text-xs sm:text-sm truncate">{top3.name}</div>
+                    <div className="text-sm sm:text-lg font-black text-amber-500 mt-0.5 sm:mt-1">{top3.score} XP</div>
                   </div>
                 </motion.div>
               )}

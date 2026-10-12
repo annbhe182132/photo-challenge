@@ -121,10 +121,10 @@ const HomePage = () => {
         </div>
 
         {/* Header */}
-        <header className="relative z-10 mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-6 sm:px-8 lg:px-10">
-          <a href="#home" className="flex items-center gap-3 text-lg font-black tracking-[0.25em] text-white">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-cyan-400/30 bg-cyan-500/20 backdrop-blur-xl shadow-[0_0_15px_rgba(34,211,238,0.3)]">
-              <Camera className="h-5 w-5 text-cyan-300" />
+        <header className="relative z-10 mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-4 sm:px-8 sm:py-6 lg:px-10">
+          <a href="#home" className="flex items-center gap-2.5 sm:gap-3 text-base sm:text-lg font-black tracking-[0.2em] sm:tracking-[0.25em] text-white">
+            <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-2xl border border-cyan-400/30 bg-cyan-500/20 backdrop-blur-xl shadow-[0_0_15px_rgba(34,211,238,0.3)]">
+              <Camera className="h-4 w-4 sm:h-5 sm:w-5 text-cyan-300" />
             </div>
             PHOTO CHALLENGE
           </a>
@@ -140,7 +140,7 @@ const HomePage = () => {
           <div className="flex items-center gap-3">
             <button
               onClick={toggleSound}
-              className="flex h-10 w-10 items-center justify-center rounded-2xl border border-white/15 bg-white/10 text-slate-300 backdrop-blur-xl transition hover:bg-white/20"
+              className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-2xl border border-white/15 bg-white/10 text-slate-300 backdrop-blur-xl transition hover:bg-white/20"
               title="Tắt/Mở âm thanh Sci-Fi"
             >
               {soundEnabled ? <Volume2 size={18} className="text-cyan-300" /> : <VolumeX size={18} className="text-slate-500" />}
@@ -149,27 +149,27 @@ const HomePage = () => {
         </header>
 
         {/* Main Hero */}
-        <main id="home" className="relative z-10 mx-auto flex max-w-7xl flex-col px-6 pb-20 sm:px-8 lg:px-10">
-          <section className="grid items-center gap-12 py-12 lg:grid-cols-[1.1fr_0.9fr] lg:py-20">
+        <main id="home" className="relative z-10 mx-auto flex max-w-7xl flex-col px-4 pb-16 sm:px-8 sm:pb-20 lg:px-10">
+          <section className="grid items-center gap-8 py-8 sm:gap-12 sm:py-12 lg:grid-cols-[1.1fr_0.9fr] lg:py-20">
             <motion.div
               initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
-              className="space-y-8"
+              className="space-y-6 sm:space-y-8"
             >
-              <div className="inline-flex items-center gap-2 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-4 py-2 text-sm text-cyan-200 backdrop-blur-xl">
+              <div className="inline-flex items-center gap-2 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3.5 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm text-cyan-200 backdrop-blur-xl">
                 <Zap className="h-4 w-4 text-amber-400 animate-bounce" />
                 Dự Án Board Game Phygital Đầu Tiên Tại Việt Nam Tích Hợp AI
               </div>
 
-              <div className="space-y-4">
-                <h1 className="text-5xl font-black leading-[0.95] tracking-tight text-white sm:text-6xl lg:text-7xl">
+              <div className="space-y-3 sm:space-y-4">
+                <h1 className="text-4xl font-black leading-[1] tracking-tight text-white sm:text-6xl lg:text-7xl">
                   PHOTO
                   <span className="block bg-gradient-to-r from-cyan-400 via-fuchsia-400 to-amber-300 bg-clip-text text-transparent drop-shadow-[0_0_25px_rgba(217,70,239,0.3)]">
                     CHALLENGE
                   </span>
                 </h1>
-                <p className="max-w-xl text-lg text-slate-300 sm:text-xl leading-relaxed">
+                <p className="max-w-xl text-base sm:text-xl text-slate-300 leading-relaxed">
                   Trò chơi kết hợp <strong className="text-cyan-300 font-bold">Bộ Bài Vật Lý 24 Lá</strong> và <strong className="text-fuchsia-300 font-bold whitespace-nowrap">Web App Nhận Diện AI</strong>. Tạo khoảnh khắc bùng nổ, tương tác nhóm thật & lưu giữ kỉ niệm vô giá!
                 </p>
               </div>
