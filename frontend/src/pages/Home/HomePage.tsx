@@ -91,10 +91,10 @@ const HomePage = () => {
     }
   };
 
-  // QR cố định trên bộ bài mở trang tham gia phòng; camera chỉ dùng để quét QR lá bài.
+  // Mở camera để quét QR phòng như luồng tham gia phòng ban đầu.
   const handleScanQR = () => {
     sound.playClick();
-    navigate('/join');
+    navigate('/scan', { state: { fromHomeScan: true } });
   };
 
   const handleAdmin = () => {
