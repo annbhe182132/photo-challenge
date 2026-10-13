@@ -24,7 +24,14 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { DECK_CARDS, type PhysicalCard } from '../../data/gameData';
 import QRCodeImage from '../../components/QRCodeImage';
-import { cardQrValue, downloadCardQrSheet } from '../../utils/qrPayload';
+import {
+  BOX_QR_VALUE,
+  cardQrValue,
+  downloadAll25QrSheet,
+  downloadBoxQrBadge,
+  downloadBoxQrCleanSvg,
+  downloadBoxQrPng,
+} from '../../utils/qrPayload';
 import { sound } from '../../utils/soundEngine';
 
 const pressArticles = [
@@ -86,7 +93,7 @@ const AdminPage = () => {
   const handleExportCardQrCodes = async () => {
     sound.playClick();
     try {
-      await downloadCardQrSheet(cards);
+      await downloadAll25QrSheet(cards);
     } catch {
       window.alert('Không thể tạo bộ mã QR. Vui lòng thử lại.');
     }
@@ -228,34 +235,90 @@ const AdminPage = () => {
 
         {/* Tab Content */}
         {activeTab === 'cards' && (
-          <div className="mt-6 rounded-3xl border border-white/15 bg-slate-900/60 p-6 backdrop-blur-xl">
-            <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-              <div>
-                <h3 className="text-xl font-bold text-white">Danh Sách Thẻ Bài Physical Phygital</h3>
-                <p className="text-xs text-slate-400">Quản lý nội dung thử thách, danh mục và in mã QR định danh</p>
-              </div>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => { void handleExportCardQrCodes(); }}
-                  className="flex items-center gap-2 rounded-xl border border-cyan-400/40 bg-cyan-500/10 px-4 py-2 text-sm font-bold text-cyan-300 transition hover:bg-cyan-500/20"
-                >
-                  <Download size={16} />
-                  Tải bộ QR 24 lá (SVG)
-                </button>
-                <button
-                  onClick={() => {
-                    sound.playClick();
-                    alert('Chức năng thêm thẻ bài mới sẵn sàng!');
-                  }}
-                  className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 px-4 py-2 text-sm font-bold text-white shadow-lg shadow-cyan-500/20 transition hover:scale-105"
-                >
-                  <Plus size={16} />
-                  Thêm Thẻ Bài Mới
-                </button>
+          <div className="mt-6 space-y-6">
+            {/* Special Section: Mã QR Số 25 - In Trên Bao Bì Vỏ Hộp Sản Phẩm */}
+            <div className="rounded-3xl border-2 border-cyan-400/50 bg-gradient-to-br from-cyan-950/50 via-slate-900/80 to-slate-950 p-6 shadow-2xl backdrop-blur-2xl">
+              <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
+                <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5 text-center sm:text-left">
+                  <div className="relative rounded-2xl bg-white p-3.5 shadow-xl shrink-0">
+                    <QRCodeImage value={BOX_QR_VALUE} size={140} alt="Mã QR Bao Bì Sản Phẩm" />
+                    <span className="absolute -bottom-2 -right-2 rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 px-2.5 py-0.5 text-[11px] font-black text-slate-950 shadow-md">
+                      #25 BOX
+                    </span>
+                  </div>
+                  <div className="space-y-2.5">
+                    <div className="inline-flex items-center gap-2 rounded-full border border-cyan-400/40 bg-cyan-400/10 px-3 py-1 text-xs font-bold text-cyan-300">
+                      <Sparkles size={14} className="text-cyan-400 animate-spin" />
+                      MÃ QR SỐ 25 — IN VỎ HỘP & BAO BÌ VẬT LÝ
+                    </div>
+                    <h3 className="text-2xl font-black text-white">QR Code Vỏ Hộp Bộ Bài (Packaging Deck Box)</h3>
+                    <p className="max-w-2xl text-xs sm:text-sm text-slate-300 leading-relaxed">
+                      Mã QR này dành riêng để in lên mặt ngoài vỏ hộp bao bì hoặc tờ cẩm nang trong hộp. Khi khách hàng mở hộp bài, chỉ cần dùng camera điện thoại quét mã là truy cập ngay vào <strong>Landing Page WebApp</strong> có hướng dẫn luật chơi chi tiết, luồng Phygital và nút vào phòng chơi tức thì.
+                    </p>
+                    <div className="flex flex-wrap items-center gap-2 text-xs font-mono text-cyan-200">
+                      <span className="rounded-lg bg-slate-800/90 px-3 py-1 border border-white/10">🔗 {BOX_QR_VALUE}</span>
+                      <span className="rounded-lg bg-emerald-500/15 text-emerald-300 px-3 py-1 border border-emerald-500/30">✓ Vector 300 DPI</span>
+                      <span className="rounded-lg bg-purple-500/15 text-purple-300 px-3 py-1 border border-purple-500/30">Mức sửa lỗi: High (H 30%)</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Download Actions for Box QR */}
+                <div className="flex flex-col sm:flex-row lg:flex-col gap-2.5 w-full sm:w-auto shrink-0">
+                  <button
+                    onClick={() => { sound.playClick(); void downloadBoxQrBadge(); }}
+                    className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 px-5 py-3 text-xs font-bold text-white shadow-lg shadow-cyan-500/25 transition hover:scale-105"
+                  >
+                    <Download size={16} />
+                    Tải Nhãn In Hộp Bài (Badge SVG)
+                  </button>
+                  <button
+                    onClick={() => { sound.playClick(); void downloadBoxQrPng(); }}
+                    className="flex items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/10 px-5 py-2.5 text-xs font-bold text-slate-200 transition hover:bg-white/20"
+                  >
+                    <Download size={16} />
+                    Tải PNG 2400x2400 (Siêu Nét)
+                  </button>
+                  <button
+                    onClick={() => { sound.playClick(); void downloadBoxQrCleanSvg(); }}
+                    className="flex items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/10 px-5 py-2.5 text-xs font-bold text-slate-200 transition hover:bg-white/20"
+                  >
+                    <Download size={16} />
+                    Tải Vector QR Gốc (SVG)
+                  </button>
+                </div>
               </div>
             </div>
 
-            <div className="overflow-x-auto">
+            {/* Danh sách 24 lá bài */}
+            <div className="rounded-3xl border border-white/15 bg-slate-900/60 p-6 backdrop-blur-xl">
+              <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+                <div>
+                  <h3 className="text-xl font-bold text-white">Danh Sách 24 Thẻ Bài Physical Phygital</h3>
+                  <p className="text-xs text-slate-400">Nội dung 24 nhiệm vụ lá bài thật và mã QR định danh từng lá</p>
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => { void handleExportCardQrCodes(); }}
+                    className="flex items-center gap-2 rounded-xl border border-cyan-400/40 bg-cyan-500/10 px-4 py-2 text-sm font-bold text-cyan-300 transition hover:bg-cyan-500/20"
+                  >
+                    <Download size={16} />
+                    Tải trọn bộ 25 mã QR (SVG)
+                  </button>
+                  <button
+                    onClick={() => {
+                      sound.playClick();
+                      alert('Chức năng thêm thẻ bài mới sẵn sàng!');
+                    }}
+                    className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 px-4 py-2 text-sm font-bold text-white shadow-lg shadow-cyan-500/20 transition hover:scale-105"
+                  >
+                    <Plus size={16} />
+                    Thêm Thẻ Bài Mới
+                  </button>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto">
               <table className="w-full text-left text-sm text-slate-300">
                 <thead className="border-b border-white/10 bg-white/5 text-xs font-bold uppercase text-slate-400">
                   <tr>
@@ -295,7 +358,8 @@ const AdminPage = () => {
               </table>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
         {activeTab === 'ai' && (
           <div className="mt-6 grid gap-6 md:grid-cols-2">

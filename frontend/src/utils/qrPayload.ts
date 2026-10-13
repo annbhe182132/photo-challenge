@@ -83,34 +83,124 @@ export const parseQRCodePayload = (rawValue: string): QRCodePayload | null => {
   return null;
 };
 
+export const BOX_QR_VALUE = 'https://annbhe182132.github.io/photo-challenge/';
 export const roomQrValue = (roomCode: string) => `PHOTO-CHALLENGE:ROOM:${roomCode.toUpperCase()}`;
 export const cardQrValue = (cardCode: string) => `https://annbhe182132.github.io/photo-challenge/#/scan?cardCode=${encodeURIComponent(cardCode.toUpperCase())}`;
 
+export const downloadBoxQrCleanSvg = async () => {
+  const { default: QRCode } = await import('qrcode');
+  const svg = await QRCode.toString(BOX_QR_VALUE, {
+    type: 'svg',
+    margin: 2,
+    color: { dark: '#0f172a', light: '#ffffff' },
+    errorCorrectionLevel: 'H',
+  });
+  const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'photo-challenge-box-qr.svg';
+  link.click();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+};
+
+export const downloadBoxQrPng = async () => {
+  const { default: QRCode } = await import('qrcode');
+  const dataUrl = await QRCode.toDataURL(BOX_QR_VALUE, {
+    width: 2400,
+    margin: 2,
+    color: { dark: '#0f172a', light: '#ffffff' },
+    errorCorrectionLevel: 'H',
+  });
+  const link = document.createElement('a');
+  link.href = dataUrl;
+  link.download = 'photo-challenge-box-qr.png';
+  link.click();
+};
+
+export const downloadBoxQrBadge = async () => {
+  const { default: QRCode } = await import('qrcode');
+  const cleanSvg = await QRCode.toString(BOX_QR_VALUE, {
+    type: 'svg',
+    margin: 2,
+    color: { dark: '#0f172a', light: '#ffffff' },
+    errorCorrectionLevel: 'H',
+  });
+  const viewBoxMatch = cleanSvg.match(/viewBox="([^"]+)"/);
+  const viewBox = viewBoxMatch ? viewBoxMatch[1] : '0 0 33 33';
+  const qrInner = cleanSvg.slice(cleanSvg.indexOf('>') + 1, cleanSvg.lastIndexOf('</svg>'));
+
+  const badgeSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="750" viewBox="0 0 600 750">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#f8fafc"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="750" rx="36" fill="url(#bgGrad)" stroke="#0284c7" stroke-width="6"/>
+  <rect x="16" y="16" width="568" height="718" rx="24" fill="none" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="8 8"/>
+  <rect x="70" y="40" width="460" height="52" rx="26" fill="#0f172a"/>
+  <text x="300" y="73" font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="900" fill="#38bdf8" text-anchor="middle" letter-spacing="3">PHOTO CHALLENGE</text>
+  <text x="300" y="132" font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="26" font-weight="900" fill="#0f172a" text-anchor="middle">QUÉT MÃ VÀO WEB APP CHƠI NGAY</text>
+  <text x="300" y="162" font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="600" fill="#64748b" text-anchor="middle">Trải nghiệm Board Game Phygital kết hợp Trí Tuệ Nhân Tạo (AI)</text>
+  <rect x="90" y="185" width="420" height="420" rx="28" fill="#ffffff" stroke="#cbd5e1" stroke-width="3"/>
+  <svg x="110" y="205" width="380" height="380" viewBox="${viewBox}">
+    ${qrInner}
+  </svg>
+  <text x="300" y="640" font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="700" fill="#0284c7" text-anchor="middle">👉 annbhe182132.github.io/photo-challenge/</text>
+  <text x="300" y="670" font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="600" fill="#334155" text-anchor="middle">Mở camera điện thoại quét mã • Không cần tải ứng dụng</text>
+  <text x="300" y="698" font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#94a3b8" text-anchor="middle">Bộ bài 24 lá vật lý + WebApp AI • Bản quyền © 2026</text>
+</svg>`;
+
+  const blob = new Blob([badgeSvg], { type: 'image/svg+xml;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'photo-challenge-box-qr-badge.svg';
+  link.click();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+};
+
 export const downloadCardQrSheet = async (cards: PhysicalCard[]) => {
+  return downloadAll25QrSheet(cards);
+};
+
+export const downloadAll25QrSheet = async (cards: PhysicalCard[]) => {
   const cellWidth = 300;
   const cellHeight = 150;
   const columns = 3;
-  const rows = Math.ceil(cards.length / columns);
+  // Total 25 items: 1 Box QR + 24 Cards
+  const totalItems = 1 + cards.length;
+  const rows = Math.ceil(totalItems / columns);
   const { default: QRCode } = await import('qrcode');
-  const qrSvgs = await Promise.all(cards.map((card) => (
+
+  const boxSvg = await QRCode.toString(BOX_QR_VALUE, { type: 'svg', errorCorrectionLevel: 'H', margin: 1 });
+  const cardSvgs = await Promise.all(cards.map((card) => (
     QRCode.toString(cardQrValue(card.code), { type: 'svg', errorCorrectionLevel: 'M', margin: 1 })
   )));
 
-  const cells = cards.map((card, index) => {
-    const svg = qrSvgs[index];
+  // Cell 0: Box QR
+  const boxViewBox = boxSvg.match(/viewBox="([^"]+)"/)?.[1] ?? '0 0 33 33';
+  const boxSvgContent = boxSvg.slice(boxSvg.indexOf('>') + 1, boxSvg.lastIndexOf('</svg>'));
+  const boxCell = `<g transform="translate(0 0)"><rect width="${cellWidth}" height="${cellHeight}" fill="#f0f9ff" stroke="#0284c7" stroke-width="2"/><svg x="12" y="12" width="126" height="126" viewBox="${boxViewBox}">${boxSvgContent}</svg><text x="150" y="45" font-family="Arial,sans-serif" font-size="14" font-weight="900" fill="#0284c7">MÃ SỐ 25: BAO BÌ</text><text x="150" y="70" font-family="Arial,sans-serif" font-size="15" font-weight="700" fill="#0f172a">Vỏ Hộp Bộ Bài</text><text x="150" y="94" font-family="Arial,sans-serif" font-size="11" fill="#475569">Quét vào WebApp chơi</text><text x="150" y="118" font-family="Arial,sans-serif" font-size="10" font-weight="700" fill="#0369a1">URL: photo-challenge/</text></g>`;
+
+  // Cells 1 to 24: Cards
+  const cardCells = cards.map((card, index) => {
+    const itemIndex = index + 1;
+    const svg = cardSvgs[index];
     const viewBox = svg.match(/viewBox="([^"]+)"/)?.[1] ?? '0 0 33 33';
     const svgContent = svg.slice(svg.indexOf('>') + 1, svg.lastIndexOf('</svg>'));
-    const x = (index % columns) * cellWidth;
-    const y = Math.floor(index / columns) * cellHeight;
+    const x = (itemIndex % columns) * cellWidth;
+    const y = Math.floor(itemIndex / columns) * cellHeight;
     return `<g transform="translate(${x} ${y})"><rect width="${cellWidth}" height="${cellHeight}" fill="#ffffff" stroke="#cbd5e1"/><svg x="12" y="12" width="126" height="126" viewBox="${viewBox}">${svgContent}</svg><text x="150" y="65" font-family="Arial,sans-serif" font-size="17" font-weight="700" fill="#0f172a">${card.code}</text><text x="150" y="91" font-family="Arial,sans-serif" font-size="13" fill="#334155">${escapeXml(card.title)}</text><text x="150" y="118" font-family="Arial,sans-serif" font-size="11" fill="#64748b">PHOTO-CHALLENGE:CARD</text></g>`;
   }).join('');
 
-  const sheet = `<svg xmlns="http://www.w3.org/2000/svg" width="${cellWidth * columns}" height="${cellHeight * rows}" viewBox="0 0 ${cellWidth * columns} ${cellHeight * rows}">${cells}</svg>`;
+  const sheet = `<svg xmlns="http://www.w3.org/2000/svg" width="${cellWidth * columns}" height="${cellHeight * rows}" viewBox="0 0 ${cellWidth * columns} ${cellHeight * rows}">${boxCell}${cardCells}</svg>`;
   const blob = new Blob([sheet], { type: 'image/svg+xml;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.download = 'photo-challenge-card-qr-codes.svg';
+  link.download = 'photo-challenge-all-25-qr-codes.svg';
   link.click();
   window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 };
@@ -122,3 +212,4 @@ const escapeXml = (value: string) => value.replace(/[<>&'"]/g, (character) => ({
   "'": '&apos;',
   '"': '&quot;',
 }[character] ?? character));
+

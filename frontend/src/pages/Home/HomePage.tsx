@@ -45,7 +45,28 @@ const featureCards = [
   },
 ];
 
-const steps = ['Rút Thẻ Bài Thật', 'Quét Mã QR Bài', 'Nhận Thử Thách & Chụp', 'AI Chấm Điểm & Phạt'];
+const steps = [
+  {
+    title: 'Rút Thẻ Bài Thật',
+    desc: 'Mở hộp, xáo đều 24 lá bài thử thách và đặt giữa bàn. Đến lượt ai, người đó rút 1 lá bài thật bất kỳ.',
+    tag: 'Thẻ Bài Thật',
+  },
+  {
+    title: 'Quét Mã QR Lá Bài',
+    desc: 'Dùng camera trên WebApp này quét mã QR in trên lá bài để tải đúng nhiệm vụ vào màn hình game.',
+    tag: 'Web & QR',
+  },
+  {
+    title: 'Thực Hiện Thử Thách & Chụp',
+    desc: 'Cùng nhóm bạn tạo dáng, diễn xuất hoặc tương tác theo yêu cầu trước khi đồng hồ đếm ngược hết giờ.',
+    tag: 'Camera Thử Thách',
+  },
+  {
+    title: 'AI Chấm Điểm & Phạt',
+    desc: 'AI Vision chấm điểm cảm xúc và tư thế. Đạt yêu cầu nhận thưởng XP, trượt sẽ kích hoạt Vòng Quay Phạt!',
+    tag: 'Trọng Tài AI',
+  },
+];
 
 const particles = Array.from({ length: 16 }, (_, index) => ({
   id: index,
@@ -367,23 +388,34 @@ const HomePage = () => {
           <section id="how-it-works" className="py-16">
             <div className="mb-10 text-center">
               <span className="text-xs font-bold uppercase tracking-widest text-cyan-400">Luồng Hoạt Động Phygital</span>
-              <h2 className="mt-2 text-3xl font-black text-white sm:text-4xl">Dễ Dàng Bắt Đầu Trong 4 Bước</h2>
+              <h2 className="mt-2 text-3xl font-black text-white sm:text-4xl">Cẩm Nang Cách Chơi Trong 4 Bước</h2>
+              <p className="mt-2 text-slate-400 text-sm max-w-xl mx-auto">
+                Hướng dẫn nhanh cho người chơi khi quét mã QR từ bao bì hộp bài vật lý
+              </p>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-4">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {steps.map((step, index) => (
                 <motion.div
-                  key={step}
+                  key={step.title}
                   initial={{ opacity: 0, y: 16 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, amount: 0.25 }}
                   transition={{ duration: 0.35, delay: index * 0.08 }}
-                  className="relative rounded-[1.75rem] border border-white/15 bg-white/10 p-6 text-center backdrop-blur-xl"
+                  className="relative flex flex-col justify-between rounded-[1.75rem] border border-white/15 bg-white/10 p-6 text-left backdrop-blur-xl transition hover:border-cyan-400/40"
                 >
-                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-cyan-500 font-bold text-white">
-                    {index + 1}
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-cyan-500 font-black text-white text-base">
+                        {index + 1}
+                      </div>
+                      <span className="rounded-full bg-cyan-500/10 border border-cyan-400/30 px-2.5 py-0.5 text-[10px] font-bold text-cyan-300">
+                        {step.tag}
+                      </span>
+                    </div>
+                    <h3 className="mt-4 text-base font-bold text-white">{step.title}</h3>
+                    <p className="mt-2 text-xs leading-relaxed text-slate-300">{step.desc}</p>
                   </div>
-                  <h3 className="mt-4 text-base font-bold text-white">{step}</h3>
                 </motion.div>
               ))}
             </div>
