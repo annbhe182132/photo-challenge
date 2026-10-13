@@ -17,6 +17,9 @@ import { useGame } from '../../context/GameContext';
 import { apiRequest } from '../../services/api';
 import type { Player } from '../../data/gameData';
 import { sound } from '../../utils/soundEngine';
+import unoCompareImg from '../../assets/uno-compare.png';
+import werewolfCompareImg from '../../assets/werewolf-compare.png';
+import truthOrDareCompareImg from '../../assets/truth-or-dare-compare.png';
 
 interface CreatedRoomResponse {
   success: boolean;
@@ -326,34 +329,118 @@ const HomePage = () => {
             </div>
 
             <div className="grid gap-6 md:grid-cols-3">
-              <div className="rounded-3xl border border-white/15 bg-slate-900/60 p-6 backdrop-blur-xl space-y-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-500/20 text-cyan-300 font-black">
-                  VS
+              {/* UNO Comparison */}
+              <div className="group rounded-3xl border border-white/15 bg-slate-900/60 p-6 backdrop-blur-xl flex flex-col justify-between transition-all duration-300 hover:border-cyan-500/40 hover:shadow-2xl hover:shadow-cyan-500/10 hover:-translate-y-1">
+                <div className="space-y-4">
+                  <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-slate-950/80 h-48 w-full flex items-center justify-center">
+                    <img
+                      src={unoCompareImg}
+                      alt="Board game UNO"
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/20 to-transparent pointer-events-none" />
+                    <div className="absolute top-3 left-3 flex items-center gap-1.5 rounded-full border border-cyan-400/30 bg-slate-950/80 px-3 py-1 text-xs font-bold text-cyan-300 backdrop-blur-md">
+                      <span>VS UNO</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <span className="text-[11px] font-semibold tracking-wider text-cyan-400 uppercase">Board game thẻ số</span>
+                    <h3 className="text-xl font-bold text-white mt-1">So Với Board Game UNO</h3>
+                  </div>
+
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    UNO chỉ ngồi một chỗ đánh bài đơn điệu, dễ cắm cúi vào các con số. <strong className="text-white font-semibold">Photo Challenge</strong> buộc người chơi phải tương tác hành động thực tế, đứng dậy tạo dáng chụp ảnh kỉ niệm và tạo không khí bùng nổ!
+                  </p>
                 </div>
-                <h3 className="text-xl font-bold text-white">So Với Board Game UNO</h3>
-                <p className="text-xs text-slate-300 leading-relaxed">
-                  UNO chỉ ngồi một chỗ đánh bài đơn điệu. **Photo Challenge** buộc người chơi phải tương tác hành động thực tế, đứng dậy chụp ảnh kỉ niệm và tạo không khí bùng nổ!
-                </p>
+
+                <div className="mt-5 pt-4 border-t border-white/10 space-y-2 text-[11px]">
+                  <div className="flex items-center justify-between text-slate-400">
+                    <span>UNO:</span>
+                    <span className="text-rose-400 font-medium">Ngồi yên một chỗ, đơn điệu</span>
+                  </div>
+                  <div className="flex items-center justify-between text-cyan-300 font-semibold">
+                    <span>Photo Challenge:</span>
+                    <span className="text-emerald-400">Vận động & bắt trọn cảm xúc thật</span>
+                  </div>
+                </div>
               </div>
 
-              <div className="rounded-3xl border border-white/15 bg-slate-900/60 p-6 backdrop-blur-xl space-y-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-fuchsia-500/20 text-fuchsia-300 font-black">
-                  VS
+              {/* Ma Soi Comparison */}
+              <div className="group rounded-3xl border border-white/15 bg-slate-900/60 p-6 backdrop-blur-xl flex flex-col justify-between transition-all duration-300 hover:border-fuchsia-500/40 hover:shadow-2xl hover:shadow-fuchsia-500/10 hover:-translate-y-1">
+                <div className="space-y-4">
+                  <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-slate-950/80 h-48 w-full flex items-center justify-center">
+                    <img
+                      src={werewolfCompareImg}
+                      alt="Board game Ma Sói Werewolf"
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/20 to-transparent pointer-events-none" />
+                    <div className="absolute top-3 left-3 flex items-center gap-1.5 rounded-full border border-fuchsia-400/30 bg-slate-950/80 px-3 py-1 text-xs font-bold text-fuchsia-300 backdrop-blur-md">
+                      <span>VS Ma Sói</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <span className="text-[11px] font-semibold tracking-wider text-fuchsia-400 uppercase">Board game ẩn vai</span>
+                    <h3 className="text-xl font-bold text-white mt-1">So Với Ma Sói (Werewolf)</h3>
+                  </div>
+
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    Ma Sói đòi hỏi luật phức tạp, cần quản trò và người bị loại sớm phải ngồi ngoài hàng giờ. <strong className="text-white font-semibold">Photo Challenge</strong> giữ 100% thành viên tham gia liên tục mọi vòng chơi mà không một ai bị bỏ rơi hay đứng ngoài cuộc!
+                  </p>
                 </div>
-                <h3 className="text-xl font-bold text-white">So Với Ma Sói</h3>
-                <p className="text-xs text-slate-300 leading-relaxed">
-                  Ma Sói đòi hỏi luật phức tạp và người bị loại sớm sẽ đứng ngoài. **Photo Challenge** giữ 100% thành viên tham gia liên tục mọi vòng chơi mà không ai bị bỏ rơi!
-                </p>
+
+                <div className="mt-5 pt-4 border-t border-white/10 space-y-2 text-[11px]">
+                  <div className="flex items-center justify-between text-slate-400">
+                    <span>Ma Sói:</span>
+                    <span className="text-rose-400 font-medium">Cần quản trò, loại sớm ngồi chờ</span>
+                  </div>
+                  <div className="flex items-center justify-between text-fuchsia-300 font-semibold">
+                    <span>Photo Challenge:</span>
+                    <span className="text-emerald-400">100% gắn kết không ai bị loại</span>
+                  </div>
+                </div>
               </div>
 
-              <div className="rounded-3xl border border-white/15 bg-slate-900/60 p-6 backdrop-blur-xl space-y-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-500/20 text-amber-300 font-black">
-                  VS
+              {/* Truth or Dare Comparison */}
+              <div className="group rounded-3xl border border-white/15 bg-slate-900/60 p-6 backdrop-blur-xl flex flex-col justify-between transition-all duration-300 hover:border-amber-500/40 hover:shadow-2xl hover:shadow-amber-500/10 hover:-translate-y-1">
+                <div className="space-y-4">
+                  <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-slate-950/80 h-48 w-full flex items-center justify-center">
+                    <img
+                      src={truthOrDareCompareImg}
+                      alt="Card game Truth or Dare Dám Nói Dám Làm"
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/20 to-transparent pointer-events-none" />
+                    <div className="absolute top-3 left-3 flex items-center gap-1.5 rounded-full border border-amber-400/30 bg-slate-950/80 px-3 py-1 text-xs font-bold text-amber-300 backdrop-blur-md">
+                      <span>VS Truth or Dare</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <span className="text-[11px] font-semibold tracking-wider text-amber-400 uppercase">Thẻ bài Thật hay Thách</span>
+                    <h3 className="text-xl font-bold text-white mt-1">So Với Truth or Dare</h3>
+                  </div>
+
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    Truth or Dare dễ bị bí ý tưởng, gượng gạo và gian lận khi thực hiện thách thức. <strong className="text-white font-semibold">Photo Challenge</strong> có AI trọng tài phân tích biểu cảm & tư thế, đếm ngược tự động và Vòng Quay Hình Phạt cực cay!
+                  </p>
                 </div>
-                <h3 className="text-xl font-bold text-white">So Với Truth or Dare</h3>
-                <p className="text-xs text-slate-300 leading-relaxed">
-                  Truth or Dare dễ bị bí ý tưởng và gian lận. **Photo Challenge** có bộ đếm giờ, AI trọng tài khách quan và Vòng Quay Hình Phạt tự động cực kỳ hài hước!
-                </p>
+
+                <div className="mt-5 pt-4 border-t border-white/10 space-y-2 text-[11px]">
+                  <div className="flex items-center justify-between text-slate-400">
+                    <span>Truth or Dare:</span>
+                    <span className="text-rose-400 font-medium">Dễ gượng gạo, bí câu hỏi</span>
+                  </div>
+                  <div className="flex items-center justify-between text-amber-300 font-semibold">
+                    <span>Photo Challenge:</span>
+                    <span className="text-emerald-400">AI trọng tài & Vòng quay phạt số</span>
+                  </div>
+                </div>
               </div>
             </div>
           </section>
