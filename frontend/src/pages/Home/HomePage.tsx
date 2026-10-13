@@ -315,15 +315,17 @@ const HomePage = () => {
           </section>
 
           {/* Comparison Section vs Traditional Games */}
-          <section id="comparison" className="py-16">
-            <div className="mb-10 text-center space-y-3">
-              <span className="rounded-full border border-fuchsia-500/30 bg-fuchsia-500/10 px-4 py-1.5 text-xs font-bold text-fuchsia-300 uppercase tracking-widest">
-                Đột Phá Thị Trường Boardgame
-              </span>
-              <h2 className="text-3xl font-black text-white sm:text-4xl">
+          <section id="comparison" className="py-20 sm:py-28">
+            <div className="mb-14 text-center space-y-4">
+              <div className="flex justify-center mb-3">
+                <span className="inline-flex items-center justify-center rounded-full border border-fuchsia-500/30 bg-fuchsia-500/10 px-5 py-2 text-xs sm:text-sm font-bold text-fuchsia-300 uppercase tracking-widest backdrop-blur-xl shadow-[0_0_20px_rgba(217,70,239,0.2)]">
+                  Đột Phá Thị Trường Boardgame
+                </span>
+              </div>
+              <h2 className="text-3xl font-black text-white sm:text-4xl lg:text-5xl tracking-tight">
                 Vì Sao SNAPDECK Vượt Xa UNO, Ma Sói & Truth or Dare?
               </h2>
-              <p className="text-slate-400 text-sm max-w-2xl mx-auto">
+              <p className="text-slate-400 text-sm sm:text-base max-w-2xl mx-auto leading-relaxed pt-1">
                 Kết hợp yếu tố vật lý của lá bài và sức mạnh số của WebApp AI, giải quyết triệt để sự chán nản & nghiện điện thoại cá nhân.
               </p>
             </div>
