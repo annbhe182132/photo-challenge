@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Camera, CheckCircle2, Layers, QrCode, Sparkles, StopCircle, SwitchCamera, Zap } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, Camera, CheckCircle2, Layers, QrCode, Sparkles, StopCircle, SwitchCamera, Upload, Zap } from 'lucide-react';
 import type { Html5Qrcode as Html5QrcodeType } from 'html5-qrcode';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useGame } from '../../context/GameContext';
@@ -8,6 +8,12 @@ import { DECK_CARDS, THEMES, type PhysicalCard, type Player } from '../../data/g
 import { apiRequest } from '../../services/api';
 import { parseQRCodePayload } from '../../utils/qrPayload';
 import { sound } from '../../utils/soundEngine';
+
+export const isInAppBrowser = () => {
+  if (typeof navigator === 'undefined') return false;
+  const ua = (navigator.userAgent || navigator.vendor || '').toLowerCase();
+  return /zalo|fban|fbav|instagram|messenger|tiktok|bytedance|line|micromessenger/i.test(ua);
+};
 
 interface MissionApiResponse {
   success: boolean;
@@ -44,14 +50,19 @@ type ScanStatus = 'idle' | 'starting' | 'scanning' | 'processing' | 'success' | 
 
 const getCameraErrorMessage = (error: unknown) => {
   const message = (error instanceof Error ? error.message : String(error)).toLowerCase();
+  const inApp = isInAppBrowser();
+
+  if (inApp) {
+    return 'Trình duyệt trong ứng dụng (Zalo/Facebook) đang chặn camera trực tiếp. Hãy bấm nút "•••" ở góc trên bên phải màn hình để chọn "Mở bằng trình duyệt" (Safari/Chrome), hoặc dùng nút "Chụp / Tải ảnh mã QR" bên dưới.';
+  }
   if (message.includes('media devices') || message.includes('getusermedia') || message.includes('not supported')) {
-    return 'Trình duyệt này không hỗ trợ camera. Hãy dùng trình duyệt mới trên localhost hoặc HTTPS.';
+    return 'Trình duyệt này không hỗ trợ camera trực tiếp. Hãy mở bằng Safari (trên iPhone) hoặc Chrome (trên Android).';
   }
   if (message.includes('notallowed') || message.includes('permission') || message.includes('denied')) {
-    return 'Bạn đã từ chối quyền camera. Hãy cho phép camera trong cài đặt trình duyệt rồi thử lại.';
+    return 'Bạn đã từ chối quyền camera. Hãy cho phép camera trong cài đặt trình duyệt (hoặc Cài đặt > Safari > Camera trên iPhone) rồi tải lại trang.';
   }
   if (message.includes('notfound') || message.includes('no camera') || message.includes('requested device not found')) {
-    return 'Không tìm thấy camera trên thiết bị này.';
+    return 'Không tìm thấy camera trên thiết bị. Bạn có thể dùng nút "Chụp / Tải ảnh mã QR" bên dưới.';
   }
   if (
     message.includes('notreadable')
@@ -63,9 +74,9 @@ const getCameraErrorMessage = (error: unknown) => {
     return 'Camera đang được ứng dụng khác sử dụng. Hãy đóng ứng dụng đó rồi thử lại.';
   }
   if (message.includes('secure context') || message.includes('insecure')) {
-    return 'Trình duyệt chỉ cho phép camera trên localhost hoặc HTTPS.';
+    return 'Trình duyệt chỉ cho phép camera trên HTTPS.';
   }
-  return 'Không thể khởi động camera. Hãy kiểm tra quyền truy cập, thiết bị và thử lại.';
+  return 'Không thể khởi động camera trực tiếp. Hãy thử mở trang web bằng Safari/Chrome hoặc dùng nút "Chụp / Tải ảnh mã QR" bên dưới.';
 };
 
 const ScanQRPage = () => {
@@ -335,34 +346,47 @@ const ScanQRPage = () => {
 
         scanner = new Html5Qrcode(qrReaderId, { verbose: false });
         scannerRef.current = scanner;
-        const videoInputs = (await navigator.mediaDevices.enumerateDevices())
-          .filter((device) => device.kind === 'videoinput');
 
-        const preferredCamera =
-          videoInputs.find((device) =>
-            /back|rear|environment|sau/i.test(device.label)
-          ) ?? videoInputs[0];
+        const videoConfig = {
+          fps: 10,
+          qrbox: (viewWidth: number, viewHeight: number) => {
+            const size = Math.floor(Math.min(viewWidth, viewHeight, 280));
+            return { width: size, height: size };
+          },
+        };
+        const onDecoded = (decodedText: string) => { void handleDecodedQr(decodedText, session); };
+        const onDecodeError = () => {};
 
-        const camera = cameraId ?? preferredCamera?.deviceId;
-
-        if (!camera) {
-          throw new Error(
-            'Không tìm thấy camera. Hãy kiểm tra thiết bị và quyền truy cập camera.'
-          );
-        }
         try {
-          await scanner.start(
-            camera,
-            {
-              fps: 10,
-              qrbox: (viewWidth, viewHeight) => {
-                const size = Math.floor(Math.min(viewWidth, viewHeight, 280));
-                return { width: size, height: size };
-              },
-            },
-            (decodedText) => { void handleDecodedQr(decodedText, session); },
-            () => { },
-          );
+          if (cameraId) {
+            await scanner.start(cameraId, videoConfig, onDecoded, onDecodeError);
+          } else {
+            // Trên điện thoại, ưu tiên camera sau (facingMode: environment) trực tiếp để kích hoạt cấp quyền
+            try {
+              await scanner.start({ facingMode: 'environment' }, videoConfig, onDecoded, onDecodeError);
+            } catch (envError) {
+              console.warn('[QR Camera] facingMode environment failed, trying user camera:', envError);
+              try {
+                await scanner.start({ facingMode: 'user' }, videoConfig, onDecoded, onDecodeError);
+              } catch (userError) {
+                console.warn('[QR Camera] facingMode user failed, checking enumerated devices:', userError);
+                if (navigator.mediaDevices?.enumerateDevices) {
+                  const videoInputs = (await navigator.mediaDevices.enumerateDevices())
+                    .filter((device) => device.kind === 'videoinput');
+                  const preferredCamera = videoInputs.find((device) =>
+                    /back|rear|environment|sau/i.test(device.label)
+                  ) ?? videoInputs[0];
+                  if (preferredCamera?.deviceId) {
+                    await scanner.start(preferredCamera.deviceId, videoConfig, onDecoded, onDecodeError);
+                  } else {
+                    throw envError;
+                  }
+                } else {
+                  throw envError;
+                }
+              }
+            }
+          }
         } catch (error) {
           startFailed = true;
           throw error;
@@ -422,6 +446,42 @@ const ScanQRPage = () => {
         startLockRef.current = false;
       }
     });
+  };
+
+  const handleFileScan = async (file: File) => {
+    if (scanStatus === 'processing') return;
+    const session = ++sessionRef.current;
+    handledQrRef.current = false;
+    setErrorMessage(null);
+    setScanStatus('processing');
+
+    try {
+      const currentScanner = scannerRef.current;
+      if (currentScanner) {
+        await disposeScanner(currentScanner);
+      }
+
+      const { Html5Qrcode } = await import('html5-qrcode');
+      const fileScanner = new Html5Qrcode(qrReaderId, { verbose: false });
+      let decodedText: string;
+      try {
+        decodedText = await fileScanner.scanFile(file, false);
+      } finally {
+        try {
+          fileScanner.clear();
+        } catch {
+          // ignore cleanup error
+        }
+      }
+
+      if (session !== sessionRef.current) return;
+      await handleDecodedQr(decodedText, session);
+    } catch (error) {
+      if (session !== sessionRef.current) return;
+      console.warn('[QR File Scan] Failed:', error);
+      setErrorMessage('Không nhận diện được mã QR trong ảnh. Hãy chụp ảnh cận cảnh, vuông góc và đủ sáng rồi thử lại.');
+      setScanStatus('error');
+    }
   };
 
   const handleSelectCard = async (card: PhysicalCard) => {
@@ -541,6 +601,20 @@ const ScanQRPage = () => {
               </div>
             ) : mode === 'camera' && (
               <div className="space-y-4 text-center">
+                {isInAppBrowser() && (
+                  <div className="mx-auto max-w-lg rounded-2xl border border-amber-500/40 bg-amber-500/10 p-4 text-left text-xs text-amber-200">
+                    <div className="flex items-start gap-2.5">
+                      <AlertTriangle size={18} className="mt-0.5 shrink-0 text-amber-400" />
+                      <div>
+                        <p className="font-bold text-amber-100">Đang mở trong ứng dụng (Zalo / Facebook)</p>
+                        <p className="mt-1 leading-relaxed text-amber-200/90">
+                          Trình duyệt trong ứng dụng có thể chặn camera trực tiếp. Để quét mượt nhất, hãy nhấn nút <strong className="text-white underline">•••</strong> ở góc trên bên phải màn hình rồi chọn <strong>"Mở bằng trình duyệt"</strong> (Safari), hoặc dùng nút <strong>"Chụp / Tải ảnh QR"</strong> bên dưới.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <div className="relative mx-auto min-h-[280px] w-full max-w-lg overflow-hidden rounded-3xl border-2 border-cyan-400/40 bg-slate-950 shadow-2xl sm:min-h-[360px]">
                   <div id={qrReaderId} className="min-h-[280px] w-full overflow-hidden sm:min-h-[360px]" />
                   {!isScannerActive && (
@@ -553,7 +627,7 @@ const ScanQRPage = () => {
                           ? 'Đã nhận QR hợp lệ.'
                           : scanStatus === 'processing'
                             ? 'Đang xử lý mã QR...'
-                            : 'Nhấn bắt đầu để cấp quyền camera và quét mã QR.'}
+                            : 'Nhấn bắt đầu để cấp quyền camera hoặc tải ảnh QR.'}
                       </p>
                     </div>
                   )}
@@ -579,23 +653,45 @@ const ScanQRPage = () => {
                   </label>
                 )}
 
-                {isScannerActive ? (
-                  <button
-                    onClick={() => { void stopScanner(); }}
-                    disabled={scanStatus === 'stopping'}
-                    className="mx-auto flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-red-400/40 bg-red-500/15 px-6 py-3 font-bold text-red-200 transition hover:bg-red-500/25"
+                <div className="mx-auto flex w-full max-w-lg flex-col gap-3 sm:flex-row sm:items-center">
+                  {isScannerActive ? (
+                    <button
+                      onClick={() => { void stopScanner(); }}
+                      disabled={scanStatus === 'stopping'}
+                      className="flex min-h-12 flex-1 items-center justify-center gap-2 rounded-2xl border border-red-400/40 bg-red-500/15 px-6 py-3 font-bold text-red-200 transition hover:bg-red-500/25"
+                    >
+                      <StopCircle size={19} /> Dừng quét
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => { void startScanner(); }}
+                      disabled={scanStatus === 'processing' || scanStatus === 'success'}
+                      className="flex min-h-12 flex-1 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 via-fuchsia-500 to-cyan-500 px-6 py-3 font-bold text-white shadow-xl shadow-fuchsia-500/20 disabled:cursor-wait disabled:opacity-70"
+                    >
+                      <Camera size={19} /> {scanButtonLabel()}
+                    </button>
+                  )}
+
+                  <label
+                    className="flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-2xl border border-cyan-400/40 bg-cyan-500/15 px-6 py-3 font-bold text-cyan-200 shadow-lg backdrop-blur-md transition hover:bg-cyan-500/25"
                   >
-                    <StopCircle size={19} /> Dừng quét
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => { void startScanner(); }}
-                    disabled={scanStatus === 'processing' || scanStatus === 'success'}
-                    className="mx-auto flex min-h-12 w-full max-w-lg items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 via-fuchsia-500 to-cyan-500 px-6 py-3 font-bold text-white shadow-xl shadow-fuchsia-500/20 disabled:cursor-wait disabled:opacity-70"
-                  >
-                    <Camera size={19} /> {scanButtonLabel()}
-                  </button>
-                )}
+                    <Upload size={18} />
+                    <span>Chụp / Tải ảnh QR</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          void handleFileScan(file);
+                          e.target.value = '';
+                        }
+                      }}
+                    />
+                  </label>
+                </div>
 
                 {scanStatus === 'scanning' && (
                   <p className="flex items-center justify-center gap-2 text-sm font-bold text-cyan-200">

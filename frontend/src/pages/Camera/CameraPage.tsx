@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Camera, Check, RotateCcw, SwitchCamera } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, Camera, Check, RotateCcw, SwitchCamera, Upload } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useGame } from '../../context/GameContext';
 import { sound } from '../../utils/soundEngine';
+import { isInAppBrowser } from '../ScanQR/ScanQRPage';
 
 type CameraStatus = 'idle' | 'requesting' | 'live' | 'error';
 
@@ -14,13 +15,18 @@ const getCaptureTimeByDifficulty = (diff: number) => {
 };
 
 const getCameraErrorMessage = (error: unknown) => {
+  const inApp = isInAppBrowser();
+  if (inApp) {
+    return 'Trình duyệt trong ứng dụng (Zalo/Facebook) đang chặn camera trực tiếp. Bạn hãy dùng nút "Chụp từ máy / Tải ảnh lên" bên dưới hoặc nhấn dấu "•••" ở góc trên bên phải để "Mở bằng trình duyệt" (Safari).';
+  }
+
   const name = error instanceof DOMException ? error.name : '';
 
   if (name === 'NotAllowedError' || name === 'PermissionDeniedError' || name === 'SecurityError') {
     return 'Bạn đã từ chối quyền camera. Hãy cho phép camera trong cài đặt trình duyệt rồi thử lại.';
   }
   if (name === 'NotFoundError' || name === 'DevicesNotFoundError') {
-    return 'Không tìm thấy camera trên thiết bị này.';
+    return 'Không tìm thấy camera trên thiết bị này. Hãy dùng nút "Chụp từ máy / Tải ảnh lên".';
   }
   if (name === 'NotReadableError' || name === 'TrackStartError' || name === 'AbortError') {
     return 'Camera đang được ứng dụng khác sử dụng hoặc không thể khởi động. Hãy đóng ứng dụng đó rồi thử lại.';
@@ -28,7 +34,7 @@ const getCameraErrorMessage = (error: unknown) => {
   if (name === 'OverconstrainedError') {
     return 'Không tìm thấy camera phù hợp. Hãy thử chuyển camera hoặc kiểm tra thiết bị.';
   }
-  return 'Không thể mở camera. Hãy kiểm tra thiết bị và quyền truy cập camera rồi thử lại.';
+  return 'Không thể mở camera trực tiếp. Bạn có thể dùng nút "Chụp từ máy / Tải ảnh lên" bên dưới để hoàn thành thử thách.';
 };
 
 const stopStream = (stream: MediaStream) => {
@@ -90,10 +96,19 @@ const CameraPage = () => {
     setCameraStatus('requesting');
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: false,
-        video,
-      });
+      let stream: MediaStream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: false,
+          video,
+        });
+      } catch (initialError) {
+        console.warn('[CameraPage] Primary getUserMedia failed, retrying with fallback { video: true }:', initialError);
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: false,
+          video: true,
+        });
+      }
 
       if (requestId !== requestIdRef.current) {
         stopStream(stream);
@@ -246,6 +261,25 @@ const CameraPage = () => {
     setCameraError(null);
   };
 
+  const handlePhotoFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const result = e.target?.result as string;
+      if (result) {
+        sound.playClick();
+        setPreviewImage(result);
+        setCaptured(true);
+        setCameraStatus('idle');
+        setCameraError(null);
+        stopCamera();
+      }
+    };
+    reader.readAsDataURL(file);
+    event.target.value = '';
+  };
+
   const handleUsePhoto = () => {
     if (!previewImage || isConfirming) return;
     sound.playClick();
@@ -338,12 +372,26 @@ const CameraPage = () => {
                       <p className="text-xs text-slate-400">Đồng hồ chỉ bắt đầu khi camera hoạt động.</p>
                     )}
                     {cameraStatus === 'error' && (
-                      <button
-                        onClick={handleOpenCamera}
-                        className="rounded-xl border border-cyan-400/40 bg-cyan-500/15 px-4 py-2 text-sm font-bold text-cyan-200 transition hover:bg-cyan-500/25"
-                      >
-                        Thử mở camera lại
-                      </button>
+                      <div className="flex flex-wrap items-center justify-center gap-2">
+                        <button
+                          onClick={handleOpenCamera}
+                          className="rounded-xl border border-cyan-400/40 bg-cyan-500/15 px-4 py-2 text-sm font-bold text-cyan-200 transition hover:bg-cyan-500/25"
+                        >
+                          Thử mở camera lại
+                        </button>
+                        <label
+                          className="cursor-pointer rounded-xl border border-fuchsia-400/40 bg-fuchsia-500/15 px-4 py-2 text-sm font-bold text-fuchsia-200 transition hover:bg-fuchsia-500/25"
+                        >
+                          Tải ảnh từ máy
+                          <input
+                            type="file"
+                            accept="image/*"
+                            capture="user"
+                            className="hidden"
+                            onChange={handlePhotoFileUpload}
+                          />
+                        </label>
+                      </div>
                     )}
                   </div>
                 )}
@@ -365,6 +413,20 @@ const CameraPage = () => {
                 <canvas ref={canvasRef} className="hidden" />
               </div>
 
+              {isInAppBrowser() && !captured && (
+                <div className="mx-auto max-w-lg rounded-2xl border border-amber-500/40 bg-amber-500/10 p-4 text-left text-xs text-amber-200">
+                  <div className="flex items-start gap-2.5">
+                    <AlertTriangle size={18} className="mt-0.5 shrink-0 text-amber-400" />
+                    <div>
+                      <p className="font-bold text-amber-100">Đang mở trong ứng dụng (Zalo / Facebook)</p>
+                      <p className="mt-1 leading-relaxed text-amber-200/90">
+                        Nếu camera trực tiếp bị chặn, bạn có thể dùng nút <strong>"Chụp từ máy / Tải ảnh lên"</strong> bên dưới hoặc nhấn <strong className="text-white underline">•••</strong> ở góc trên bên phải để <strong>"Mở bằng trình duyệt"</strong> (Safari).
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {cameraError && (
                 <p role="alert" className="rounded-xl border border-red-400/40 bg-red-500/10 px-4 py-3 text-center text-sm font-semibold text-red-200">
                   {cameraError}
@@ -374,16 +436,32 @@ const CameraPage = () => {
               {!captured ? (
                 <div className="flex flex-wrap items-center justify-center gap-3">
                   {cameraStatus !== 'live' ? (
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={handleOpenCamera}
-                      disabled={cameraStatus === 'requesting'}
-                      className="flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 via-fuchsia-500 to-cyan-500 px-6 py-3 font-bold text-white shadow-xl shadow-fuchsia-500/20 disabled:cursor-wait disabled:opacity-70"
-                    >
-                      <Camera size={19} />
-                      {cameraStatus === 'requesting' ? 'Đang mở camera...' : 'Mở camera'}
-                    </motion.button>
+                    <>
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={handleOpenCamera}
+                        disabled={cameraStatus === 'requesting'}
+                        className="flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 via-fuchsia-500 to-cyan-500 px-6 py-3 font-bold text-white shadow-xl shadow-fuchsia-500/20 disabled:cursor-wait disabled:opacity-70"
+                      >
+                        <Camera size={19} />
+                        {cameraStatus === 'requesting' ? 'Đang mở camera...' : 'Mở camera'}
+                      </motion.button>
+
+                      <label
+                        className="flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-2xl border border-cyan-400/40 bg-cyan-500/15 px-6 py-3 font-bold text-cyan-200 shadow-lg backdrop-blur-md transition hover:bg-cyan-500/25"
+                      >
+                        <Upload size={18} />
+                        <span>Chụp từ máy / Tải ảnh lên</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          capture="user"
+                          className="hidden"
+                          onChange={handlePhotoFileUpload}
+                        />
+                      </label>
+                    </>
                   ) : (
                     <>
                       {canSwitchCamera && (
