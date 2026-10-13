@@ -226,9 +226,9 @@ const HomePage = () => {
 
               <div className="space-y-3 sm:space-y-4">
                 <h1 className="text-4xl font-black leading-[1] tracking-tight text-white sm:text-6xl lg:text-7xl">
-                  PHOTO
+                  SNAP
                   <span className="block bg-gradient-to-r from-cyan-400 via-fuchsia-400 to-amber-300 bg-clip-text text-transparent drop-shadow-[0_0_25px_rgba(217,70,239,0.3)]">
-                    CHALLENGE
+                    DECK
                   </span>
                 </h1>
                 <p className="max-w-xl text-base sm:text-xl text-slate-300 leading-relaxed">
