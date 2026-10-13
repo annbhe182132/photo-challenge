@@ -194,32 +194,57 @@ const ScanQRPage = () => {
     setScanStatus('processing');
     setErrorMessage(null);
 
+    // Chuẩn hóa mã thẻ để hỗ trợ cả định dạng mới SD- và định dạng cũ PC-
+    const normalizedCode = code.toUpperCase().replace(/^PC-/, 'SD-');
+    const legacyCode = code.toUpperCase().replace(/^SD-/, 'PC-');
+    const matchingDeckCard = manualCard ?? DECK_CARDS.find((card) =>
+      card.code === normalizedCode || card.code === legacyCode || card.code === code.toUpperCase()
+    );
+
     try {
+      // Gọi API lấy nhiệm vụ từ máy chủ
       const data = await apiRequest<MissionApiResponse>(`/api/missions/qr/${encodeURIComponent(code)}`);
       if (requestSession !== sessionRef.current) return;
       const mission = data.mission;
       if (data.success !== true) {
         throw new Error(data.message || 'Máy chủ không trả về thử thách hợp lệ.');
       }
+
+      // Chuẩn hóa mã bài trả về từ backend để so sánh tương thích (SD-CARD-xxx <-> PC-CARD-xxx)
+      const apiCardCode = data.card?.code?.toUpperCase().replace(/^PC-/, 'SD-');
+      const apiMissionCode = mission?.cardCode?.toUpperCase().replace(/^PC-/, 'SD-');
+
+      const isMatch = (apiCardCode === normalizedCode || data.card?.code?.toUpperCase() === code.toUpperCase()) &&
+                      (apiMissionCode === normalizedCode || mission?.cardCode?.toUpperCase() === code.toUpperCase());
+
       if (
-        data.card?.code?.toUpperCase() !== code ||
-        mission?.cardCode?.toUpperCase() !== code ||
-        typeof mission.title !== 'string' ||
-        typeof mission.instruction !== 'string' ||
-        typeof mission.difficulty !== 'number' ||
-        typeof mission.xp !== 'number'
+        !isMatch ||
+        typeof mission?.title !== 'string' ||
+        typeof mission?.instruction !== 'string' ||
+        typeof mission?.difficulty !== 'number' ||
+        typeof mission?.xp !== 'number'
       ) {
+        // Nếu API trả về dữ liệu lệch định dạng nhưng đã có lá bài vật lý trong DECK_CARDS, dùng ngay lá bài đó!
+        if (matchingDeckCard) {
+          setActiveCard(matchingDeckCard);
+          setScanStatus('success');
+          sound.playScanBeep();
+          window.setTimeout(() => {
+            if (requestSession === sessionRef.current) {
+              navigate('/challenge', { state: { round: currentRound } });
+            }
+          }, 500);
+          return;
+        }
         throw new Error('Dữ liệu thử thách không khớp với mã lá bài vừa quét.');
       }
 
-      const matchingDeckCard = manualCard ?? DECK_CARDS.find((card) => card.code === code);
-      // Ưu tiên nội dung 24 lá bài đã chốt trong gameData.ts để QR không hiển thị
-      // nhiệm vụ cũ từ dữ liệu backend chưa được seed lại.
+      // Ưu tiên nội dung 24 lá bài chuẩn trong gameData.ts
       const activeCard: PhysicalCard = {
-        id: matchingDeckCard?.id ?? mission.missionCode ?? `qr-${code}`,
-        code,
+        id: matchingDeckCard?.id ?? mission.missionCode ?? `qr-${normalizedCode}`,
+        code: normalizedCode,
         category: matchingDeckCard?.category ?? 'Creative',
-        theme: matchingDeckCard?.theme ?? data.card.themeId ?? 'pose',
+        theme: matchingDeckCard?.theme ?? data.card?.themeId ?? 'pose',
         title: matchingDeckCard?.title ?? mission.title,
         mission: matchingDeckCard?.mission ?? mission.instruction,
         difficulty: matchingDeckCard?.difficulty ?? mission.difficulty,
@@ -236,6 +261,20 @@ const ScanQRPage = () => {
         }
       }, 500);
     } catch (error) {
+      // Fallback an toàn: Nếu API máy chủ bị chậm, lỗi mạng hoặc lệch dữ liệu,
+      // vẫn cho phép người chơi bốc bài và chơi tiếp ngay với bộ 24 lá vật lý đã nạp sẵn
+      if (matchingDeckCard) {
+        setActiveCard(matchingDeckCard);
+        setScanStatus('success');
+        sound.playScanBeep();
+        window.setTimeout(() => {
+          if (requestSession === sessionRef.current) {
+            navigate('/challenge', { state: { round: currentRound } });
+          }
+        }, 500);
+        return;
+      }
+
       if (requestSession !== sessionRef.current) return;
       setErrorMessage(error instanceof Error
         ? error.message
