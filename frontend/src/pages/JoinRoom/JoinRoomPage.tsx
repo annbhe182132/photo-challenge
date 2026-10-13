@@ -58,7 +58,7 @@ export default function JoinRoomPage() {
         <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-cyan-400/30 bg-cyan-500/10 text-cyan-300">
           {error ? <Camera size={30} /> : <LoaderCircle size={30} className="animate-spin" />}
         </div>
-        <p className="mt-5 text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">Photo Challenge</p>
+        <p className="mt-5 text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">SNAPDECK</p>
         <h1 className="mt-2 text-2xl font-black">{error ? 'Chưa thể vào phòng' : 'Đang tạo phòng chơi...'}</h1>
         <p className="mt-3 text-sm leading-6 text-slate-300">
           {error ? error : 'Vui lòng đợi trong giây lát. Bạn sẽ được chuyển thẳng vào Lobby khi phòng sẵn sàng.'}

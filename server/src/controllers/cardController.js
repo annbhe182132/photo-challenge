@@ -15,11 +15,16 @@ export const getCards = async (req, res) => {
   }
 };
 
-// Lấy chi tiết thẻ bài qua mã QR (code) hoặc ID
 export const getCardByCode = async (req, res) => {
   try {
     const { code } = req.params;
-    const card = await Card.findOne({ code: code.toUpperCase() });
+    const rawCode = code.toUpperCase();
+    const altCode = rawCode.startsWith('PC-')
+      ? rawCode.replace('PC-', 'SD-')
+      : rawCode.replace('SD-', 'PC-');
+    const card = await Card.findOne({
+      $or: [{ code: rawCode }, { code: altCode }, { qrKey: rawCode }, { qrKey: altCode }],
+    });
     if (!card) {
       return res.status(404).json({ success: false, message: 'Không tìm thấy thẻ bài với mã QR này!' });
     }

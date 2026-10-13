@@ -94,8 +94,9 @@ const ScanQRPage = () => {
   } = useGame();
 
   const isFromHomeScan = location.state?.fromHomeScan ?? false;
-  const directCardCode = new URLSearchParams(location.search).get('cardCode')?.trim().toUpperCase() ?? null;
-  const isDirectCardQr = !isFromHomeScan && Boolean(directCardCode && /^PC-CARD-\d{3}$/.test(directCardCode));
+  const rawDirectCardCode = new URLSearchParams(location.search).get('cardCode')?.trim().toUpperCase() ?? null;
+  const directCardCode = rawDirectCardCode ? rawDirectCardCode.replace(/^PC-/, 'SD-') : null;
+  const isDirectCardQr = !isFromHomeScan && Boolean(directCardCode && /^(?:SD|PC)-CARD-\d{3}$/.test(rawDirectCardCode ?? ''));
   const [mode, setScanMode] = useState<'camera' | 'deck'>(isFromHomeScan || isDirectCardQr ? 'camera' : 'deck');
   const [scanStatus, setScanStatus] = useState<ScanStatus>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -496,8 +497,9 @@ const ScanQRPage = () => {
   useEffect(() => {
     if (isFromHomeScan) return;
     const params = new URLSearchParams(location.search);
-    const cardCode = params.get('cardCode')?.trim().toUpperCase();
-    if (!cardCode || !/^PC-CARD-\d{3}$/.test(cardCode)) return;
+    const rawCardCode = params.get('cardCode')?.trim().toUpperCase();
+    if (!rawCardCode || !/^(?:SD|PC)-CARD-\d{3}$/.test(rawCardCode)) return;
+    const cardCode = rawCardCode.replace(/^PC-/, 'SD-');
     const card = DECK_CARDS.find((item) => item.code === cardCode);
     if (!card || handledQrRef.current) return;
     handledQrRef.current = true;

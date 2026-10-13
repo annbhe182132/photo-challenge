@@ -40,7 +40,7 @@ Truy cập kiểm tra trạng thái tại: `http://localhost:5000/api/health`
 | Phương thức | Endpoint | Mô tả |
 | :--- | :--- | :--- |
 | **GET** | `/api/cards` | Lấy danh sách toàn bộ 24 thẻ bài vật lý |
-| **GET** | `/api/cards/:code` | Lấy chi tiết thẻ bài qua mã QR (VD: `PC-CARD-001`) |
+| **GET** | `/api/cards/:code` | Lấy chi tiết thẻ bài qua mã QR (VD: `SD-CARD-001` hoặc `PC-CARD-001`) |
 | **POST** | `/api/cards` | Thêm thẻ bài mới (Admin) |
 | **GET** | `/api/themes` | Lấy danh sách 4 chủ đề |
 | **GET** | `/api/punishments` | Lấy danh sách các hình phạt |

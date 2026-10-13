@@ -4,30 +4,30 @@ import QRCode from '../frontend/node_modules/qrcode/lib/index.js';
 
 // 24 Cards definition
 const CARD_CODES = [
-  { code: 'PC-CARD-001', title: 'Fashion Model Bàn Ăn' },
-  { code: 'PC-CARD-002', title: 'Khoảnh Khắc Cầu Xin' },
-  { code: 'PC-CARD-003', title: 'Tác Phẩm Tượng Sống' },
-  { code: 'PC-CARD-004', title: 'Gương Mặt Đa Nhân Cách' },
-  { code: 'PC-CARD-005', title: 'Poster Phim Hành Động' },
-  { code: 'PC-CARD-006', title: 'Ca Sĩ Diva Sân Khấu' },
-  { code: 'PC-CARD-007', title: 'Cú Lừa Vô Tội' },
-  { code: 'PC-CARD-008', title: 'Bản Tin Thời Sự Trực Tiếp' },
-  { code: 'PC-CARD-009', title: 'Trái Tim Đồng Điệu' },
-  { code: 'PC-CARD-010', title: 'Cạn Ly Gắn Kết' },
-  { code: 'PC-CARD-011', title: 'Điểm Tựa Vững Chắc' },
-  { code: 'PC-CARD-012', title: 'Cặp Đôi Bất Đắc Dĩ' },
-  { code: 'PC-CARD-013', title: 'Đôi Mắt Biết Nói' },
-  { code: 'PC-CARD-014', title: 'Vật Bất Ly Thân' },
-  { code: 'PC-CARD-015', title: 'Nghệ Thuật Khung Hình' },
-  { code: 'PC-CARD-016', title: 'Sinh Vật Bí Ẩn' },
-  { code: 'PC-CARD-017', title: 'Góc Nhìn Khác Biệt' },
-  { code: 'PC-CARD-018', title: 'Mặt Trời Tí Hon' },
-  { code: 'PC-CARD-019', title: 'Nụ Cười Thật Trân' },
-  { code: 'PC-CARD-020', title: 'Biểu Cảm Khó Đỡ' },
-  { code: 'PC-CARD-021', title: 'Lời Thú Tội Ngọt Ngào' },
-  { code: 'PC-CARD-022', title: 'Phản Ứng Bất Ngờ' },
-  { code: 'PC-CARD-023', title: 'Chớp Mắt Thần Tốc' },
-  { code: 'PC-CARD-024', title: 'Truy Tìm Kẻ Phá Đám' },
+  { code: 'SD-CARD-001', title: 'Fashion Model Bàn Ăn' },
+  { code: 'SD-CARD-002', title: 'Khoảnh Khắc Cầu Xin' },
+  { code: 'SD-CARD-003', title: 'Tác Phẩm Tượng Sống' },
+  { code: 'SD-CARD-004', title: 'Gương Mặt Đa Nhân Cách' },
+  { code: 'SD-CARD-005', title: 'Poster Phim Hành Động' },
+  { code: 'SD-CARD-006', title: 'Ca Sĩ Diva Sân Khấu' },
+  { code: 'SD-CARD-007', title: 'Cú Lừa Vô Tội' },
+  { code: 'SD-CARD-008', title: 'Bản Tin Thời Sự Trực Tiếp' },
+  { code: 'SD-CARD-009', title: 'Trái Tim Đồng Điệu' },
+  { code: 'SD-CARD-010', title: 'Cạn Ly Gắn Kết' },
+  { code: 'SD-CARD-011', title: 'Điểm Tựa Vững Chắc' },
+  { code: 'SD-CARD-012', title: 'Cặp Đôi Bất Đắc Dĩ' },
+  { code: 'SD-CARD-013', title: 'Đôi Mắt Biết Nói' },
+  { code: 'SD-CARD-014', title: 'Vật Bất Ly Thân' },
+  { code: 'SD-CARD-015', title: 'Nghệ Thuật Khung Hình' },
+  { code: 'SD-CARD-016', title: 'Sinh Vật Bí Ẩn' },
+  { code: 'SD-CARD-017', title: 'Góc Nhìn Khác Biệt' },
+  { code: 'SD-CARD-018', title: 'Mặt Trời Tí Hon' },
+  { code: 'SD-CARD-019', title: 'Nụ Cười Thật Trân' },
+  { code: 'SD-CARD-020', title: 'Biểu Cảm Khó Đỡ' },
+  { code: 'SD-CARD-021', title: 'Lời Thú Tội Ngọt Ngào' },
+  { code: 'SD-CARD-022', title: 'Phản Ứng Bất Ngờ' },
+  { code: 'SD-CARD-023', title: 'Chớp Mắt Thần Tốc' },
+  { code: 'SD-CARD-024', title: 'Truy Tìm Kẻ Phá Đám' },
 ];
 
 const BOX_URL = 'https://annbhe182132.github.io/photo-challenge/';
@@ -77,7 +77,7 @@ async function run() {
       <text x="152" y="44" font-family="monospace" font-size="15" font-weight="800" fill="#0284c7">${c.code}</text>
       <text x="152" y="70" font-family="'Segoe UI', Arial, sans-serif" font-size="14" font-weight="700" fill="#0f172a">${escapeXml(c.title)}</text>
       <text x="152" y="96" font-family="'Segoe UI', Arial, sans-serif" font-size="11" fill="#475569">Lá Bài Thử Thách Physical</text>
-      <text x="152" y="122" font-family="'Segoe UI', Arial, sans-serif" font-size="10" font-weight="600" fill="#64748b">PHOTO-CHALLENGE:CARD</text>
+      <text x="152" y="122" font-family="'Segoe UI', Arial, sans-serif" font-size="10" font-weight="600" fill="#64748b">SNAPDECK:CARD</text>
     </g>`;
   }).join('\n');
 

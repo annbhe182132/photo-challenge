@@ -54,8 +54,8 @@
   "cards": [
     {
       "id": "card-01",
-      "code": "PC-CARD-001",
-      "qrKey": "PC-CARD-001",
+      "code": "SD-CARD-001",
+      "qrKey": "SD-CARD-001",
       "themeId": "solo-pose-style",
       "title": "Fashion Model Bàn Ăn",
       "mission": "Chọn một món đồ trên bàn làm phụ kiện và tạo dáng như người mẫu chụp ảnh bìa tạp chí.",
@@ -67,8 +67,8 @@
     },
     {
       "id": "card-02",
-      "code": "PC-CARD-002",
-      "qrKey": "PC-CARD-002",
+      "code": "SD-CARD-002",
+      "qrKey": "SD-CARD-002",
       "themeId": "solo-pose-style",
       "title": "Góc Nghiêng Thần Thánh",
       "mission": "Tìm góc nghiêng đẹp nhất, nở nụ cười nhẹ và nhờ một người bạn chụp chân dung.",
@@ -80,8 +80,8 @@
     },
     {
       "id": "card-03",
-      "code": "PC-CARD-003",
-      "qrKey": "PC-CARD-003",
+      "code": "SD-CARD-003",
+      "qrKey": "SD-CARD-003",
       "themeId": "solo-pose-style",
       "title": "Trạng Thái Bất Trọng Lực",
       "mission": "Tạo dáng như đang nghiêng người hoặc bay khi vẫn ngồi tại chỗ; chụp từ góc thấp để tạo ảo giác.",
@@ -93,8 +93,8 @@
     },
     {
       "id": "card-04",
-      "code": "PC-CARD-004",
-      "qrKey": "PC-CARD-004",
+      "code": "SD-CARD-004",
+      "qrKey": "SD-CARD-004",
       "themeId": "solo-pose-style",
       "title": "MC Bản Tin Trực Tiếp",
       "mission": "Giữ vẻ mặt nghiêm túc, ngồi thẳng như người dẫn chương trình bản tin và chụp một tấm ảnh trang trọng hài hước.",
@@ -106,8 +106,8 @@
     },
     {
       "id": "card-05",
-      "code": "PC-CARD-005",
-      "qrKey": "PC-CARD-005",
+      "code": "SD-CARD-005",
+      "qrKey": "SD-CARD-005",
       "themeId": "solo-acting-drama",
       "title": "Lời Tỏ Tình Sến Súa",
       "mission": "Chọn một người bạn và diễn lời tỏ tình thật sến trong 10 giây; quay video ngắn.",
@@ -119,8 +119,8 @@
     },
     {
       "id": "card-06",
-      "code": "PC-CARD-006",
-      "qrKey": "PC-CARD-006",
+      "code": "SD-CARD-006",
+      "qrKey": "SD-CARD-006",
       "themeId": "solo-acting-drama",
       "title": "Bật Tông Cảm Xúc",
       "mission": "Trong 6 giây, lần lượt diễn ba cảm xúc: bối rối, tức giận rồi bật cười vui vẻ; quay video.",
@@ -132,8 +132,8 @@
     },
     {
       "id": "card-07",
-      "code": "PC-CARD-007",
-      "qrKey": "PC-CARD-007",
+      "code": "SD-CARD-007",
+      "qrKey": "SD-CARD-007",
       "themeId": "solo-acting-drama",
       "title": "Phản Ứng Trúng Số",
       "mission": "Diễn phản ứng như vừa trúng 10 tỷ đồng và chụp lại khoảnh khắc đỉnh điểm.",
@@ -145,8 +145,8 @@
     },
     {
       "id": "card-08",
-      "code": "PC-CARD-008",
-      "qrKey": "PC-CARD-008",
+      "code": "SD-CARD-008",
+      "qrKey": "SD-CARD-008",
       "themeId": "solo-acting-drama",
       "title": "Lồng Tiếng Phim Truyền Hình",
       "mission": "Lồng tiếng kịch tính cho một hành động bất kỳ của người bạn đối diện; quay video có cả bạn và người bạn đó.",
@@ -158,8 +158,8 @@
     },
     {
       "id": "card-09",
-      "code": "PC-CARD-009",
-      "qrKey": "PC-CARD-009",
+      "code": "SD-CARD-009",
+      "qrKey": "SD-CARD-009",
       "themeId": "one-on-one-interaction",
       "title": "Bắt Cặp Bắn Tim",
       "mission": "Chọn một người bạn, cùng tạo hình trái tim bằng tay theo phong cách K-pop và chụp ảnh.",
@@ -171,8 +171,8 @@
     },
     {
       "id": "card-10",
-      "code": "PC-CARD-010",
-      "qrKey": "PC-CARD-010",
+      "code": "SD-CARD-010",
+      "qrKey": "SD-CARD-010",
       "themeId": "one-on-one-interaction",
       "title": "Nhìn Vào Mắt Nhau",
       "mission": "Chọn một người bạn và nhìn vào mắt nhau trong 10 giây; người rút bài cố gắng không bật cười. Quay video đếm ngược.",
@@ -184,8 +184,8 @@
     },
     {
       "id": "card-11",
-      "code": "PC-CARD-011",
-      "qrKey": "PC-CARD-011",
+      "code": "SD-CARD-011",
+      "qrKey": "SD-CARD-011",
       "themeId": "one-on-one-interaction",
       "title": "Tựa Vai Thanh Xuân",
       "mission": "Nhẹ nhàng tựa vai người bạn ngồi cạnh và chụp một bức ảnh ấm áp.",
@@ -197,8 +197,8 @@
     },
     {
       "id": "card-12",
-      "code": "PC-CARD-012",
-      "qrKey": "PC-CARD-012",
+      "code": "SD-CARD-012",
+      "qrKey": "SD-CARD-012",
       "themeId": "one-on-one-interaction",
       "title": "Bắt Tay Phong Cách Hip-hop",
       "mission": "Cùng một người bạn sáng tạo một kiểu bắt tay hoặc đập tay độc đáo rồi thực hiện lại; quay video.",
@@ -210,8 +210,8 @@
     },
     {
       "id": "card-13",
-      "code": "PC-CARD-013",
-      "qrKey": "PC-CARD-013",
+      "code": "SD-CARD-013",
+      "qrKey": "SD-CARD-013",
       "themeId": "creative-prop-space",
       "title": "Quán Quân Biến Hóa",
       "mission": "Dùng ba món đồ trên bàn như ống hút, đĩa hoặc khăn giấy để tạo biểu tượng hay khuôn mặt hài hước rồi chụp ảnh.",
@@ -223,8 +223,8 @@
     },
     {
       "id": "card-14",
-      "code": "PC-CARD-014",
-      "qrKey": "PC-CARD-014",
+      "code": "SD-CARD-014",
+      "qrKey": "SD-CARD-014",
       "themeId": "creative-prop-space",
       "title": "Góc Nhìn Đánh Lừa",
       "mission": "Căn chỉnh máy ảnh để bàn tay của bạn trông như đang cầm chiếc cốc của người bạn ở xa; chụp ảnh.",
@@ -236,8 +236,8 @@
     },
     {
       "id": "card-15",
-      "code": "PC-CARD-015",
-      "qrKey": "PC-CARD-015",
+      "code": "SD-CARD-015",
+      "qrKey": "SD-CARD-015",
       "themeId": "creative-prop-space",
       "title": "Săn Đồ Vật Theo Màu",
       "mission": "Trong 30 giây, tìm ba đồ vật cùng màu quanh bàn và chụp ảnh cùng các món đồ đó.",
@@ -249,8 +249,8 @@
     },
     {
       "id": "card-16",
-      "code": "PC-CARD-016",
-      "qrKey": "PC-CARD-016",
+      "code": "SD-CARD-016",
+      "qrKey": "SD-CARD-016",
       "themeId": "creative-prop-space",
       "title": "Đại Sứ Sản Phẩm",
       "mission": "Chọn một đồ vật trên bàn, chẳng hạn chai nước hoặc hộp tăm, rồi tạo dáng như đang quảng cáo sản phẩm chuyên nghiệp.",
@@ -262,8 +262,8 @@
     },
     {
       "id": "card-17",
-      "code": "PC-CARD-017",
-      "qrKey": "PC-CARD-017",
+      "code": "SD-CARD-017",
+      "qrKey": "SD-CARD-017",
       "themeId": "truth-expression",
       "title": "Giữ Mặt Lạnh Như Băng",
       "mission": "Giữ vẻ mặt nghiêm túc trong 15 giây trong khi cả nhóm cố làm bạn bật cười; quay video.",
@@ -275,8 +275,8 @@
     },
     {
       "id": "card-18",
-      "code": "PC-CARD-018",
-      "qrKey": "PC-CARD-018",
+      "code": "SD-CARD-018",
+      "qrKey": "SD-CARD-018",
       "themeId": "truth-expression",
       "title": "Recreate Meme Cá Nhân",
       "mission": "Dùng chính khuôn mặt của mình để tái hiện một meme nổi tiếng như mặt bối rối hoặc cười lớn; chụp ảnh.",
@@ -288,8 +288,8 @@
     },
     {
       "id": "card-19",
-      "code": "PC-CARD-019",
-      "qrKey": "PC-CARD-019",
+      "code": "SD-CARD-019",
+      "qrKey": "SD-CARD-019",
       "themeId": "truth-expression",
       "title": "Lời Khen Chân Thành",
       "mission": "Chọn một người bạn và nói một điều bạn thật sự trân trọng ở họ; chụp ảnh cùng cử chỉ trái tim.",
@@ -301,8 +301,8 @@
     },
     {
       "id": "card-20",
-      "code": "PC-CARD-020",
-      "qrKey": "PC-CARD-020",
+      "code": "SD-CARD-020",
+      "qrKey": "SD-CARD-020",
       "themeId": "truth-expression",
       "title": "Bí Mật Báo Báo",
       "mission": "Chia sẻ một thói quen cá nhân vui nhộn mà cả nhóm chưa biết; chụp lại biểu cảm ngại ngùng hoặc thích thú sau khi kể.",
@@ -314,8 +314,8 @@
     },
     {
       "id": "card-21",
-      "code": "PC-CARD-021",
-      "qrKey": "PC-CARD-021",
+      "code": "SD-CARD-021",
+      "qrKey": "SD-CARD-021",
       "themeId": "speed-secret-mission",
       "title": "Thần Thái 3 Giây",
       "mission": "Quét QR để kích hoạt đếm ngược 3 giây, sau đó lập tức tạo dáng thật ngầu trước máy ảnh.",
@@ -327,8 +327,8 @@
     },
     {
       "id": "card-22",
-      "code": "PC-CARD-022",
-      "qrKey": "PC-CARD-022",
+      "code": "SD-CARD-022",
+      "qrKey": "SD-CARD-022",
       "themeId": "speed-secret-mission",
       "title": "Thám Tử Giấu Đồ",
       "mission": "Giấu một vật nhỏ trong một trong hai bàn tay, đưa hai nắm tay ra để mọi người đoán; chụp ảnh.",
@@ -340,8 +340,8 @@
     },
     {
       "id": "card-23",
-      "code": "PC-CARD-023",
-      "qrKey": "PC-CARD-023",
+      "code": "SD-CARD-023",
+      "qrKey": "SD-CARD-023",
       "themeId": "speed-secret-mission",
       "title": "Vũ Điệu 5 Giây",
       "mission": "Ngẫu hứng nhảy một điệu nhảy kéo dài 5 giây ngay tại chỗ ngồi; quay video.",
@@ -353,8 +353,8 @@
     },
     {
       "id": "card-24",
-      "code": "PC-CARD-024",
-      "qrKey": "PC-CARD-024",
+      "code": "SD-CARD-024",
+      "qrKey": "SD-CARD-024",
       "themeId": "speed-secret-mission",
       "title": "Đố Vui Chi Tiết",
       "mission": "Chỉ ra một chi tiết nhỏ trên quần áo hoặc phụ kiện của người chơi khác mà mọi người có thể chưa để ý; chụp ảnh chỉ tay vào chi tiết đó.",
@@ -367,8 +367,8 @@
   ],
   "missions": [
     {
-      "missionCode": "PC-CARD-001-M01",
-      "cardCode": "PC-CARD-001",
+      "missionCode": "SD-CARD-001-M01",
+      "cardCode": "SD-CARD-001",
       "themeId": "solo-pose-style",
       "title": "Fashion Model Bàn Ăn",
       "instruction": "Chọn một món đồ trên bàn làm phụ kiện và tạo dáng như người mẫu chụp ảnh bìa tạp chí.",
@@ -379,8 +379,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-001-M02",
-      "cardCode": "PC-CARD-001",
+      "missionCode": "SD-CARD-001-M02",
+      "cardCode": "SD-CARD-001",
       "themeId": "solo-pose-style",
       "title": "Fashion Model Bàn Ăn — Biến thể 1",
       "instruction": "Dùng một món đồ trên bàn làm phụ kiện chính, tạo dáng kiểu ảnh bìa thời trang với ánh mắt tự tin.",
@@ -391,8 +391,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-001-M03",
-      "cardCode": "PC-CARD-001",
+      "missionCode": "SD-CARD-001-M03",
+      "cardCode": "SD-CARD-001",
       "themeId": "solo-pose-style",
       "title": "Fashion Model Bàn Ăn — Biến thể 2",
       "instruction": "Tạo dáng như người mẫu đang giới thiệu phụ kiện bàn ăn; người bạn chụp ảnh chọn góc thấp hoặc ngang mắt.",
@@ -403,8 +403,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-001-M04",
-      "cardCode": "PC-CARD-001",
+      "missionCode": "SD-CARD-001-M04",
+      "cardCode": "SD-CARD-001",
       "themeId": "solo-pose-style",
       "title": "Fashion Model Bàn Ăn — Biến thể 3",
       "instruction": "Thực hiện ba dáng liên tiếp: thanh lịch, cá tính và hài hước; chụp lại dáng ấn tượng nhất.",
@@ -415,8 +415,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-002-M01",
-      "cardCode": "PC-CARD-002",
+      "missionCode": "SD-CARD-002-M01",
+      "cardCode": "SD-CARD-002",
       "themeId": "solo-pose-style",
       "title": "Góc Nghiêng Thần Thánh",
       "instruction": "Tìm góc nghiêng đẹp nhất, nở nụ cười nhẹ và nhờ một người bạn chụp chân dung.",
@@ -427,8 +427,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-002-M02",
-      "cardCode": "PC-CARD-002",
+      "missionCode": "SD-CARD-002-M02",
+      "cardCode": "SD-CARD-002",
       "themeId": "solo-pose-style",
       "title": "Góc Nghiêng Thần Thánh — Biến thể 1",
       "instruction": "Thử hai góc nghiêng trái và phải, giữ nụ cười nhẹ rồi chọn bức ảnh ưng ý nhất.",
@@ -439,8 +439,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-002-M03",
-      "cardCode": "PC-CARD-002",
+      "missionCode": "SD-CARD-002-M03",
+      "cardCode": "SD-CARD-002",
       "themeId": "solo-pose-style",
       "title": "Góc Nghiêng Thần Thánh — Biến thể 2",
       "instruction": "Tạo ánh mắt bí ẩn ở góc nghiêng, giữ cằm tự nhiên và nhờ bạn chụp chân dung cận cảnh.",
@@ -451,8 +451,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-002-M04",
-      "cardCode": "PC-CARD-002",
+      "missionCode": "SD-CARD-002-M04",
+      "cardCode": "SD-CARD-002",
       "themeId": "solo-pose-style",
       "title": "Góc Nghiêng Thần Thánh — Biến thể 3",
       "instruction": "Chụp góc nghiêng với ánh sáng sẵn có từ cửa sổ hoặc đèn trong quán, không dùng thêm đạo cụ.",
@@ -463,8 +463,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-003-M01",
-      "cardCode": "PC-CARD-003",
+      "missionCode": "SD-CARD-003-M01",
+      "cardCode": "SD-CARD-003",
       "themeId": "solo-pose-style",
       "title": "Trạng Thái Bất Trọng Lực",
       "instruction": "Tạo dáng như đang nghiêng người hoặc bay khi vẫn ngồi tại chỗ; chụp từ góc thấp để tạo ảo giác.",
@@ -475,8 +475,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-003-M02",
-      "cardCode": "PC-CARD-003",
+      "missionCode": "SD-CARD-003-M02",
+      "cardCode": "SD-CARD-003",
       "themeId": "solo-pose-style",
       "title": "Trạng Thái Bất Trọng Lực — Biến thể 1",
       "instruction": "Đặt tay ra trước như đang lơ lửng, nghiêng người an toàn trên ghế và chụp từ góc thấp.",
@@ -487,8 +487,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-003-M03",
-      "cardCode": "PC-CARD-003",
+      "missionCode": "SD-CARD-003-M03",
+      "cardCode": "SD-CARD-003",
       "themeId": "solo-pose-style",
       "title": "Trạng Thái Bất Trọng Lực — Biến thể 2",
       "instruction": "Tạo ảo giác đang chống tay lên không trung; người chụp căn khung để cơ thể trông như đang bay.",
@@ -499,8 +499,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-003-M04",
-      "cardCode": "PC-CARD-003",
+      "missionCode": "SD-CARD-003-M04",
+      "cardCode": "SD-CARD-003",
       "themeId": "solo-pose-style",
       "title": "Trạng Thái Bất Trọng Lực — Biến thể 3",
       "instruction": "Tạo dáng như trọng lực bị đảo ngược chỉ bằng tay, vai và biểu cảm; không đứng lên ghế hay bàn.",
@@ -511,8 +511,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-004-M01",
-      "cardCode": "PC-CARD-004",
+      "missionCode": "SD-CARD-004-M01",
+      "cardCode": "SD-CARD-004",
       "themeId": "solo-pose-style",
       "title": "MC Bản Tin Trực Tiếp",
       "instruction": "Giữ vẻ mặt nghiêm túc, ngồi thẳng như người dẫn chương trình bản tin và chụp một tấm ảnh trang trọng hài hước.",
@@ -523,8 +523,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-004-M02",
-      "cardCode": "PC-CARD-004",
+      "missionCode": "SD-CARD-004-M02",
+      "cardCode": "SD-CARD-004",
       "themeId": "solo-pose-style",
       "title": "MC Bản Tin Trực Tiếp — Biến thể 1",
       "instruction": "Cầm một món đồ như micro tưởng tượng và tạo dáng nghiêm túc như đang dẫn bản tin trực tiếp.",
@@ -535,8 +535,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-004-M03",
-      "cardCode": "PC-CARD-004",
+      "missionCode": "SD-CARD-004-M03",
+      "cardCode": "SD-CARD-004",
       "themeId": "solo-pose-style",
       "title": "MC Bản Tin Trực Tiếp — Biến thể 2",
       "instruction": "Đọc một câu thông báo bất kỳ bằng vẻ mặt trang trọng, sau đó chụp ảnh chân dung MC.",
@@ -547,8 +547,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-004-M04",
-      "cardCode": "PC-CARD-004",
+      "missionCode": "SD-CARD-004-M04",
+      "cardCode": "SD-CARD-004",
       "themeId": "solo-pose-style",
       "title": "MC Bản Tin Trực Tiếp — Biến thể 3",
       "instruction": "Tạo dáng nhìn thẳng camera, hai tay đặt ngay ngắn như người dẫn chương trình truyền hình.",
@@ -559,8 +559,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-005-M01",
-      "cardCode": "PC-CARD-005",
+      "missionCode": "SD-CARD-005-M01",
+      "cardCode": "SD-CARD-005",
       "themeId": "solo-acting-drama",
       "title": "Lời Tỏ Tình Sến Súa",
       "instruction": "Chọn một người bạn và diễn lời tỏ tình thật sến trong 10 giây; quay video ngắn.",
@@ -571,8 +571,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-005-M02",
-      "cardCode": "PC-CARD-005",
+      "missionCode": "SD-CARD-005-M02",
+      "cardCode": "SD-CARD-005",
       "themeId": "solo-acting-drama",
       "title": "Lời Tỏ Tình Sến Súa — Biến thể 1",
       "instruction": "Tỏ tình bằng một câu khen sến súa nhất có thể trong 10 giây; người bạn có thể phản ứng tự nhiên.",
@@ -583,8 +583,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-005-M03",
-      "cardCode": "PC-CARD-005",
+      "missionCode": "SD-CARD-005-M03",
+      "cardCode": "SD-CARD-005",
       "themeId": "solo-acting-drama",
       "title": "Lời Tỏ Tình Sến Súa — Biến thể 2",
       "instruction": "Diễn cảnh tỏ tình như phim tình cảm, kết thúc bằng một câu thoại thật bất ngờ; quay video ngắn.",
@@ -595,8 +595,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-005-M04",
-      "cardCode": "PC-CARD-005",
+      "missionCode": "SD-CARD-005-M04",
+      "cardCode": "SD-CARD-005",
       "themeId": "solo-acting-drama",
       "title": "Lời Tỏ Tình Sến Súa — Biến thể 3",
       "instruction": "Nói lời tỏ tình với phong cách quá kịch tính như phim truyền hình, nhưng vẫn giữ không khí vui vẻ.",
@@ -607,8 +607,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-006-M01",
-      "cardCode": "PC-CARD-006",
+      "missionCode": "SD-CARD-006-M01",
+      "cardCode": "SD-CARD-006",
       "themeId": "solo-acting-drama",
       "title": "Bật Tông Cảm Xúc",
       "instruction": "Trong 6 giây, lần lượt diễn ba cảm xúc: bối rối, tức giận rồi bật cười vui vẻ; quay video.",
@@ -619,8 +619,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-006-M02",
-      "cardCode": "PC-CARD-006",
+      "missionCode": "SD-CARD-006-M02",
+      "cardCode": "SD-CARD-006",
       "themeId": "solo-acting-drama",
       "title": "Bật Tông Cảm Xúc — Biến thể 1",
       "instruction": "Diễn nhanh ba cảm xúc: ngạc nhiên, thất vọng và vui sướng trong 6 giây; quay một mạch.",
@@ -631,8 +631,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-006-M03",
-      "cardCode": "PC-CARD-006",
+      "missionCode": "SD-CARD-006-M03",
+      "cardCode": "SD-CARD-006",
       "themeId": "solo-acting-drama",
       "title": "Bật Tông Cảm Xúc — Biến thể 2",
       "instruction": "Bắt đầu bằng vẻ mặt bình thường rồi chuyển sang giận dữ giả và cười lớn theo nhịp đếm.",
@@ -643,8 +643,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-006-M04",
-      "cardCode": "PC-CARD-006",
+      "missionCode": "SD-CARD-006-M04",
+      "cardCode": "SD-CARD-006",
       "themeId": "solo-acting-drama",
       "title": "Bật Tông Cảm Xúc — Biến thể 3",
       "instruction": "Nhờ bạn đếm 1–2–3 để chuyển lần lượt qua ba biểu cảm đối lập, quay video ngắn.",
@@ -655,8 +655,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-007-M01",
-      "cardCode": "PC-CARD-007",
+      "missionCode": "SD-CARD-007-M01",
+      "cardCode": "SD-CARD-007",
       "themeId": "solo-acting-drama",
       "title": "Phản Ứng Trúng Số",
       "instruction": "Diễn phản ứng như vừa trúng 10 tỷ đồng và chụp lại khoảnh khắc đỉnh điểm.",
@@ -667,8 +667,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-007-M02",
-      "cardCode": "PC-CARD-007",
+      "missionCode": "SD-CARD-007-M02",
+      "cardCode": "SD-CARD-007",
       "themeId": "solo-acting-drama",
       "title": "Phản Ứng Trúng Số — Biến thể 1",
       "instruction": "Diễn như vừa nhìn thấy thông báo trúng số, bật dậy khỏi ghế một cách an toàn và tạo dáng ăn mừng.",
@@ -679,8 +679,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-007-M03",
-      "cardCode": "PC-CARD-007",
+      "missionCode": "SD-CARD-007-M03",
+      "cardCode": "SD-CARD-007",
       "themeId": "solo-acting-drama",
       "title": "Phản Ứng Trúng Số — Biến thể 2",
       "instruction": "Tưởng tượng vừa trúng 10 tỷ, thể hiện sự sốc rồi vui sướng trong một bức ảnh.",
@@ -691,8 +691,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-007-M04",
-      "cardCode": "PC-CARD-007",
+      "missionCode": "SD-CARD-007-M04",
+      "cardCode": "SD-CARD-007",
       "themeId": "solo-acting-drama",
       "title": "Phản Ứng Trúng Số — Biến thể 3",
       "instruction": "Tạo dáng ôm đầu không tin nổi rồi chuyển sang ăn mừng chiến thắng; chụp khoảnh khắc hài hước.",
@@ -703,8 +703,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-008-M01",
-      "cardCode": "PC-CARD-008",
+      "missionCode": "SD-CARD-008-M01",
+      "cardCode": "SD-CARD-008",
       "themeId": "solo-acting-drama",
       "title": "Lồng Tiếng Phim Truyền Hình",
       "instruction": "Lồng tiếng kịch tính cho một hành động bất kỳ của người bạn đối diện; quay video có cả bạn và người bạn đó.",
@@ -715,8 +715,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-008-M02",
-      "cardCode": "PC-CARD-008",
+      "missionCode": "SD-CARD-008-M02",
+      "cardCode": "SD-CARD-008",
       "themeId": "solo-acting-drama",
       "title": "Lồng Tiếng Phim Truyền Hình — Biến thể 1",
       "instruction": "Chọn một hành động đơn giản của bạn bên cạnh và lồng tiếng như cảnh cao trào phim truyền hình.",
@@ -727,8 +727,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-008-M03",
-      "cardCode": "PC-CARD-008",
+      "missionCode": "SD-CARD-008-M03",
+      "cardCode": "SD-CARD-008",
       "themeId": "solo-acting-drama",
       "title": "Lồng Tiếng Phim Truyền Hình — Biến thể 2",
       "instruction": "Dùng giọng thuyết minh nghiêm trọng cho cảnh bạn mình đang uống nước hoặc cầm đồ; quay video ngắn.",
@@ -739,8 +739,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-008-M04",
-      "cardCode": "PC-CARD-008",
+      "missionCode": "SD-CARD-008-M04",
+      "cardCode": "SD-CARD-008",
       "themeId": "solo-acting-drama",
       "title": "Lồng Tiếng Phim Truyền Hình — Biến thể 3",
       "instruction": "Lồng tiếng như trailer phim cho một hành động bình thường, có mở đầu và kết thúc kịch tính.",
@@ -751,8 +751,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-009-M01",
-      "cardCode": "PC-CARD-009",
+      "missionCode": "SD-CARD-009-M01",
+      "cardCode": "SD-CARD-009",
       "themeId": "one-on-one-interaction",
       "title": "Bắt Cặp Bắn Tim",
       "instruction": "Chọn một người bạn, cùng tạo hình trái tim bằng tay theo phong cách K-pop và chụp ảnh.",
@@ -763,8 +763,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-009-M02",
-      "cardCode": "PC-CARD-009",
+      "missionCode": "SD-CARD-009-M02",
+      "cardCode": "SD-CARD-009",
       "themeId": "one-on-one-interaction",
       "title": "Bắt Cặp Bắn Tim — Biến thể 1",
       "instruction": "Cùng bạn tạo trái tim bằng hai bàn tay ở ngang ngực và chụp ảnh kiểu thần tượng.",
@@ -775,8 +775,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-009-M03",
-      "cardCode": "PC-CARD-009",
+      "missionCode": "SD-CARD-009-M03",
+      "cardCode": "SD-CARD-009",
       "themeId": "one-on-one-interaction",
       "title": "Bắt Cặp Bắn Tim — Biến thể 2",
       "instruction": "Tạo dáng bắn tim bằng một tay, người bạn đáp lại bằng trái tim hai tay; chụp ảnh đôi.",
@@ -787,8 +787,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-009-M04",
-      "cardCode": "PC-CARD-009",
+      "missionCode": "SD-CARD-009-M04",
+      "cardCode": "SD-CARD-009",
       "themeId": "one-on-one-interaction",
       "title": "Bắt Cặp Bắn Tim — Biến thể 3",
       "instruction": "Hai người tạo trái tim trên đầu theo phong cách K-pop và giữ dáng trong lúc chụp.",
@@ -799,8 +799,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-010-M01",
-      "cardCode": "PC-CARD-010",
+      "missionCode": "SD-CARD-010-M01",
+      "cardCode": "SD-CARD-010",
       "themeId": "one-on-one-interaction",
       "title": "Nhìn Vào Mắt Nhau",
       "instruction": "Chọn một người bạn và nhìn vào mắt nhau trong 10 giây; người rút bài cố gắng không bật cười. Quay video đếm ngược.",
@@ -811,8 +811,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-010-M02",
-      "cardCode": "PC-CARD-010",
+      "missionCode": "SD-CARD-010-M02",
+      "cardCode": "SD-CARD-010",
       "themeId": "one-on-one-interaction",
       "title": "Nhìn Vào Mắt Nhau — Biến thể 1",
       "instruction": "Nhìn vào mắt nhau trong 10 giây; người rút bài cố giữ bình tĩnh và quay lại phản ứng.",
@@ -823,8 +823,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-010-M03",
-      "cardCode": "PC-CARD-010",
+      "missionCode": "SD-CARD-010-M03",
+      "cardCode": "SD-CARD-010",
       "themeId": "one-on-one-interaction",
       "title": "Nhìn Vào Mắt Nhau — Biến thể 2",
       "instruction": "Hai người nhìn nhau không nói trong 10 giây, ai bật cười trước thì làm biểu cảm hài hước cho camera.",
@@ -835,8 +835,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-010-M04",
-      "cardCode": "PC-CARD-010",
+      "missionCode": "SD-CARD-010-M04",
+      "cardCode": "SD-CARD-010",
       "themeId": "one-on-one-interaction",
       "title": "Nhìn Vào Mắt Nhau — Biến thể 3",
       "instruction": "Đếm ngược 10 giây khi nhìn vào mắt bạn; sau đó cả hai cùng tạo một biểu cảm bất ngờ.",
@@ -847,8 +847,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-011-M01",
-      "cardCode": "PC-CARD-011",
+      "missionCode": "SD-CARD-011-M01",
+      "cardCode": "SD-CARD-011",
       "themeId": "one-on-one-interaction",
       "title": "Tựa Vai Thanh Xuân",
       "instruction": "Nhẹ nhàng tựa vai người bạn ngồi cạnh và chụp một bức ảnh ấm áp.",
@@ -859,8 +859,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-011-M02",
-      "cardCode": "PC-CARD-011",
+      "missionCode": "SD-CARD-011-M02",
+      "cardCode": "SD-CARD-011",
       "themeId": "one-on-one-interaction",
       "title": "Tựa Vai Thanh Xuân — Biến thể 1",
       "instruction": "Tựa nhẹ vào vai người bạn bên cạnh và cùng nhìn về phía camera như ảnh kỷ niệm thanh xuân.",
@@ -871,8 +871,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-011-M03",
-      "cardCode": "PC-CARD-011",
+      "missionCode": "SD-CARD-011-M03",
+      "cardCode": "SD-CARD-011",
       "themeId": "one-on-one-interaction",
       "title": "Tựa Vai Thanh Xuân — Biến thể 2",
       "instruction": "Tạo dáng tựa vai với nụ cười tự nhiên; người chụp bắt khoảnh khắc thân thiết.",
@@ -883,8 +883,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-011-M04",
-      "cardCode": "PC-CARD-011",
+      "missionCode": "SD-CARD-011-M04",
+      "cardCode": "SD-CARD-011",
       "themeId": "one-on-one-interaction",
       "title": "Tựa Vai Thanh Xuân — Biến thể 3",
       "instruction": "Hai người cùng hướng nhìn ra xa như poster phim tuổi trẻ, một người tựa nhẹ lên vai người kia.",
@@ -895,8 +895,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-012-M01",
-      "cardCode": "PC-CARD-012",
+      "missionCode": "SD-CARD-012-M01",
+      "cardCode": "SD-CARD-012",
       "themeId": "one-on-one-interaction",
       "title": "Bắt Tay Phong Cách Hip-hop",
       "instruction": "Cùng một người bạn sáng tạo một kiểu bắt tay hoặc đập tay độc đáo rồi thực hiện lại; quay video.",
@@ -907,8 +907,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-012-M02",
-      "cardCode": "PC-CARD-012",
+      "missionCode": "SD-CARD-012-M02",
+      "cardCode": "SD-CARD-012",
       "themeId": "one-on-one-interaction",
       "title": "Bắt Tay Phong Cách Hip-hop — Biến thể 1",
       "instruction": "Tự nghĩ một kiểu bắt tay ba nhịp với bạn, luyện một lần rồi quay lại lần thực hiện hoàn chỉnh.",
@@ -919,8 +919,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-012-M03",
-      "cardCode": "PC-CARD-012",
+      "missionCode": "SD-CARD-012-M03",
+      "cardCode": "SD-CARD-012",
       "themeId": "one-on-one-interaction",
       "title": "Bắt Tay Phong Cách Hip-hop — Biến thể 2",
       "instruction": "Sáng tạo kiểu đập tay có động tác kết thúc độc đáo và lặp lại đồng bộ trước camera.",
@@ -931,8 +931,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-012-M04",
-      "cardCode": "PC-CARD-012",
+      "missionCode": "SD-CARD-012-M04",
+      "cardCode": "SD-CARD-012",
       "themeId": "one-on-one-interaction",
       "title": "Bắt Tay Phong Cách Hip-hop — Biến thể 3",
       "instruction": "Kết hợp bắt tay, chạm khuỷu tay và tạo dáng cuối cùng; quay video ngắn cùng bạn.",
@@ -943,8 +943,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-013-M01",
-      "cardCode": "PC-CARD-013",
+      "missionCode": "SD-CARD-013-M01",
+      "cardCode": "SD-CARD-013",
       "themeId": "creative-prop-space",
       "title": "Quán Quân Biến Hóa",
       "instruction": "Dùng ba món đồ trên bàn như ống hút, đĩa hoặc khăn giấy để tạo biểu tượng hay khuôn mặt hài hước rồi chụp ảnh.",
@@ -955,8 +955,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-013-M02",
-      "cardCode": "PC-CARD-013",
+      "missionCode": "SD-CARD-013-M02",
+      "cardCode": "SD-CARD-013",
       "themeId": "creative-prop-space",
       "title": "Quán Quân Biến Hóa — Biến thể 1",
       "instruction": "Dùng ba món đồ trên bàn để tạo khuôn mặt có mắt, mũi và miệng; chụp từ trên xuống.",
@@ -967,8 +967,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-013-M03",
-      "cardCode": "PC-CARD-013",
+      "missionCode": "SD-CARD-013-M03",
+      "cardCode": "SD-CARD-013",
       "themeId": "creative-prop-space",
       "title": "Quán Quân Biến Hóa — Biến thể 2",
       "instruction": "Sắp xếp đồ vật thành một biểu tượng hoặc chữ cái, cả nhóm đoán ý nghĩa trước khi chụp ảnh.",
@@ -979,8 +979,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-013-M04",
-      "cardCode": "PC-CARD-013",
+      "missionCode": "SD-CARD-013-M04",
+      "cardCode": "SD-CARD-013",
       "themeId": "creative-prop-space",
       "title": "Quán Quân Biến Hóa — Biến thể 3",
       "instruction": "Tạo một nhân vật nhỏ bằng khăn giấy, ống hút và đồ vật sẵn có; chụp ảnh tác phẩm.",
@@ -991,8 +991,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-014-M01",
-      "cardCode": "PC-CARD-014",
+      "missionCode": "SD-CARD-014-M01",
+      "cardCode": "SD-CARD-014",
       "themeId": "creative-prop-space",
       "title": "Góc Nhìn Đánh Lừa",
       "instruction": "Căn chỉnh máy ảnh để bàn tay của bạn trông như đang cầm chiếc cốc của người bạn ở xa; chụp ảnh.",
@@ -1003,8 +1003,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-014-M02",
-      "cardCode": "PC-CARD-014",
+      "missionCode": "SD-CARD-014-M02",
+      "cardCode": "SD-CARD-014",
       "themeId": "creative-prop-space",
       "title": "Góc Nhìn Đánh Lừa — Biến thể 1",
       "instruction": "Đưa bàn tay gần camera sao cho trông như đang nâng chiếc cốc ở phía xa.",
@@ -1015,8 +1015,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-014-M03",
-      "cardCode": "PC-CARD-014",
+      "missionCode": "SD-CARD-014-M03",
+      "cardCode": "SD-CARD-014",
       "themeId": "creative-prop-space",
       "title": "Góc Nhìn Đánh Lừa — Biến thể 2",
       "instruction": "Căn góc để ngón tay trông như đang chạm vào đầu người bạn ngồi xa; chụp ảnh phối cảnh.",
@@ -1027,8 +1027,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-014-M04",
-      "cardCode": "PC-CARD-014",
+      "missionCode": "SD-CARD-014-M04",
+      "cardCode": "SD-CARD-014",
       "themeId": "creative-prop-space",
       "title": "Góc Nhìn Đánh Lừa — Biến thể 3",
       "instruction": "Tạo ảo giác bàn tay đang giữ một đồ vật ở xa bằng cách điều chỉnh vị trí camera.",
@@ -1039,8 +1039,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-015-M01",
-      "cardCode": "PC-CARD-015",
+      "missionCode": "SD-CARD-015-M01",
+      "cardCode": "SD-CARD-015",
       "themeId": "creative-prop-space",
       "title": "Săn Đồ Vật Theo Màu",
       "instruction": "Trong 30 giây, tìm ba đồ vật cùng màu quanh bàn và chụp ảnh cùng các món đồ đó.",
@@ -1051,8 +1051,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-015-M02",
-      "cardCode": "PC-CARD-015",
+      "missionCode": "SD-CARD-015-M02",
+      "cardCode": "SD-CARD-015",
       "themeId": "creative-prop-space",
       "title": "Săn Đồ Vật Theo Màu — Biến thể 1",
       "instruction": "Trong 30 giây, tìm ba vật màu giống nhau trên bàn và xếp thành bố cục chụp ảnh.",
@@ -1063,8 +1063,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-015-M03",
-      "cardCode": "PC-CARD-015",
+      "missionCode": "SD-CARD-015-M03",
+      "cardCode": "SD-CARD-015",
       "themeId": "creative-prop-space",
       "title": "Săn Đồ Vật Theo Màu — Biến thể 2",
       "instruction": "Chọn một màu, tìm ba món đồ cùng màu trong tầm với và chụp ảnh chứng minh.",
@@ -1075,8 +1075,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-015-M04",
-      "cardCode": "PC-CARD-015",
+      "missionCode": "SD-CARD-015-M04",
+      "cardCode": "SD-CARD-015",
       "themeId": "creative-prop-space",
       "title": "Săn Đồ Vật Theo Màu — Biến thể 3",
       "instruction": "Săn ba vật cùng màu nhưng có kích thước khác nhau; sắp xếp từ nhỏ đến lớn rồi chụp ảnh.",
@@ -1087,8 +1087,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-016-M01",
-      "cardCode": "PC-CARD-016",
+      "missionCode": "SD-CARD-016-M01",
+      "cardCode": "SD-CARD-016",
       "themeId": "creative-prop-space",
       "title": "Đại Sứ Sản Phẩm",
       "instruction": "Chọn một đồ vật trên bàn, chẳng hạn chai nước hoặc hộp tăm, rồi tạo dáng như đang quảng cáo sản phẩm chuyên nghiệp.",
@@ -1099,8 +1099,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-016-M02",
-      "cardCode": "PC-CARD-016",
+      "missionCode": "SD-CARD-016-M02",
+      "cardCode": "SD-CARD-016",
       "themeId": "creative-prop-space",
       "title": "Đại Sứ Sản Phẩm — Biến thể 1",
       "instruction": "Giới thiệu một món đồ trên bàn như sản phẩm cao cấp bằng dáng đứng hoặc ngồi chuyên nghiệp.",
@@ -1111,8 +1111,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-016-M03",
-      "cardCode": "PC-CARD-016",
+      "missionCode": "SD-CARD-016-M03",
+      "cardCode": "SD-CARD-016",
       "themeId": "creative-prop-space",
       "title": "Đại Sứ Sản Phẩm — Biến thể 2",
       "instruction": "Cầm một vật bất kỳ và tạo ảnh quảng cáo với biểu cảm tự tin, như thể đây là sản phẩm hot nhất.",
@@ -1123,8 +1123,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-016-M04",
-      "cardCode": "PC-CARD-016",
+      "missionCode": "SD-CARD-016-M04",
+      "cardCode": "SD-CARD-016",
       "themeId": "creative-prop-space",
       "title": "Đại Sứ Sản Phẩm — Biến thể 3",
       "instruction": "Tạo dáng giới thiệu sản phẩm trong 5 giây, sau đó chụp ảnh quảng cáo có điểm nhấn rõ ràng.",
@@ -1135,8 +1135,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-017-M01",
-      "cardCode": "PC-CARD-017",
+      "missionCode": "SD-CARD-017-M01",
+      "cardCode": "SD-CARD-017",
       "themeId": "truth-expression",
       "title": "Giữ Mặt Lạnh Như Băng",
       "instruction": "Giữ vẻ mặt nghiêm túc trong 15 giây trong khi cả nhóm cố làm bạn bật cười; quay video.",
@@ -1147,8 +1147,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-017-M02",
-      "cardCode": "PC-CARD-017",
+      "missionCode": "SD-CARD-017-M02",
+      "cardCode": "SD-CARD-017",
       "themeId": "truth-expression",
       "title": "Giữ Mặt Lạnh Như Băng — Biến thể 1",
       "instruction": "Giữ mặt lạnh trong 15 giây khi bạn bè làm biểu cảm hài hước trước mặt; quay video.",
@@ -1159,8 +1159,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-017-M03",
-      "cardCode": "PC-CARD-017",
+      "missionCode": "SD-CARD-017-M03",
+      "cardCode": "SD-CARD-017",
       "themeId": "truth-expression",
       "title": "Giữ Mặt Lạnh Như Băng — Biến thể 2",
       "instruction": "Không được cười trong lúc cả nhóm lần lượt kể một câu đùa ngắn trong 15 giây.",
@@ -1171,8 +1171,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-017-M04",
-      "cardCode": "PC-CARD-017",
+      "missionCode": "SD-CARD-017-M04",
+      "cardCode": "SD-CARD-017",
       "themeId": "truth-expression",
       "title": "Giữ Mặt Lạnh Như Băng — Biến thể 3",
       "instruction": "Nhìn vào camera với vẻ nghiêm túc tuyệt đối trong 15 giây, bất kể bạn bè diễn trò.",
@@ -1183,8 +1183,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-018-M01",
-      "cardCode": "PC-CARD-018",
+      "missionCode": "SD-CARD-018-M01",
+      "cardCode": "SD-CARD-018",
       "themeId": "truth-expression",
       "title": "Recreate Meme Cá Nhân",
       "instruction": "Dùng chính khuôn mặt của mình để tái hiện một meme nổi tiếng như mặt bối rối hoặc cười lớn; chụp ảnh.",
@@ -1195,8 +1195,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-018-M02",
-      "cardCode": "PC-CARD-018",
+      "missionCode": "SD-CARD-018-M02",
+      "cardCode": "SD-CARD-018",
       "themeId": "truth-expression",
       "title": "Recreate Meme Cá Nhân — Biến thể 1",
       "instruction": "Chọn một meme quen thuộc và tái hiện nét mặt bằng chính khuôn mặt mình; chụp ảnh.",
@@ -1207,8 +1207,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-018-M03",
-      "cardCode": "PC-CARD-018",
+      "missionCode": "SD-CARD-018-M03",
+      "cardCode": "SD-CARD-018",
       "themeId": "truth-expression",
       "title": "Recreate Meme Cá Nhân — Biến thể 2",
       "instruction": "Tái hiện biểu cảm mèo bối rối hoặc người cười lớn chỉ bằng gương mặt và tư thế đầu.",
@@ -1219,8 +1219,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-018-M04",
-      "cardCode": "PC-CARD-018",
+      "missionCode": "SD-CARD-018-M04",
+      "cardCode": "SD-CARD-018",
       "themeId": "truth-expression",
       "title": "Recreate Meme Cá Nhân — Biến thể 3",
       "instruction": "Tạo hai phiên bản meme: trước khi hiểu chuyện và sau khi hiểu chuyện; chụp ảnh ghép nếu tiện.",
@@ -1231,8 +1231,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-019-M01",
-      "cardCode": "PC-CARD-019",
+      "missionCode": "SD-CARD-019-M01",
+      "cardCode": "SD-CARD-019",
       "themeId": "truth-expression",
       "title": "Lời Khen Chân Thành",
       "instruction": "Chọn một người bạn và nói một điều bạn thật sự trân trọng ở họ; chụp ảnh cùng cử chỉ trái tim.",
@@ -1243,8 +1243,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-019-M02",
-      "cardCode": "PC-CARD-019",
+      "missionCode": "SD-CARD-019-M02",
+      "cardCode": "SD-CARD-019",
       "themeId": "truth-expression",
       "title": "Lời Khen Chân Thành — Biến thể 1",
       "instruction": "Nói một lời khen chân thành về tính cách hoặc hành động của một người bạn, rồi cùng tạo hình trái tim.",
@@ -1255,8 +1255,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-019-M03",
-      "cardCode": "PC-CARD-019",
+      "missionCode": "SD-CARD-019-M03",
+      "cardCode": "SD-CARD-019",
       "themeId": "truth-expression",
       "title": "Lời Khen Chân Thành — Biến thể 2",
       "instruction": "Chọn bạn và nói điều bạn ngưỡng mộ ở họ; chụp ảnh với biểu cảm vui vẻ tự nhiên.",
@@ -1267,8 +1267,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-019-M04",
-      "cardCode": "PC-CARD-019",
+      "missionCode": "SD-CARD-019-M04",
+      "cardCode": "SD-CARD-019",
       "themeId": "truth-expression",
       "title": "Lời Khen Chân Thành — Biến thể 3",
       "instruction": "Gửi một lời cảm ơn ngắn đến người bạn đã giúp mình; kết thúc bằng một dáng chụp thân thiện.",
@@ -1279,8 +1279,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-020-M01",
-      "cardCode": "PC-CARD-020",
+      "missionCode": "SD-CARD-020-M01",
+      "cardCode": "SD-CARD-020",
       "themeId": "truth-expression",
       "title": "Bí Mật Báo Báo",
       "instruction": "Chia sẻ một thói quen cá nhân vui nhộn mà cả nhóm chưa biết; chụp lại biểu cảm ngại ngùng hoặc thích thú sau khi kể.",
@@ -1291,8 +1291,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-020-M02",
-      "cardCode": "PC-CARD-020",
+      "missionCode": "SD-CARD-020-M02",
+      "cardCode": "SD-CARD-020",
       "themeId": "truth-expression",
       "title": "Bí Mật Báo Báo — Biến thể 1",
       "instruction": "Chia sẻ một thói quen nhỏ kỳ lạ nhưng vô hại của bản thân mà nhóm chưa biết.",
@@ -1303,8 +1303,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-020-M03",
-      "cardCode": "PC-CARD-020",
+      "missionCode": "SD-CARD-020-M03",
+      "cardCode": "SD-CARD-020",
       "themeId": "truth-expression",
       "title": "Bí Mật Báo Báo — Biến thể 2",
       "instruction": "Kể một chuyện vui về thói quen hằng ngày của mình, sau đó chụp biểu cảm của cả nhóm.",
@@ -1315,8 +1315,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-020-M04",
-      "cardCode": "PC-CARD-020",
+      "missionCode": "SD-CARD-020-M04",
+      "cardCode": "SD-CARD-020",
       "themeId": "truth-expression",
       "title": "Bí Mật Báo Báo — Biến thể 3",
       "instruction": "Tiết lộ một sở thích hoặc thói quen bất ngờ nhưng bạn thấy thoải mái khi chia sẻ; không bắt buộc tiết lộ điều riêng tư.",
@@ -1327,8 +1327,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-021-M01",
-      "cardCode": "PC-CARD-021",
+      "missionCode": "SD-CARD-021-M01",
+      "cardCode": "SD-CARD-021",
       "themeId": "speed-secret-mission",
       "title": "Thần Thái 3 Giây",
       "instruction": "Quét QR để kích hoạt đếm ngược 3 giây, sau đó lập tức tạo dáng thật ngầu trước máy ảnh.",
@@ -1339,8 +1339,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-021-M02",
-      "cardCode": "PC-CARD-021",
+      "missionCode": "SD-CARD-021-M02",
+      "cardCode": "SD-CARD-021",
       "themeId": "speed-secret-mission",
       "title": "Thần Thái 3 Giây — Biến thể 1",
       "instruction": "Quét QR hoặc bấm bắt đầu để đếm ngược 3 giây, sau đó lập tức tạo dáng ngầu và chụp ảnh.",
@@ -1351,8 +1351,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-021-M03",
-      "cardCode": "PC-CARD-021",
+      "missionCode": "SD-CARD-021-M03",
+      "cardCode": "SD-CARD-021",
       "themeId": "speed-secret-mission",
       "title": "Thần Thái 3 Giây — Biến thể 2",
       "instruction": "Nhờ bạn đếm 3–2–1 thật nhanh; ngay khi nghe số 1 phải vào dáng thời trang.",
@@ -1363,8 +1363,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-021-M04",
-      "cardCode": "PC-CARD-021",
+      "missionCode": "SD-CARD-021-M04",
+      "cardCode": "SD-CARD-021",
       "themeId": "speed-secret-mission",
       "title": "Thần Thái 3 Giây — Biến thể 3",
       "instruction": "Đặt camera sẵn, khởi động đếm ngược 3 giây và tạo dáng bất ngờ trước khi hết giờ.",
@@ -1375,8 +1375,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-022-M01",
-      "cardCode": "PC-CARD-022",
+      "missionCode": "SD-CARD-022-M01",
+      "cardCode": "SD-CARD-022",
       "themeId": "speed-secret-mission",
       "title": "Thám Tử Giấu Đồ",
       "instruction": "Giấu một vật nhỏ trong một trong hai bàn tay, đưa hai nắm tay ra để mọi người đoán; chụp ảnh.",
@@ -1387,8 +1387,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-022-M02",
-      "cardCode": "PC-CARD-022",
+      "missionCode": "SD-CARD-022-M02",
+      "cardCode": "SD-CARD-022",
       "themeId": "speed-secret-mission",
       "title": "Thám Tử Giấu Đồ — Biến thể 1",
       "instruction": "Giấu một vật nhỏ trong một tay, đưa hai nắm tay ra và để mọi người đoán; chụp ảnh.",
@@ -1399,8 +1399,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-022-M03",
-      "cardCode": "PC-CARD-022",
+      "missionCode": "SD-CARD-022-M03",
+      "cardCode": "SD-CARD-022",
       "themeId": "speed-secret-mission",
       "title": "Thám Tử Giấu Đồ — Biến thể 2",
       "instruction": "Chọn tay trái hoặc phải giấu nắp chai hoặc đồng xu, giữ hai tay ngang nhau để đánh lừa nhóm.",
@@ -1411,8 +1411,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-022-M04",
-      "cardCode": "PC-CARD-022",
+      "missionCode": "SD-CARD-022-M04",
+      "cardCode": "SD-CARD-022",
       "themeId": "speed-secret-mission",
       "title": "Thám Tử Giấu Đồ — Biến thể 3",
       "instruction": "Giữ bí mật vật nhỏ trong một bàn tay, tạo vẻ mặt đánh lạc hướng rồi chụp hai nắm tay.",
@@ -1423,8 +1423,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-023-M01",
-      "cardCode": "PC-CARD-023",
+      "missionCode": "SD-CARD-023-M01",
+      "cardCode": "SD-CARD-023",
       "themeId": "speed-secret-mission",
       "title": "Vũ Điệu 5 Giây",
       "instruction": "Ngẫu hứng nhảy một điệu nhảy kéo dài 5 giây ngay tại chỗ ngồi; quay video.",
@@ -1435,8 +1435,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-023-M02",
-      "cardCode": "PC-CARD-023",
+      "missionCode": "SD-CARD-023-M02",
+      "cardCode": "SD-CARD-023",
       "themeId": "speed-secret-mission",
       "title": "Vũ Điệu 5 Giây — Biến thể 1",
       "instruction": "Nhảy tự do 5 giây ngay tại chỗ, không cần đứng lên; quay video ngắn.",
@@ -1447,8 +1447,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-023-M03",
-      "cardCode": "PC-CARD-023",
+      "missionCode": "SD-CARD-023-M03",
+      "cardCode": "SD-CARD-023",
       "themeId": "speed-secret-mission",
       "title": "Vũ Điệu 5 Giây — Biến thể 2",
       "instruction": "Chọn một động tác nhảy vui nhộn, lặp lại trong 5 giây rồi kết thúc bằng một dáng pose.",
@@ -1459,8 +1459,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-023-M04",
-      "cardCode": "PC-CARD-023",
+      "missionCode": "SD-CARD-023-M04",
+      "cardCode": "SD-CARD-023",
       "themeId": "speed-secret-mission",
       "title": "Vũ Điệu 5 Giây — Biến thể 3",
       "instruction": "Thực hiện điệu nhảy ngẫu hứng tại chỗ ngồi và giữ dáng kết thúc trong một giây.",
@@ -1471,8 +1471,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-024-M01",
-      "cardCode": "PC-CARD-024",
+      "missionCode": "SD-CARD-024-M01",
+      "cardCode": "SD-CARD-024",
       "themeId": "speed-secret-mission",
       "title": "Đố Vui Chi Tiết",
       "instruction": "Chỉ ra một chi tiết nhỏ trên quần áo hoặc phụ kiện của người chơi khác mà mọi người có thể chưa để ý; chụp ảnh chỉ tay vào chi tiết đó.",
@@ -1483,8 +1483,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-024-M02",
-      "cardCode": "PC-CARD-024",
+      "missionCode": "SD-CARD-024-M02",
+      "cardCode": "SD-CARD-024",
       "themeId": "speed-secret-mission",
       "title": "Đố Vui Chi Tiết — Biến thể 1",
       "instruction": "Quan sát người chơi khác và chỉ ra một chi tiết nhỏ trên trang phục hoặc phụ kiện của họ.",
@@ -1495,8 +1495,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-024-M03",
-      "cardCode": "PC-CARD-024",
+      "missionCode": "SD-CARD-024-M03",
+      "cardCode": "SD-CARD-024",
       "themeId": "speed-secret-mission",
       "title": "Đố Vui Chi Tiết — Biến thể 2",
       "instruction": "Tìm một chi tiết màu sắc hoặc họa tiết dễ bị bỏ qua trên đồ của bạn bên cạnh; chụp ảnh chỉ vào chi tiết đó.",
@@ -1507,8 +1507,8 @@
       "isActive": true
     },
     {
-      "missionCode": "PC-CARD-024-M04",
-      "cardCode": "PC-CARD-024",
+      "missionCode": "SD-CARD-024-M04",
+      "cardCode": "SD-CARD-024",
       "themeId": "speed-secret-mission",
       "title": "Đố Vui Chi Tiết — Biến thể 3",
       "instruction": "Trong 20 giây, phát hiện một chi tiết thú vị trên trang phục của một người bạn và giới thiệu cho cả nhóm.",

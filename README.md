@@ -1,4 +1,4 @@
-# Photo Challenge — Phygital AI Board Game Platform
+# SNAPDECK — Phygital AI Board Game Platform (Formerly Photo Challenge)
 
 Hệ thống trò chơi kết hợp giữa **Bộ bài vật lý 24 lá (Physical)** và **Ứng dụng Web nhận diện AI (Digital)**.
 

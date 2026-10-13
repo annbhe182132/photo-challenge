@@ -84,14 +84,14 @@ const GalleryPage = () => {
   // Social Share Handlers
   const handleShareFacebook = (photo: GalleryPhoto) => {
     sound.playClick();
-    const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.origin)}&quote=${encodeURIComponent(`Khoảnh khắc ván chơi Photo Challenge - "${photo.cardTitle}" đạt ${photo.score}% AI Match!`)}`;
+    const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.origin)}&quote=${encodeURIComponent(`Khoảnh khắc ván chơi SNAPDECK - "${photo.cardTitle}" đạt ${photo.score}% AI Match!`)}`;
     window.open(shareUrl, '_blank', 'width=600,height=400');
     showToast('Đã mở cửa sổ chia sẻ lên Facebook!');
   };
 
   const handleShareTwitter = (photo: GalleryPhoto) => {
     sound.playClick();
-    const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(`📸 Khoảnh khắc đỉnh cao tại Photo Challenge! Bài thử thách: "${photo.cardTitle}" đạt ${photo.score}% AI Match! #PhotoChallenge #Phygital`)}&url=${encodeURIComponent(window.location.origin)}`;
+    const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(`📸 Khoảnh khắc đỉnh cao tại SNAPDECK! Bài thử thách: "${photo.cardTitle}" đạt ${photo.score}% AI Match! #SNAPDECK #Phygital`)}&url=${encodeURIComponent(window.location.origin)}`;
     window.open(shareUrl, '_blank', 'width=600,height=400');
     showToast('Đã mở cửa sổ chia sẻ lên Twitter / X!');
   };
@@ -126,8 +126,8 @@ const GalleryPage = () => {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: `Photo Challenge - ${photo.cardTitle}`,
-          text: `Khoảnh khắc kỉ niệm ván chơi Photo Challenge! AI Match: ${photo.score}%`,
+          title: `SNAPDECK - ${photo.cardTitle}`,
+          text: `Khoảnh khắc kỉ niệm ván chơi SNAPDECK! AI Match: ${photo.score}%`,
           url: window.location.href,
         });
         showToast('Chia sẻ hệ thống thành công!');
@@ -290,7 +290,7 @@ const GalleryPage = () => {
                   </button>
 
                   <div className="text-center space-y-1">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-fuchsia-400">PHOTO CHALLENGE PHYGITAL</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-fuchsia-400">SNAPDECK PHYGITAL</span>
                     <h3 className="text-2xl font-black text-white">Chia Sẻ & Tải Thẻ HD</h3>
                     <p className="text-xs text-slate-300">Thử thách: <strong className="text-cyan-300">{selectedPhoto.cardTitle}</strong></p>
                   </div>

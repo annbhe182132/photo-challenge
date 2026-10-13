@@ -43,7 +43,7 @@ const LeaderboardPage = () => {
           <div className="my-auto py-8 space-y-8">
             <div className="text-center space-y-2">
               <h1 className="text-4xl font-black text-white sm:text-5xl">Vinh Danh Người Chơi MVP</h1>
-              <p className="text-sm text-slate-300">Tổng kết điểm số & huy hiệu qua các vòng chơi Phygital Photo Challenge</p>
+              <p className="text-sm text-slate-300">Tổng kết điểm số & huy hiệu qua các vòng chơi Phygital SNAPDECK</p>
             </div>
 
             {/* 3D Podium for Top 3 */}

@@ -6,7 +6,7 @@
     "cards": [
       {
         "_id": "670100000000000000000001",
-        "code": "PC-CARD-001",
+        "code": "SD-CARD-001",
         "category": "Group",
         "theme": "party",
         "title": "Cạn Ly Đồng Điệu",
@@ -18,7 +18,7 @@
       },
       {
         "_id": "670100000000000000000002",
-        "code": "PC-CARD-002",
+        "code": "SD-CARD-002",
         "category": "Action",
         "theme": "party",
         "title": "Cú Bay Bất Tận",
@@ -30,7 +30,7 @@
       },
       {
         "_id": "670100000000000000000003",
-        "code": "PC-CARD-003",
+        "code": "SD-CARD-003",
         "category": "Spicy",
         "theme": "party",
         "title": "Tình Mẫu Tử Thiêng Liêng",
@@ -42,7 +42,7 @@
       },
       {
         "_id": "670100000000000000000004",
-        "code": "PC-CARD-004",
+        "code": "SD-CARD-004",
         "category": "Meme",
         "theme": "teambuilding",
         "title": "Poster Phim Siêu Cấp",
@@ -54,7 +54,7 @@
       },
       {
         "_id": "670100000000000000000005",
-        "code": "PC-CARD-005",
+        "code": "SD-CARD-005",
         "category": "Creative",
         "theme": "travel",
         "title": "Góc Nhìn Khổng Lồ",
@@ -66,7 +66,7 @@
       },
       {
         "_id": "670100000000000000000006",
-        "code": "PC-CARD-006",
+        "code": "SD-CARD-006",
         "category": "Spicy",
         "theme": "birthday",
         "title": "Tia Sét Biểu Cảm",
@@ -78,7 +78,7 @@
       },
       {
         "_id": "670100000000000000000007",
-        "code": "PC-CARD-007",
+        "code": "SD-CARD-007",
         "category": "Action",
         "theme": "teambuilding",
         "title": "Tháp Người Đoàn Kết",
@@ -90,7 +90,7 @@
       },
       {
         "_id": "670100000000000000000008",
-        "code": "PC-CARD-008",
+        "code": "SD-CARD-008",
         "category": "Meme",
         "theme": "party",
         "title": "Cái Nhìn Đánh Giá",
@@ -102,7 +102,7 @@
       },
       {
         "_id": "670100000000000000000009",
-        "code": "PC-CARD-009",
+        "code": "SD-CARD-009",
         "category": "Creative",
         "theme": "birthday",
         "title": "Vương Miện Sinh Nhật",
@@ -114,7 +114,7 @@
       },
       {
         "_id": "670100000000000000010",
-        "code": "PC-CARD-010",
+        "code": "SD-CARD-010",
         "category": "Action",
         "theme": "travel",
         "title": "Bước Chân Phiêu Lưu",
@@ -126,7 +126,7 @@
       },
       {
         "_id": "670100000000000000000011",
-        "code": "PC-CARD-011",
+        "code": "SD-CARD-011",
         "category": "Group",
         "theme": "teambuilding",
         "title": "Trái Tim Đồng Tâm",
@@ -138,7 +138,7 @@
       },
       {
         "_id": "670100000000000000000012",
-        "code": "PC-CARD-012",
+        "code": "SD-CARD-012",
         "category": "Spicy",
         "theme": "party",
         "title": "Nụ Hôn Bất Ngờ",
@@ -150,7 +150,7 @@
       },
       {
         "_id": "670100000000000000000013",
-        "code": "PC-CARD-013",
+        "code": "SD-CARD-013",
         "category": "Meme",
         "theme": "party",
         "title": "Ngủ Gật Giữa Tiệc",
@@ -162,7 +162,7 @@
       },
       {
         "_id": "670100000000000000000014",
-        "code": "PC-CARD-014",
+        "code": "SD-CARD-014",
         "category": "Creative",
         "theme": "travel",
         "title": "Bóng Đổ Nghệ Thuật",
@@ -174,7 +174,7 @@
       },
       {
         "_id": "670100000000000000000015",
-        "code": "PC-CARD-015",
+        "code": "SD-CARD-015",
         "category": "Group",
         "theme": "birthday",
         "title": "Thổi Nến Siêu Tốc",
@@ -186,7 +186,7 @@
       },
       {
         "_id": "670100000000000000000016",
-        "code": "PC-CARD-016",
+        "code": "SD-CARD-016",
         "category": "Action",
         "theme": "teambuilding",
         "title": "Kéo Co Vô Hình",
@@ -198,7 +198,7 @@
       },
       {
         "_id": "670100000000000000000017",
-        "code": "PC-CARD-017",
+        "code": "SD-CARD-017",
         "category": "Meme",
         "theme": "birthday",
         "title": "Gương Mặt Hoảng Hốt",
@@ -210,7 +210,7 @@
       },
       {
         "_id": "670100000000000000000018",
-        "code": "PC-CARD-018",
+        "code": "SD-CARD-018",
         "category": "Creative",
         "theme": "party",
         "title": "Kính Mắt Bằng Tay",
@@ -222,7 +222,7 @@
       },
       {
         "_id": "670100000000000000000019",
-        "code": "PC-CARD-019",
+        "code": "SD-CARD-019",
         "category": "Spicy",
         "theme": "teambuilding",
         "title": "Cõng Nhau Về Đích",
@@ -234,7 +234,7 @@
       },
       {
         "_id": "670100000000000000000020",
-        "code": "PC-CARD-020",
+        "code": "SD-CARD-020",
         "category": "Action",
         "theme": "travel",
         "title": "Cú Nhảy Đồng Loạt",
@@ -246,7 +246,7 @@
       },
       {
         "_id": "670100000000000000000021",
-        "code": "PC-CARD-021",
+        "code": "SD-CARD-021",
         "category": "Group",
         "theme": "party",
         "title": "Đoàn Tàu Lắc Lư",
@@ -258,7 +258,7 @@
       },
       {
         "_id": "670100000000000000000022",
-        "code": "PC-CARD-022",
+        "code": "SD-CARD-022",
         "category": "Meme",
         "theme": "travel",
         "title": "Tượng Đài Bất Động",
@@ -270,7 +270,7 @@
       },
       {
         "_id": "670100000000000000000023",
-        "code": "PC-CARD-023",
+        "code": "SD-CARD-023",
         "category": "Spicy",
         "theme": "birthday",
         "title": "Lời Chúc Thầm Kín",
@@ -282,7 +282,7 @@
       },
       {
         "_id": "670100000000000000000024",
-        "code": "PC-CARD-024",
+        "code": "SD-CARD-024",
         "category": "Creative",
         "theme": "teambuilding",
         "title": "Bức Ảnh Tương Lai",

@@ -188,12 +188,12 @@ const HomePage = () => {
             <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-2xl border border-cyan-400/30 bg-cyan-500/20 backdrop-blur-xl shadow-[0_0_15px_rgba(34,211,238,0.3)]">
               <Camera className="h-4 w-4 sm:h-5 sm:w-5 text-cyan-300" />
             </div>
-            PHOTO CHALLENGE
+            SNAPDECK
           </a>
 
           <nav className="hidden items-center gap-8 text-sm font-semibold text-slate-300 md:flex">
             <a href="#home" className="transition hover:text-cyan-300">Trang chủ</a>
-            <a href="#comparison" className="transition hover:text-cyan-300">Vì sao chọn Photo Challenge?</a>
+            <a href="#comparison" className="transition hover:text-cyan-300">Vì sao chọn SNAPDECK?</a>
             <a href="#how-it-works" className="transition hover:text-cyan-300">Luồng Phygital</a>
             <button onClick={() => navigate('/gallery')} className="transition hover:text-cyan-300">Bộ Sưu Tập</button>
             <button onClick={() => navigate('/leaderboard')} className="transition hover:text-cyan-300">Xếp Hạng</button>
@@ -321,7 +321,7 @@ const HomePage = () => {
                 Đột Phá Thị Trường Boardgame
               </span>
               <h2 className="text-3xl font-black text-white sm:text-4xl">
-                Vì Sao Photo Challenge Vượt Xa UNO, Ma Sói & Truth or Dare?
+                Vì Sao SNAPDECK Vượt Xa UNO, Ma Sói & Truth or Dare?
               </h2>
               <p className="text-slate-400 text-sm max-w-2xl mx-auto">
                 Kết hợp yếu tố vật lý của lá bài và sức mạnh số của WebApp AI, giải quyết triệt để sự chán nản & nghiện điện thoại cá nhân.
@@ -351,7 +351,7 @@ const HomePage = () => {
                   </div>
 
                   <p className="text-xs text-slate-300 leading-relaxed">
-                    UNO chỉ ngồi một chỗ đánh bài đơn điệu, dễ cắm cúi vào các con số. <strong className="text-white font-semibold">Photo Challenge</strong> buộc người chơi phải tương tác hành động thực tế, đứng dậy tạo dáng chụp ảnh kỉ niệm và tạo không khí bùng nổ!
+                    UNO chỉ ngồi một chỗ đánh bài đơn điệu, dễ cắm cúi vào các con số. <strong className="text-white font-semibold">SNAPDECK</strong> buộc người chơi phải tương tác hành động thực tế, đứng dậy tạo dáng chụp ảnh kỉ niệm và tạo không khí bùng nổ!
                   </p>
                 </div>
 
@@ -361,7 +361,7 @@ const HomePage = () => {
                     <span className="text-rose-400 font-medium">Ngồi yên một chỗ, đơn điệu</span>
                   </div>
                   <div className="flex items-center justify-between text-cyan-300 font-semibold">
-                    <span>Photo Challenge:</span>
+                    <span>SNAPDECK:</span>
                     <span className="text-emerald-400">Vận động & bắt trọn cảm xúc thật</span>
                   </div>
                 </div>
@@ -389,7 +389,7 @@ const HomePage = () => {
                   </div>
 
                   <p className="text-xs text-slate-300 leading-relaxed">
-                    Ma Sói đòi hỏi luật phức tạp, cần quản trò và người bị loại sớm phải ngồi ngoài hàng giờ. <strong className="text-white font-semibold">Photo Challenge</strong> giữ 100% thành viên tham gia liên tục mọi vòng chơi mà không một ai bị bỏ rơi hay đứng ngoài cuộc!
+                    Ma Sói đòi hỏi luật phức tạp, cần quản trò và người bị loại sớm phải ngồi ngoài hàng giờ. <strong className="text-white font-semibold">SNAPDECK</strong> giữ 100% thành viên tham gia liên tục mọi vòng chơi mà không một ai bị bỏ rơi hay đứng ngoài cuộc!
                   </p>
                 </div>
 
@@ -399,7 +399,7 @@ const HomePage = () => {
                     <span className="text-rose-400 font-medium">Cần quản trò, loại sớm ngồi chờ</span>
                   </div>
                   <div className="flex items-center justify-between text-fuchsia-300 font-semibold">
-                    <span>Photo Challenge:</span>
+                    <span>SNAPDECK:</span>
                     <span className="text-emerald-400">100% gắn kết không ai bị loại</span>
                   </div>
                 </div>
@@ -427,7 +427,7 @@ const HomePage = () => {
                   </div>
 
                   <p className="text-xs text-slate-300 leading-relaxed">
-                    Truth or Dare dễ bị bí ý tưởng, gượng gạo và gian lận khi thực hiện thách thức. <strong className="text-white font-semibold">Photo Challenge</strong> có AI trọng tài phân tích biểu cảm & tư thế, đếm ngược tự động và Vòng Quay Hình Phạt cực cay!
+                    Truth or Dare dễ bị bí ý tưởng, gượng gạo và gian lận khi thực hiện thách thức. <strong className="text-white font-semibold">SNAPDECK</strong> có AI trọng tài phân tích biểu cảm & tư thế, đếm ngược tự động và Vòng Quay Hình Phạt cực cay!
                   </p>
                 </div>
 
@@ -437,7 +437,7 @@ const HomePage = () => {
                     <span className="text-rose-400 font-medium">Dễ gượng gạo, bí câu hỏi</span>
                   </div>
                   <div className="flex items-center justify-between text-amber-300 font-semibold">
-                    <span>Photo Challenge:</span>
+                    <span>SNAPDECK:</span>
                     <span className="text-emerald-400">AI trọng tài & Vòng quay phạt số</span>
                   </div>
                 </div>
@@ -511,7 +511,7 @@ const HomePage = () => {
 
         <footer className="relative z-10 border-t border-white/10 bg-slate-950/60 px-6 py-8 backdrop-blur-xl">
           <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 text-sm text-slate-400 md:flex-row">
-            <p className="font-semibold text-slate-300">PHOTO CHALLENGE — Phygital Party Game Platform</p>
+            <p className="font-semibold text-slate-300">SNAPDECK — Phygital Party Game Platform</p>
             <div className="flex items-center gap-4">
               <button onClick={handleAdmin} className="text-cyan-400 font-bold hover:underline">
                 Portal Nhà Đầu Tư & Quản Trị (/admin)

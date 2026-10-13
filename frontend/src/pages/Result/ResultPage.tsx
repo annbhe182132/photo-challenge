@@ -300,7 +300,7 @@ const ResultPage = () => {
                       <HeartHandshake size={18} /> THÔNG ĐIỆP VĂN MINH & AN TOÀN KHI CHƠI
                     </div>
                     <p className="leading-relaxed text-slate-300">
-                      <strong>Photo Challenge</strong> được thiết kế nhằm mang lại những tiếng cười sảng khoái và gắn kết tinh thần đồng đội.
+                      <strong>SNAPDECK</strong> được thiết kế nhằm mang lại những tiếng cười sảng khoái và gắn kết tinh thần đồng đội.
                       <strong>Tuyệt đối không khuyến khích</strong> các hình phạt tiêu cực, mang tính bạo lực, hạ thấp danh dự hoặc gây nguy hiểm đến tính mạng, sức khỏe người chơi.
                       Hãy luôn ưu tiên những hình phạt hài hước, dí dỏm, nhẹ nhàng và an toàn nhất cho tất cả các thành viên!
                     </p>

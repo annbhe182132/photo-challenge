@@ -48,7 +48,7 @@ export const PUNISHMENTS: Punishment[] = [
 export const DECK_CARDS: PhysicalCard[] = [
   {
     id: 'card-01',
-    code: 'PC-CARD-001',
+    code: 'SD-CARD-001',
     category: 'Creative',
     theme: 'pose',
     title: 'Fashion Model Bàn Ăn',
@@ -59,7 +59,7 @@ export const DECK_CARDS: PhysicalCard[] = [
   },
   {
     id: 'card-02',
-    code: 'PC-CARD-002',
+    code: 'SD-CARD-002',
     category: 'Creative',
     theme: 'pose',
     title: 'Góc Nghiêng Thần Thánh',
@@ -70,7 +70,7 @@ export const DECK_CARDS: PhysicalCard[] = [
   },
   {
     id: 'card-03',
-    code: 'PC-CARD-003',
+    code: 'SD-CARD-003',
     category: 'Creative',
     theme: 'pose',
     title: 'Trạng Thái “Bất Trọng Lực”',
@@ -81,7 +81,7 @@ export const DECK_CARDS: PhysicalCard[] = [
   },
   {
     id: 'card-04',
-    code: 'PC-CARD-004',
+    code: 'SD-CARD-004',
     category: 'Creative',
     theme: 'pose',
     title: 'MC Bản Tin Trực Tiếp',
@@ -92,7 +92,7 @@ export const DECK_CARDS: PhysicalCard[] = [
   },
   {
     id: 'card-05',
-    code: 'PC-CARD-005',
+    code: 'SD-CARD-005',
     category: 'Action',
     theme: 'acting',
     title: 'Lời Tỏ Tình Sến Súa',
@@ -103,7 +103,7 @@ export const DECK_CARDS: PhysicalCard[] = [
   },
   {
     id: 'card-06',
-    code: 'PC-CARD-006',
+    code: 'SD-CARD-006',
     category: 'Action',
     theme: 'acting',
     title: 'Bật Tông Cảm Xúc',
@@ -114,7 +114,7 @@ export const DECK_CARDS: PhysicalCard[] = [
   },
   {
     id: 'card-07',
-    code: 'PC-CARD-007',
+    code: 'SD-CARD-007',
     category: 'Action',
     theme: 'acting',
     title: 'Phản Ứng Trúng Số',
@@ -125,7 +125,7 @@ export const DECK_CARDS: PhysicalCard[] = [
   },
   {
     id: 'card-08',
-    code: 'PC-CARD-008',
+    code: 'SD-CARD-008',
     category: 'Action',
     theme: 'acting',
     title: 'Lồng Tiếng Phim Truyền Hình',
@@ -136,7 +136,7 @@ export const DECK_CARDS: PhysicalCard[] = [
   },
   {
     id: 'card-09',
-    code: 'PC-CARD-009',
+    code: 'SD-CARD-009',
     category: 'Group',
     theme: 'interaction',
     title: 'Bắt Cặp Bắn Tim',
@@ -147,7 +147,7 @@ export const DECK_CARDS: PhysicalCard[] = [
   },
   {
     id: 'card-10',
-    code: 'PC-CARD-010',
+    code: 'SD-CARD-010',
     category: 'Group',
     theme: 'interaction',
     title: 'Nhìn Vào Mắt Nhau',
@@ -158,7 +158,7 @@ export const DECK_CARDS: PhysicalCard[] = [
   },
   {
     id: 'card-11',
-    code: 'PC-CARD-011',
+    code: 'SD-CARD-011',
     category: 'Group',
     theme: 'interaction',
     title: 'Tựa Vai Thanh Xuân',
@@ -169,7 +169,7 @@ export const DECK_CARDS: PhysicalCard[] = [
   },
   {
     id: 'card-12',
-    code: 'PC-CARD-012',
+    code: 'SD-CARD-012',
     category: 'Group',
     theme: 'interaction',
     title: 'Bắt Tay Phong Cách Hip-hop',
@@ -180,7 +180,7 @@ export const DECK_CARDS: PhysicalCard[] = [
   },
   {
     id: 'card-13',
-    code: 'PC-CARD-013',
+    code: 'SD-CARD-013',
     category: 'Creative',
     theme: 'creative',
     title: 'Quán Quân Biến Hóa',
@@ -191,7 +191,7 @@ export const DECK_CARDS: PhysicalCard[] = [
   },
   {
     id: 'card-14',
-    code: 'PC-CARD-014',
+    code: 'SD-CARD-014',
     category: 'Creative',
     theme: 'creative',
     title: 'Góc Nhìn Đánh Lừa',
@@ -202,7 +202,7 @@ export const DECK_CARDS: PhysicalCard[] = [
   },
   {
     id: 'card-15',
-    code: 'PC-CARD-015',
+    code: 'SD-CARD-015',
     category: 'Creative',
     theme: 'creative',
     title: 'Săn Đồ Vật Theo Màu',
@@ -213,7 +213,7 @@ export const DECK_CARDS: PhysicalCard[] = [
   },
   {
     id: 'card-16',
-    code: 'PC-CARD-016',
+    code: 'SD-CARD-016',
     category: 'Creative',
     theme: 'creative',
     title: 'Đại Sứ Sản Phẩm',
@@ -224,7 +224,7 @@ export const DECK_CARDS: PhysicalCard[] = [
   },
   {
     id: 'card-17',
-    code: 'PC-CARD-017',
+    code: 'SD-CARD-017',
     category: 'Spicy',
     theme: 'expression',
     title: 'Giữ Mặt “Lạnh Như Băng”',
@@ -235,7 +235,7 @@ export const DECK_CARDS: PhysicalCard[] = [
   },
   {
     id: 'card-18',
-    code: 'PC-CARD-018',
+    code: 'SD-CARD-018',
     category: 'Spicy',
     theme: 'expression',
     title: 'Recreate Meme Cá Nhân',
@@ -246,7 +246,7 @@ export const DECK_CARDS: PhysicalCard[] = [
   },
   {
     id: 'card-19',
-    code: 'PC-CARD-019',
+    code: 'SD-CARD-019',
     category: 'Spicy',
     theme: 'expression',
     title: 'Lời Khen Chân Thành',
@@ -257,7 +257,7 @@ export const DECK_CARDS: PhysicalCard[] = [
   },
   {
     id: 'card-20',
-    code: 'PC-CARD-020',
+    code: 'SD-CARD-020',
     category: 'Spicy',
     theme: 'expression',
     title: 'Bí Mật Báo Báo',
@@ -268,7 +268,7 @@ export const DECK_CARDS: PhysicalCard[] = [
   },
   {
     id: 'card-21',
-    code: 'PC-CARD-021',
+    code: 'SD-CARD-021',
     category: 'Action',
     theme: 'speed',
     title: 'Thần Thái 3 Giây',
@@ -279,7 +279,7 @@ export const DECK_CARDS: PhysicalCard[] = [
   },
   {
     id: 'card-22',
-    code: 'PC-CARD-022',
+    code: 'SD-CARD-022',
     category: 'Action',
     theme: 'speed',
     title: 'Thám Tử Giấu Đồ',
@@ -290,7 +290,7 @@ export const DECK_CARDS: PhysicalCard[] = [
   },
   {
     id: 'card-23',
-    code: 'PC-CARD-023',
+    code: 'SD-CARD-023',
     category: 'Action',
     theme: 'speed',
     title: 'Vũ Điệu 5 Giây',
@@ -301,7 +301,7 @@ export const DECK_CARDS: PhysicalCard[] = [
   },
   {
     id: 'card-24',
-    code: 'PC-CARD-024',
+    code: 'SD-CARD-024',
     category: 'Action',
     theme: 'speed',
     title: 'Đố Vui Chi Tiết',

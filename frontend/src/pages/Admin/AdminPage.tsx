@@ -39,15 +39,15 @@ const pressArticles = [
     publisher: 'VnExpress Tech',
     date: '28/07/2026',
     title: 'Phygital Gaming — Xu hướng giải trí kết hợp lá bài vật lý & AI lên ngôi',
-    summary: 'Photo Challenge đột phá thị trường bằng cách kết hợp bộ bài vật lý và WebApp nhận diện gương mặt AI real-time.',
+    summary: 'SNAPDECK đột phá thị trường bằng cách kết hợp bộ bài vật lý và WebApp nhận diện gương mặt AI real-time.',
     link: 'https://vnexpress.net/so-hoa',
     badge: 'Báo Điện Tử Hàng Đầu',
   },
   {
     publisher: 'TechInAsia',
     date: '25/07/2026',
-    title: 'Photo Challenge: Startup Phygital Game Việt Nam gọi vốn $500K vòng Seed',
-    summary: 'Mô hình B2B2C độc đáo giúp Photo Challenge chinh phục hơn 1,400 phòng chơi chỉ trong 3 tháng ra mắt.',
+    title: 'SNAPDECK: Startup Phygital Game Việt Nam gọi vốn $500K vòng Seed',
+    summary: 'Mô hình B2B2C độc đáo giúp SNAPDECK chinh phục hơn 1,400 phòng chơi chỉ trong 3 tháng ra mắt.',
     link: 'https://www.techinasia.com',
     badge: 'Chuyên Trang Startup Châu Á',
   },
@@ -55,7 +55,7 @@ const pressArticles = [
     publisher: 'Forbes Asia',
     date: '20/07/2026',
     title: 'Giải mã sức hút của Boardgame tích hợp công nghệ AI Vision tại Đông Nam Á',
-    summary: 'Khác biệt hoàn toàn so với UNO hay Ma Sói, Photo Challenge duy trì tỉ lệ tương tác nhóm thực tế lên đến 88.4%.',
+    summary: 'Khác biệt hoàn toàn so với UNO hay Ma Sói, SNAPDECK duy trì tỉ lệ tương tác nhóm thực tế lên đến 88.4%.',
     link: 'https://www.forbes.com',
     badge: 'Tạp Chí Tài Chính Quốc Tế',
   },
@@ -63,7 +63,7 @@ const pressArticles = [
     publisher: 'VTV Digital / Startup Vietnam',
     date: '15/07/2026',
     title: 'Giải pháp kéo giới trẻ rời xa điện thoại cá nhân bằng tương tác nhóm thực tế',
-    summary: 'Chỉ với 1 thiết bị chung cho cả nhóm, Photo Challenge kéo các thành viên lại gần nhau hơn trong mỗi cuộc vui.',
+    summary: 'Chỉ với 1 thiết bị chung cho cả nhóm, SNAPDECK kéo các thành viên lại gần nhau hơn trong mỗi cuộc vui.',
     link: 'https://vtv.vn',
     badge: 'Đài Truyền Hình Quốc Gia',
   },
@@ -549,7 +549,7 @@ const AdminPage = () => {
 
             {/* Visual Comparison Chart */}
             <div className="rounded-3xl border border-white/15 bg-slate-900/60 p-6 backdrop-blur-xl">
-              <h3 className="text-xl font-bold text-white mb-2">So Sánh Trực Quan: Photo Challenge vs Boardgame Truyền Thống</h3>
+              <h3 className="text-xl font-bold text-white mb-2">So Sánh Trực Quan: SNAPDECK vs Boardgame Truyền Thống</h3>
               <p className="text-xs text-slate-400 mb-6">Số liệu thống kê trải nghiệm người dùng thực tế từ thử nghiệm 500 nhóm trẻ (16-25 tuổi)</p>
 
               <div className="grid gap-4 md:grid-cols-3">

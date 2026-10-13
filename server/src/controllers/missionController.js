@@ -4,10 +4,18 @@ import { Mission } from '../models/Mission.js';
 
 export const getMissionByQR = async (req, res) => {
   try {
-    const qrKey = req.params.qrKey.toUpperCase();
+    const rawQrKey = req.params.qrKey.toUpperCase();
+    const altQrKey = rawQrKey.startsWith('PC-')
+      ? rawQrKey.replace('PC-', 'SD-')
+      : rawQrKey.replace('SD-', 'PC-');
 
     const card = await Card.findOne({
-      qrKey,
+      $or: [
+        { qrKey: rawQrKey },
+        { qrKey: altQrKey },
+        { code: rawQrKey },
+        { code: altQrKey },
+      ],
       isActive: true,
     });
 
@@ -18,8 +26,15 @@ export const getMissionByQR = async (req, res) => {
       });
     }
 
+    const altCardCode = card.code.startsWith('PC-')
+      ? card.code.replace('PC-', 'SD-')
+      : card.code.replace('SD-', 'PC-');
+
     const missions = await Mission.find({
-      cardCode: card.code,
+      $or: [
+        { cardCode: card.code },
+        { cardCode: altCardCode },
+      ],
       isActive: true,
     });
 

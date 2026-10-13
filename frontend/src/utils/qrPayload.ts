@@ -5,10 +5,10 @@ export type QRCodePayload =
   | { type: 'card'; code: string };
 
 const ROOM_CODE_PATTERN = /^ROOM-[A-Z0-9]{4,12}$/i;
-const CARD_CODE_PATTERN = /^PC-CARD-\d{3}$/i;
+const CARD_CODE_PATTERN = /^(?:SD|PC)-CARD-\d{3}$/i;
 
 const parseTypedPayload = (value: string): QRCodePayload | null => {
-  const match = value.match(/^PHOTO-CHALLENGE:(ROOM|CARD):(.+)$/i);
+  const match = value.match(/^(?:SNAPDECK|PHOTO-CHALLENGE):(ROOM|CARD):(.+)$/i);
   if (!match) return null;
 
   const code = match[2].trim().toUpperCase();
@@ -16,7 +16,7 @@ const parseTypedPayload = (value: string): QRCodePayload | null => {
     return { type: 'room', code };
   }
   if (match[1].toUpperCase() === 'CARD' && CARD_CODE_PATTERN.test(code)) {
-    return { type: 'card', code };
+    return { type: 'card', code: code.replace(/^PC-/, 'SD-') };
   }
   return null;
 };
@@ -28,7 +28,7 @@ export const parseQRCodePayload = (rawValue: string): QRCodePayload | null => {
 
   const normalized = value.toUpperCase();
   if (ROOM_CODE_PATTERN.test(normalized)) return { type: 'room', code: normalized };
-  if (CARD_CODE_PATTERN.test(normalized)) return { type: 'card', code: normalized };
+  if (CARD_CODE_PATTERN.test(normalized)) return { type: 'card', code: normalized.replace(/^PC-/, 'SD-') };
 
   let url: URL;
   try {
@@ -57,10 +57,10 @@ export const parseQRCodePayload = (rawValue: string): QRCodePayload | null => {
         return { type: 'room', code };
       }
       if (['CARD', 'CARDS'].includes(marker) && CARD_CODE_PATTERN.test(code)) {
-        return { type: 'card', code };
+        return { type: 'card', code: code.replace(/^PC-/, 'SD-') };
       }
       if (marker === 'QR' && upperSegments[index - 1] === 'MISSIONS' && CARD_CODE_PATTERN.test(code)) {
-        return { type: 'card', code };
+        return { type: 'card', code: code.replace(/^PC-/, 'SD-') };
       }
     }
 
@@ -78,13 +78,13 @@ export const parseQRCodePayload = (rawValue: string): QRCodePayload | null => {
   }
   const cardQueryCode = url.searchParams.get('cardCode') ?? hashQuery?.get('cardCode');
   if (cardQueryCode && CARD_CODE_PATTERN.test(cardQueryCode.toUpperCase())) {
-    return { type: 'card', code: cardQueryCode.toUpperCase() };
+    return { type: 'card', code: cardQueryCode.toUpperCase().replace(/^PC-/, 'SD-') };
   }
   return null;
 };
 
 export const BOX_QR_VALUE = 'https://annbhe182132.github.io/photo-challenge/';
-export const roomQrValue = (roomCode: string) => `PHOTO-CHALLENGE:ROOM:${roomCode.toUpperCase()}`;
+export const roomQrValue = (roomCode: string) => `SNAPDECK:ROOM:${roomCode.toUpperCase()}`;
 export const cardQrValue = (cardCode: string) => `https://annbhe182132.github.io/photo-challenge/#/scan?cardCode=${encodeURIComponent(cardCode.toUpperCase())}`;
 
 export const downloadBoxQrCleanSvg = async () => {
@@ -99,7 +99,7 @@ export const downloadBoxQrCleanSvg = async () => {
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.download = 'photo-challenge-box-qr.svg';
+  link.download = 'snapdeck-box-qr.svg';
   link.click();
   window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 };
@@ -114,7 +114,7 @@ export const downloadBoxQrPng = async () => {
   });
   const link = document.createElement('a');
   link.href = dataUrl;
-  link.download = 'photo-challenge-box-qr.png';
+  link.download = 'snapdeck-box-qr.png';
   link.click();
 };
 
@@ -140,7 +140,7 @@ export const downloadBoxQrBadge = async () => {
   <rect width="600" height="750" rx="36" fill="url(#bgGrad)" stroke="#0284c7" stroke-width="6"/>
   <rect x="16" y="16" width="568" height="718" rx="24" fill="none" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="8 8"/>
   <rect x="70" y="40" width="460" height="52" rx="26" fill="#0f172a"/>
-  <text x="300" y="73" font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="900" fill="#38bdf8" text-anchor="middle" letter-spacing="3">PHOTO CHALLENGE</text>
+  <text x="300" y="73" font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="900" fill="#38bdf8" text-anchor="middle" letter-spacing="3">SNAPDECK</text>
   <text x="300" y="132" font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="26" font-weight="900" fill="#0f172a" text-anchor="middle">QUÉT MÃ VÀO WEB APP CHƠI NGAY</text>
   <text x="300" y="162" font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="600" fill="#64748b" text-anchor="middle">Trải nghiệm Board Game Phygital kết hợp Trí Tuệ Nhân Tạo (AI)</text>
   <rect x="90" y="185" width="420" height="420" rx="28" fill="#ffffff" stroke="#cbd5e1" stroke-width="3"/>
@@ -149,14 +149,14 @@ export const downloadBoxQrBadge = async () => {
   </svg>
   <text x="300" y="640" font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="700" fill="#0284c7" text-anchor="middle">👉 annbhe182132.github.io/photo-challenge/</text>
   <text x="300" y="670" font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="600" fill="#334155" text-anchor="middle">Mở camera điện thoại quét mã • Không cần tải ứng dụng</text>
-  <text x="300" y="698" font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#94a3b8" text-anchor="middle">Bộ bài 24 lá vật lý + WebApp AI • Bản quyền © 2026</text>
+  <text x="300" y="698" font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#94a3b8" text-anchor="middle">Bộ bài 24 lá vật lý + WebApp AI • Bản quyền © 2026 SNAPDECK</text>
 </svg>`;
 
   const blob = new Blob([badgeSvg], { type: 'image/svg+xml;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.download = 'photo-challenge-box-qr-badge.svg';
+  link.download = 'snapdeck-box-qr-badge.svg';
   link.click();
   window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 };
@@ -192,7 +192,7 @@ export const downloadAll25QrSheet = async (cards: PhysicalCard[]) => {
     const svgContent = svg.slice(svg.indexOf('>') + 1, svg.lastIndexOf('</svg>'));
     const x = (itemIndex % columns) * cellWidth;
     const y = Math.floor(itemIndex / columns) * cellHeight;
-    return `<g transform="translate(${x} ${y})"><rect width="${cellWidth}" height="${cellHeight}" fill="#ffffff" stroke="#cbd5e1"/><svg x="12" y="12" width="126" height="126" viewBox="${viewBox}">${svgContent}</svg><text x="150" y="65" font-family="Arial,sans-serif" font-size="17" font-weight="700" fill="#0f172a">${card.code}</text><text x="150" y="91" font-family="Arial,sans-serif" font-size="13" fill="#334155">${escapeXml(card.title)}</text><text x="150" y="118" font-family="Arial,sans-serif" font-size="11" fill="#64748b">PHOTO-CHALLENGE:CARD</text></g>`;
+    return `<g transform="translate(${x} ${y})"><rect width="${cellWidth}" height="${cellHeight}" fill="#ffffff" stroke="#cbd5e1"/><svg x="12" y="12" width="126" height="126" viewBox="${viewBox}">${svgContent}</svg><text x="150" y="65" font-family="Arial,sans-serif" font-size="17" font-weight="700" fill="#0f172a">${card.code}</text><text x="150" y="91" font-family="Arial,sans-serif" font-size="13" fill="#334155">${escapeXml(card.title)}</text><text x="150" y="118" font-family="Arial,sans-serif" font-size="11" fill="#64748b">SNAPDECK:CARD</text></g>`;
   }).join('');
 
   const sheet = `<svg xmlns="http://www.w3.org/2000/svg" width="${cellWidth * columns}" height="${cellHeight * rows}" viewBox="0 0 ${cellWidth * columns} ${cellHeight * rows}">${boxCell}${cardCells}</svg>`;
@@ -200,7 +200,7 @@ export const downloadAll25QrSheet = async (cards: PhysicalCard[]) => {
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.download = 'photo-challenge-all-25-qr-codes.svg';
+  link.download = 'snapdeck-all-25-qr-codes.svg';
   link.click();
   window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 };
