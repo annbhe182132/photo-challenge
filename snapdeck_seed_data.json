@@ -1,51 +1,52 @@
 {
-  "version": "2.0.0",
-  "description": "Photo Challenge: 6 chủ đề chung, 24 lá bài vật lý, mỗi lá có QR riêng và 4 nhiệm vụ biến thể riêng.",
+  "version": "2.1.0",
+  "project": "SNAPDECK",
+  "description": "Dữ liệu khởi tạo chuẩn thống nhất cho SNAPDECK Phygital AI Game",
   "themes": [
     {
       "id": "solo-pose-style",
-      "name": "Solo Pose & Style",
-      "nameVi": "Tạo Dáng",
+      "name": "Tạo Dáng",
+      "nameEn": "Solo Pose & Style",
       "icon": "📸",
       "description": "Thử thách tạo dáng và chụp ảnh cá nhân đầy sáng tạo.",
       "color": "from-pink-500 to-rose-600"
     },
     {
       "id": "solo-acting-drama",
-      "name": "Solo Acting & Drama",
-      "nameVi": "Nhập Vai",
+      "name": "Nhập Vai",
+      "nameEn": "Solo Acting & Drama",
       "icon": "🎭",
       "description": "Diễn xuất, biểu cảm và nhập vai trong những tình huống vui nhộn.",
       "color": "from-violet-500 to-purple-600"
     },
     {
       "id": "one-on-one-interaction",
-      "name": "One-on-One Interaction",
-      "nameVi": "Tương Tác",
+      "name": "Tương Tác",
+      "nameEn": "One-on-One Interaction",
       "icon": "🤝",
       "description": "Tạo khoảnh khắc tương tác giữa người chơi với một người bạn.",
       "color": "from-amber-500 to-orange-600"
     },
     {
       "id": "creative-prop-space",
-      "name": "Creative Prop & Space",
-      "nameVi": "Sáng Tạo",
+      "name": "Sáng Tạo",
+      "nameEn": "Creative Prop & Space",
       "icon": "🎨",
       "description": "Sử dụng đồ vật và không gian xung quanh để tạo thử thách sáng tạo.",
       "color": "from-cyan-500 to-blue-600"
     },
     {
       "id": "truth-expression",
-      "name": "Truth & Expression",
-      "nameVi": "Thần Thái",
+      "name": "Thần Thái",
+      "nameEn": "Truth & Expression",
       "icon": "😎",
       "description": "Thể hiện cảm xúc, thần thái và chia sẻ những điều thú vị.",
       "color": "from-emerald-500 to-teal-600"
     },
     {
       "id": "speed-secret-mission",
-      "name": "Speed & Secret Mission",
-      "nameVi": "Tốc Độ",
+      "name": "Tốc Độ",
+      "nameEn": "Speed & Secret Mission",
       "icon": "⚡",
       "description": "Thử thách nhanh, bất ngờ và nhiệm vụ bí mật.",
       "color": "from-yellow-500 to-orange-500"
@@ -1519,10 +1520,147 @@
       "isActive": true
     }
   ],
-  "qrFlow": {
-    "lookupField": "qrKey",
-    "selectionRule": "Quét QR xác định cardCode; chỉ chọn mission có cùng cardCode.",
-    "antiRepeat": "Có thể mở rộng để ưu tiên nhiệm vụ chưa xuất hiện trong phòng chơi hiện tại.",
-    "note": "QR không chứa nội dung nhiệm vụ; QR chỉ định danh lá bài để có thể cập nhật nhiệm vụ mà không in lại QR."
-  }
+  "punishments": [
+    {
+      "id": "p1",
+      "title": "Uống 1 Ly Nước 🍹",
+      "description": "Nâng ly chúc mừng hoặc cạn 1 ly nước đầy!",
+      "icon": "🥤"
+    },
+    {
+      "id": "p2",
+      "title": "Làm Mặt Xấu 10s 😜",
+      "description": "Giữ nguyên nét mặt hài hước nhất trong 10 giây!",
+      "icon": "🎭"
+    },
+    {
+      "id": "p3",
+      "title": "Hát / Rap 1 Đoạn 🎤",
+      "description": "Trình diễn 1 câu hát hoặc bài rap bất kỳ!",
+      "icon": "🎵"
+    },
+    {
+      "id": "p4",
+      "title": "Đóng Vai Robot 🤖",
+      "description": "Nói chuyện và di chuyển như robot đến hết lượt sau!",
+      "icon": "🤖"
+    },
+    {
+      "id": "p5",
+      "title": "Dán Sticker Lên Trán 🏷️",
+      "description": "Nhận 1 huy hiệu hình phạt dán trực tiếp lên mặt!",
+      "icon": "✨"
+    },
+    {
+      "id": "p6",
+      "title": "Kể 1 Bí Mật Nhỏ 🤫",
+      "description": "Tiết lộ 1 thói quen buồn cười mà ít ai biết!",
+      "icon": "💡"
+    }
+  ],
+  "players": [
+    {
+      "id": "p1",
+      "name": "Alex Nguyễn",
+      "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+      "score": 140,
+      "streak": 3,
+      "badges": [
+        "👑 MVP",
+        "📸 Photo Master"
+      ]
+    },
+    {
+      "id": "p2",
+      "name": "Minh Anh",
+      "avatar": "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80",
+      "score": 115,
+      "streak": 2,
+      "badges": [
+        "⚡ Speedster"
+      ]
+    },
+    {
+      "id": "p3",
+      "name": "Trần Gia Bảo",
+      "avatar": "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop&q=80",
+      "score": 95,
+      "streak": 1,
+      "badges": [
+        "😜 Meme God"
+      ]
+    },
+    {
+      "id": "p4",
+      "name": "Hoàng Yến",
+      "avatar": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80",
+      "score": 80,
+      "streak": 0,
+      "badges": [
+        "🔥 Party Animal"
+      ]
+    }
+  ],
+  "gallery_albums": [
+    {
+      "roomCode": "ROOM-8899",
+      "themeName": "Party Đêm Đỉnh Cao",
+      "themeIcon": "🎉",
+      "date": "13/10/2026",
+      "coverImage": "https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=800&auto=format&fit=crop&q=80",
+      "photos": [
+        {
+          "round": 1,
+          "image": "https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=800&auto=format&fit=crop&q=80",
+          "cardTitle": "Cạn Ly Đồng Điệu",
+          "score": 96,
+          "mission": "Cùng 3 người bạn nâng cốc và hô 23 Dzô!"
+        },
+        {
+          "round": 2,
+          "image": "https://images.unsplash.com/photo-1528605248644-14dd04022da1?w=800&auto=format&fit=crop&q=80",
+          "cardTitle": "Cú Bay Bất Tận",
+          "score": 91,
+          "mission": "Tạo dáng cả nhóm đang bay chân không chạm đất!"
+        },
+        {
+          "round": 3,
+          "image": "https://images.unsplash.com/photo-1543807535-eceef0bc6599?w=800&auto=format&fit=crop&q=80",
+          "cardTitle": "Poster Phim Siêu Cấp",
+          "score": 98,
+          "mission": "Tạo dáng Biệt Đội Siêu Anh Hùng như poster điện ảnh!"
+        }
+      ]
+    },
+    {
+      "roomCode": "ROOM-7722",
+      "themeName": "Team Building Gắn Kết",
+      "themeIcon": "🔥",
+      "date": "13/10/2026",
+      "coverImage": "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=800&auto=format&fit=crop&q=80",
+      "photos": [
+        {
+          "round": 1,
+          "image": "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=800&auto=format&fit=crop&q=80",
+          "cardTitle": "Tình Mẫu Tử Thiêng Liêng",
+          "score": 94,
+          "mission": "Hai người chơi nhập vai Mẹ & Con ôm nhau ấm áp!"
+        },
+        {
+          "round": 2,
+          "image": "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800&auto=format&fit=crop&q=80",
+          "cardTitle": "Góc Nhìn Khổng Lồ",
+          "score": 89,
+          "mission": "Tạo hiệu ứng góc nhìn như đang nuốt trọn đồng đội!"
+        },
+        {
+          "round": 3,
+          "image": "https://images.unsplash.com/photo-1517457373958-b7bdd4587205?w=800&auto=format&fit=crop&q=80",
+          "cardTitle": "Tia Sét Biểu Cảm",
+          "score": 95,
+          "mission": "5 người chơi làm 5 biểu cảm khác nhau hoàn toàn!"
+        }
+      ]
+    }
+  ]
 }

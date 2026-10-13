@@ -18,12 +18,12 @@ MONGODB_URI=mongodb://127.0.0.1:27017/photo_challenge_db
 CLIENT_URL=http://localhost:5173
 ```
 
-### 3. Nhập dữ liệu ban đầu từ file `mongo_database_temp.json` vào MongoDB:
+### 3. Nhập dữ liệu ban đầu từ file `snapdeck_seed_data.json` vào MongoDB:
 Chỉ cần chạy lệnh seed sau khi máy bạn đã bật MongoDB:
 ```bash
 npm run seed
 ```
-> Lệnh này sẽ tự động đọc file `mongo_database_temp.json` ở thư mục gốc và nạp 24 thẻ bài, 4 themes, 6 hình phạt, phòng mẫu và album vào MongoDB!
+> Lệnh này sẽ tự động đọc file `snapdeck_seed_data.json` ở thư mục gốc và nạp 24 thẻ bài SNAPDECK, 6 themes, 96 nhiệm vụ AI, 6 hình phạt và albums mẫu vào MongoDB!
 
 ### 4. Khởi chạy máy chủ:
 ```bash

@@ -27,7 +27,7 @@ photo-challenge/
 │   ├── .env.example
 │   └── package.json
 │
-├── mongo_database_temp.json   # [DATABASE TẠM THỜI] Dữ liệu khởi tạo (Cards, Themes, Punishments, Rooms, Albums) để nhúng vào MongoDB
+├── snapdeck_seed_data.json    # [DATABASE KHỞI TẠO] Dữ liệu thống nhất (Cards, Themes, Missions, Punishments, Albums) để nạp vào MongoDB
 └── README.md
 ```
 
@@ -60,10 +60,10 @@ npm run dev
 ```
 API Server chạy tại: `http://localhost:5000` (Kiểm tra trạng thái: `http://localhost:5000/api/health`)
 
-### 3. Nhập dữ liệu từ file `mongo_database_temp.json` vào MongoDB:
+### 3. Nhập dữ liệu từ file `snapdeck_seed_data.json` vào MongoDB:
 Khi đã bật dịch vụ MongoDB (qua MongoDB Compass, Docker hoặc service nội bộ):
 ```bash
 cd server
 npm run seed
 ```
-> Lệnh này sẽ tự động đọc file `mongo_database_temp.json` ở thư mục gốc và nạp toàn bộ 24 thẻ bài, 4 chủ đề, 6 hình phạt và các album mẫu vào MongoDB.
+> Lệnh này sẽ tự động đọc file `snapdeck_seed_data.json` ở thư mục gốc và nạp toàn bộ 24 thẻ bài SNAPDECK, 6 chủ đề, 96 nhiệm vụ AI, 6 hình phạt và các album mẫu vào MongoDB.
