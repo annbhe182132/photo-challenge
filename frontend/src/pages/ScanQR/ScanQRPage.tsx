@@ -3,17 +3,12 @@ import { motion } from 'framer-motion';
 import { AlertTriangle, ArrowLeft, Camera, CheckCircle2, Layers, QrCode, Sparkles, StopCircle, SwitchCamera, Upload, Zap } from 'lucide-react';
 import type { Html5Qrcode as Html5QrcodeType } from 'html5-qrcode';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useGame } from '../../context/GameContext';
+import { useGame } from '../../context/useGame';
 import { DECK_CARDS, THEMES, type PhysicalCard, type Player } from '../../data/gameData';
 import { apiRequest } from '../../services/api';
 import { parseQRCodePayload } from '../../utils/qrPayload';
 import { sound } from '../../utils/soundEngine';
-
-export const isInAppBrowser = () => {
-  if (typeof navigator === 'undefined') return false;
-  const ua = (navigator.userAgent || navigator.vendor || '').toLowerCase();
-  return /zalo|fban|fbav|instagram|messenger|tiktok|bytedance|line|micromessenger/i.test(ua);
-};
+import { isInAppBrowser } from '../../utils/browser';
 
 interface MissionApiResponse {
   success: boolean;
@@ -40,10 +35,28 @@ interface JoinedRoomResponse {
     roomCode?: string;
     theme?: string;
     mode?: 'casual' | 'speedrun' | 'spicy';
+    verificationMethod?: 'ai' | 'group';
+    photoEvidence?: 'off' | 'optional' | 'required';
+    photoBonusEnabled?: boolean;
     currentRound?: number;
+    totalRounds?: number;
+    currentTurnIndex?: number;
+    activePlayerId?: string | null;
+    turnStartedAt?: string | null;
+    turnDeadline?: string | null;
+    turnDurationSeconds?: 0 | 15 | 30 | 60;
+    status?: 'waiting' | 'active' | 'completed';
     players?: Player[];
+    turnHistory?: Array<{
+      turnIndex: number;
+      round: number;
+      playerId: string;
+      status: 'completed' | 'failed' | 'timed_out' | 'skipped';
+      score: number;
+    }>;
   };
   player?: Player;
+  playerToken?: string;
 }
 
 type ScanStatus = 'idle' | 'starting' | 'scanning' | 'processing' | 'success' | 'stopping' | 'stopped' | 'error';
@@ -85,12 +98,26 @@ const ScanQRPage = () => {
   const componentId = useId().replace(/:/g, '');
   const {
     currentRound,
+    roomCode,
     setCurrentRound,
     setActiveCard,
     setRoomCode,
     setTheme,
     setMode: setGameMode,
     setPlayers,
+    setCurrentPlayerId,
+    setRoomPlayerToken,
+    setDeviceMode,
+    setVerificationMethod,
+    setPhotoEvidence,
+    setPhotoBonusEnabled,
+    deviceMode,
+    currentPlayerId,
+    activePlayerId,
+    currentTurnIndex,
+    turnDurationSeconds,
+    players,
+    syncRoom,
   } = useGame();
 
   const isFromHomeScan = location.state?.fromHomeScan ?? false;
@@ -103,6 +130,7 @@ const ScanQRPage = () => {
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
   const [selectedCameraId, setSelectedCameraId] = useState<string | null>(null);
   const [availableCameras, setAvailableCameras] = useState<{ id: string; label: string }[]>([]);
+  const [turnTimeLeft, setTurnTimeLeft] = useState<number | null>(null);
 
   const scannerRef = useRef<Html5QrcodeType | null>(null);
   const sessionRef = useRef(0);
@@ -113,6 +141,7 @@ const ScanQRPage = () => {
   const handledQrRef = useRef(false);
   const seenQrRef = useRef(new Set<string>());
   const qrReaderId = `${isFromHomeScan ? 'room' : 'card'}-qr-reader-${componentId}`;
+  const entryTurnIndexRef = useRef(currentTurnIndex);
 
   const disposeScanner = useCallback((scanner: Html5QrcodeType, failedStart = false): Promise<boolean> => {
     const existingDisposal = disposalPromisesRef.current.get(scanner);
@@ -177,6 +206,87 @@ const ScanQRPage = () => {
   }, [disposeScanner]);
 
   useEffect(() => {
+    if (isFromHomeScan || deviceMode !== 'multi_device') return undefined;
+    let cancelled = false;
+    let timer: number | undefined;
+    const pollRoom = async () => {
+      try {
+        const response = await apiRequest<{
+          success: boolean;
+          message?: string;
+          data?: NonNullable<JoinedRoomResponse['data']>;
+        }>(`/api/rooms/${encodeURIComponent(roomCode)}`);
+        if (cancelled) return;
+        const room = response.data;
+        if (!response.success || !room?.players || !room.status) {
+          throw new Error(response.message || 'Không thể đồng bộ lượt chơi.');
+        }
+        syncRoom({
+          players: room.players,
+          currentRound: room.currentRound ?? currentRound,
+          totalRounds: room.totalRounds ?? 5,
+          status: room.status,
+          currentTurnIndex: room.currentTurnIndex,
+          activePlayerId: room.activePlayerId,
+          turnStartedAt: room.turnStartedAt,
+          turnDeadline: room.turnDeadline,
+          turnDurationSeconds: room.turnDurationSeconds,
+        });
+        setTurnTimeLeft(room.turnDeadline
+          ? Math.max(0, Math.ceil((new Date(room.turnDeadline).getTime() - Date.now()) / 1000))
+          : null);
+        if (room.status === 'completed') {
+          const resolvedTurn = room.turnHistory?.find((turn) => turn.turnIndex === entryTurnIndexRef.current);
+          if (resolvedTurn) {
+            await stopScanner('stopped');
+            navigate('/result', {
+              replace: true,
+              state: {
+                round: resolvedTurn.round,
+                playerId: resolvedTurn.playerId,
+                passed: resolvedTurn.status === 'completed',
+                timedOut: resolvedTurn.status === 'timed_out',
+                skipped: resolvedTurn.status === 'skipped',
+                score: resolvedTurn.score,
+              },
+            });
+          } else {
+            navigate('/leaderboard', { replace: true });
+          }
+        } else if (room.currentTurnIndex !== undefined && room.currentTurnIndex !== entryTurnIndexRef.current) {
+          const resolvedTurn = room.turnHistory?.find((turn) => turn.turnIndex === entryTurnIndexRef.current);
+          await stopScanner('stopped');
+          if (resolvedTurn) {
+            navigate('/result', {
+              replace: true,
+              state: {
+                round: resolvedTurn.round,
+                playerId: resolvedTurn.playerId,
+                passed: resolvedTurn.status === 'completed',
+                timedOut: resolvedTurn.status === 'timed_out',
+                skipped: resolvedTurn.status === 'skipped',
+                score: resolvedTurn.score,
+              },
+            });
+          } else {
+            setErrorMessage('Lượt chơi vừa được chuyển tiếp. Hãy quét khi đến lượt của bạn.');
+            setScanStatus('error');
+          }
+        }
+      } catch (error) {
+        if (!cancelled) console.error('[ScanQRPage] Failed to synchronize room turn:', error);
+      } finally {
+        if (!cancelled) timer = window.setTimeout(() => { void pollRoom(); }, 2000);
+      }
+    };
+    void pollRoom();
+    return () => {
+      cancelled = true;
+      if (timer) window.clearTimeout(timer);
+    };
+  }, [currentRound, deviceMode, isFromHomeScan, navigate, roomCode, stopScanner, syncRoom]);
+
+  useEffect(() => {
     mountedRef.current = true;
     return () => {
       mountedRef.current = false;
@@ -197,11 +307,42 @@ const ScanQRPage = () => {
     // Chuẩn hóa mã thẻ để hỗ trợ cả định dạng mới SD- và định dạng cũ PC-
     const normalizedCode = code.toUpperCase().replace(/^PC-/, 'SD-');
     const legacyCode = code.toUpperCase().replace(/^SD-/, 'PC-');
+    let verifiedTurnIndex: number | null = null;
     const matchingDeckCard = manualCard ?? DECK_CARDS.find((card) =>
       card.code === normalizedCode || card.code === legacyCode || card.code === code.toUpperCase()
     );
 
     try {
+      if (deviceMode === 'multi_device') {
+        if (!currentPlayerId) throw new Error('Không xác định được người chơi trong phòng. Hãy tham gia lại.');
+        const roomResponse = await apiRequest<{
+          success: boolean;
+          message?: string;
+          data?: NonNullable<JoinedRoomResponse['data']>;
+        }>(`/api/rooms/${encodeURIComponent(roomCode)}`);
+        if (requestSession !== sessionRef.current) return;
+        const room = roomResponse.data;
+        if (!roomResponse.success || !room?.players || !room.status) {
+          throw new Error(roomResponse.message || 'Không thể kiểm tra lượt chơi hiện tại.');
+        }
+        syncRoom({
+          players: room.players,
+          currentRound: room.currentRound ?? currentRound,
+          totalRounds: room.totalRounds ?? 5,
+          status: room.status,
+          currentTurnIndex: room.currentTurnIndex,
+          activePlayerId: room.activePlayerId,
+          turnStartedAt: room.turnStartedAt,
+          turnDeadline: room.turnDeadline,
+          turnDurationSeconds: room.turnDurationSeconds,
+        });
+        verifiedTurnIndex = room.currentTurnIndex ?? null;
+        if (room.activePlayerId !== currentPlayerId) {
+          const activePlayer = room.players.find((player) => player.id === room.activePlayerId);
+          throw new Error(`Đây chưa phải lượt của bạn${activePlayer ? ` — đang chơi ${activePlayer.name}` : ''}.`);
+        }
+      }
+
       // Gọi API lấy nhiệm vụ từ máy chủ
       const data = await apiRequest<MissionApiResponse>(`/api/missions/qr/${encodeURIComponent(code)}`);
       if (requestSession !== sessionRef.current) return;
@@ -220,35 +361,53 @@ const ScanQRPage = () => {
       if (
         !isMatch ||
         typeof mission?.title !== 'string' ||
+        typeof mission.missionCode !== 'string' ||
         typeof mission?.instruction !== 'string' ||
         typeof mission?.difficulty !== 'number' ||
         typeof mission?.xp !== 'number'
       ) {
-        // Nếu API trả về dữ liệu lệch định dạng nhưng đã có lá bài vật lý trong DECK_CARDS, dùng ngay lá bài đó!
-        if (matchingDeckCard) {
-          setActiveCard(matchingDeckCard);
-          setScanStatus('success');
-          sound.playScanBeep();
-          window.setTimeout(() => {
-            if (requestSession === sessionRef.current) {
-              navigate('/challenge', { state: { round: currentRound } });
-            }
-          }, 500);
-          return;
-        }
         throw new Error('Dữ liệu thử thách không khớp với mã lá bài vừa quét.');
       }
+      if (deviceMode === 'multi_device') {
+        const latestResponse = await apiRequest<{
+          success: boolean;
+          message?: string;
+          data?: NonNullable<JoinedRoomResponse['data']>;
+        }>(`/api/rooms/${encodeURIComponent(roomCode)}`);
+        if (requestSession !== sessionRef.current) return;
+        const latestRoom = latestResponse.data;
+        if (
+          !latestResponse.success
+          || !latestRoom
+          || latestRoom.status !== 'active'
+          || latestRoom.activePlayerId !== currentPlayerId
+          || latestRoom.currentTurnIndex !== verifiedTurnIndex
+        ) {
+          throw new Error('Lượt chơi đã hết hoặc được chuyển tiếp trong khi tải thử thách. Hãy đồng bộ và quét lại đúng lượt.');
+        }
+        if (!latestRoom.players) throw new Error('Máy chủ chưa trả về danh sách người chơi của phòng.');
+        syncRoom({
+          players: latestRoom.players,
+          currentRound: latestRoom.currentRound ?? currentRound,
+          totalRounds: latestRoom.totalRounds ?? 5,
+          status: latestRoom.status,
+          currentTurnIndex: latestRoom.currentTurnIndex,
+          activePlayerId: latestRoom.activePlayerId,
+          turnStartedAt: latestRoom.turnStartedAt,
+          turnDeadline: latestRoom.turnDeadline,
+          turnDurationSeconds: latestRoom.turnDurationSeconds,
+        });
+      }
 
-      // Ưu tiên nội dung 24 lá bài chuẩn trong gameData.ts
       const activeCard: PhysicalCard = {
-        id: matchingDeckCard?.id ?? mission.missionCode ?? `qr-${normalizedCode}`,
+        id: mission.missionCode,
         code: normalizedCode,
         category: matchingDeckCard?.category ?? 'Creative',
         theme: matchingDeckCard?.theme ?? data.card?.themeId ?? 'pose',
-        title: matchingDeckCard?.title ?? mission.title,
-        mission: matchingDeckCard?.mission ?? mission.instruction,
-        difficulty: matchingDeckCard?.difficulty ?? mission.difficulty,
-        xp: matchingDeckCard?.xp ?? mission.xp,
+        title: mission.title,
+        mission: mission.instruction,
+        difficulty: mission.difficulty,
+        xp: mission.xp,
         tags: matchingDeckCard?.tags ?? [],
         ...(matchingDeckCard?.arOverlay ? { arOverlay: matchingDeckCard.arOverlay } : {}),
       };
@@ -261,20 +420,6 @@ const ScanQRPage = () => {
         }
       }, 500);
     } catch (error) {
-      // Fallback an toàn: Nếu API máy chủ bị chậm, lỗi mạng hoặc lệch dữ liệu,
-      // vẫn cho phép người chơi bốc bài và chơi tiếp ngay với bộ 24 lá vật lý đã nạp sẵn
-      if (matchingDeckCard) {
-        setActiveCard(matchingDeckCard);
-        setScanStatus('success');
-        sound.playScanBeep();
-        window.setTimeout(() => {
-          if (requestSession === sessionRef.current) {
-            navigate('/challenge', { state: { round: currentRound } });
-          }
-        }, 500);
-        return;
-      }
-
       if (requestSession !== sessionRef.current) return;
       setErrorMessage(error instanceof Error
         ? error.message
@@ -308,9 +453,29 @@ const ScanQRPage = () => {
 
       setRoomCode(room.roomCode);
       setPlayers(room.players);
+      setCurrentPlayerId(response.player?.id ?? room.players.at(-1)?.id ?? null);
+      if (typeof response.playerToken !== 'string') throw new Error('Máy chủ không cấp phiên đăng nhập người chơi.');
+      setRoomPlayerToken(response.playerToken);
+      setDeviceMode('multi_device');
+      syncRoom({
+        players: room.players,
+        currentRound: room.currentRound ?? 1,
+        totalRounds: room.totalRounds ?? 5,
+        status: room.status ?? 'waiting',
+        currentTurnIndex: room.currentTurnIndex ?? 0,
+        activePlayerId: room.activePlayerId ?? null,
+        turnStartedAt: room.turnStartedAt ?? null,
+        turnDeadline: room.turnDeadline ?? null,
+        turnDurationSeconds: room.turnDurationSeconds,
+      });
       const selectedTheme = THEMES.find((theme) => theme.id === room.theme);
       if (selectedTheme) setTheme(selectedTheme);
       if (room.mode === 'casual' || room.mode === 'speedrun' || room.mode === 'spicy') setGameMode(room.mode);
+      if (room.verificationMethod === 'group' || room.verificationMethod === 'ai') setVerificationMethod(room.verificationMethod);
+      if (room.photoEvidence === 'off' || room.photoEvidence === 'optional' || room.photoEvidence === 'required') {
+        setPhotoEvidence(room.photoEvidence);
+      }
+      if (typeof room.photoBonusEnabled === 'boolean') setPhotoBonusEnabled(room.photoBonusEnabled);
       if (typeof room.currentRound === 'number') setCurrentRound(room.currentRound);
       setScanStatus('success');
       sound.playScanBeep();
@@ -598,6 +763,21 @@ const ScanQRPage = () => {
                       ? 'Đang tải đúng nhiệm vụ được liên kết với mã QR này.'
                       : `Vòng ${currentRound} — Quét mã QR trên lá bài hoặc chọn bài demo.`}
                 </p>
+                {!isFromHomeScan && deviceMode === 'multi_device' && (
+                  <div className="mt-3 flex flex-wrap items-center gap-3 text-xs">
+                    <span className={`rounded-full border px-3 py-1.5 font-bold ${activePlayerId === currentPlayerId
+                      ? 'border-emerald-400/30 bg-emerald-500/10 text-emerald-200'
+                      : 'border-amber-400/30 bg-amber-500/10 text-amber-200'
+                    }`}>
+                      {activePlayerId === currentPlayerId
+                        ? 'Lượt của bạn'
+                        : `Đang chơi: ${players.find((player) => player.id === activePlayerId)?.name ?? 'người chơi khác'}`}
+                    </span>
+                    <span className="text-slate-300">
+                      Thời gian lượt: {turnDurationSeconds === 0 ? 'không giới hạn' : turnTimeLeft === null ? 'đang đồng bộ…' : `${turnTimeLeft} giây`}
+                    </span>
+                  </div>
+                )}
               </div>
 
               {!isFromHomeScan && !isDirectCardQr && (

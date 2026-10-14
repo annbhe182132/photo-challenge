@@ -13,7 +13,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useGame } from '../../context/GameContext';
+import { useGame } from '../../context/useGame';
 import { apiRequest } from '../../services/api';
 import type { Player } from '../../data/gameData';
 import { sound } from '../../utils/soundEngine';
@@ -27,6 +27,7 @@ interface CreatedRoomResponse {
     roomCode?: string;
     players?: Player[];
   };
+  playerToken?: string;
   message?: string;
 }
 
@@ -38,13 +39,13 @@ const featureCards = [
   },
   {
     icon: Brain,
-    title: 'Chấm Điểm AI Thông Minh',
-    description: 'Thuật toán AI tự động kiểm tra cảm xúc, tư thế và sự đồng bộ của cả nhóm.',
+    title: 'Bình chọn xác thực nhóm',
+    description: 'Người chơi đủ điều kiện cùng đánh giá thử thách; tính năng xác thực AI chưa khả dụng.',
   },
   {
     icon: Crown,
     title: 'Vòng Quay Hình Phạt 🌶️',
-    description: 'Thử thách và hình phạt hài hước tức thì khi điểm số AI dưới mức quy định.',
+    description: 'Nhóm có thể chọn hình phạt vui nhộn khi thử thách không được duyệt.',
   },
 ];
 
@@ -65,9 +66,9 @@ const steps = [
     tag: 'Camera Thử Thách',
   },
   {
-    title: 'AI Chấm Điểm & Phạt',
-    desc: 'AI Vision chấm điểm cảm xúc và tư thế. Đạt yêu cầu nhận thưởng XP, trượt sẽ kích hoạt Vòng Quay Phạt!',
-    tag: 'Trọng Tài AI',
+    title: 'Nhóm bình chọn',
+    desc: 'Người chơi khác bỏ phiếu duyệt hoặc từ chối. AI chưa khả dụng; điểm chỉ được cộng sau khi được duyệt.',
+    tag: 'Xác thực nhóm',
   },
 ];
 
@@ -81,12 +82,57 @@ const particles = Array.from({ length: 16 }, (_, index) => ({
 
 const HomePage = () => {
   const navigate = useNavigate();
-  const { soundEnabled, toggleSound, investorMode, toggleInvestorMode, theme, mode, setRoomCode, setPlayers } = useGame();
+  const {
+    soundEnabled,
+    toggleSound,
+    investorMode,
+    toggleInvestorMode,
+    theme,
+    mode,
+    deviceMode,
+    setDeviceMode,
+    verificationMethod,
+    setVerificationMethod,
+    photoEvidence,
+    setPhotoEvidence,
+    photoBonusEnabled,
+    setPhotoBonusEnabled,
+    setRoomCode,
+    setPlayers,
+    setCurrentPlayerId,
+    setRoomPlayerToken,
+    setCurrentRound,
+    setTotalRounds,
+    totalRounds,
+    turnDurationSeconds,
+    beginLocalGame,
+  } = useGame();
   const [isCreatingRoom, setIsCreatingRoom] = useState(false);
   const [roomError, setRoomError] = useState<string | null>(null);
 
+  const handleSingleDeviceStart = () => {
+    const localRoomCode = `LOCAL-${Date.now().toString().slice(-6)}`;
+    const localPlayers = [
+      { id: 'player-1', name: 'Người chơi 1', avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=player-1', score: 0, streak: 0, badges: ['🏠 Local'] },
+      { id: 'player-2', name: 'Người chơi 2', avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=player-2', score: 0, streak: 0, badges: ['🔥 Ready'] },
+    ];
+    setRoomCode(localRoomCode);
+    beginLocalGame();
+    setPlayers(localPlayers);
+    setCurrentPlayerId(null);
+    setRoomPlayerToken(null);
+    setCurrentRound(1);
+    setTotalRounds(totalRounds);
+    sound.playSuccess();
+    navigate('/lobby', { state: { isHost: true, deviceMode: 'single_device' } });
+  };
+
   // Flow 2: Host Creates Room -> Configure Lobby first -> Pick Card later
   const handleStartGame = async () => {
+    if (deviceMode === 'single_device') {
+      handleSingleDeviceStart();
+      return;
+    }
     sound.playClick();
     setIsCreatingRoom(true);
     setRoomError(null);
@@ -94,17 +140,31 @@ const HomePage = () => {
       const response = await apiRequest<CreatedRoomResponse>('/api/rooms', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ theme: theme.id, mode, hostName: 'Host' }),
+        body: JSON.stringify({
+          theme: theme.id,
+          mode,
+          deviceMode,
+          verificationMethod,
+          photoEvidence,
+          photoBonusEnabled,
+          turnDurationSeconds,
+          totalRounds,
+          hostName: 'Host',
+        }),
       });
       if (
         response.success !== true ||
         !response.data?.roomCode ||
         !Array.isArray(response.data.players)
+        || typeof response.playerToken !== 'string'
       ) {
         throw new Error(response.message || 'Máy chủ không xác nhận được phòng mới.');
       }
       setRoomCode(response.data.roomCode);
       setPlayers(response.data.players);
+      setCurrentPlayerId(response.data.players[0]?.id ?? null);
+      setRoomPlayerToken(response.playerToken);
+      setCurrentRound(1);
       navigate('/lobby', { state: { isHost: true } });
     } catch (error) {
       setRoomError(error instanceof Error
@@ -162,7 +222,7 @@ const HomePage = () => {
           <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 text-xs">
             <div className="flex items-center gap-2 text-cyan-300 font-semibold">
               <Sparkles className="h-4 w-4 animate-spin text-cyan-400" />
-              <span>CHẾ ĐỘ DEMO HỘI ĐỒNG & NHÀ ĐẦU TƯ: Phygital Party Game thế hệ mới kết hợp AI</span>
+              <span>CHẾ ĐỘ DEMO: Trò chơi phygital với xác thực nhóm (AI chưa khả dụng)</span>
             </div>
             <div className="flex items-center gap-3">
               <button
@@ -221,7 +281,7 @@ const HomePage = () => {
             >
               <div className="inline-flex items-center gap-2 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3.5 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm text-cyan-200 backdrop-blur-xl">
                 <Zap className="h-4 w-4 text-amber-400 animate-bounce" />
-                Dự Án Board Game Phygital Đầu Tiên Tại Việt Nam Tích Hợp AI
+                Board Game Phygital · Xác thực bằng bình chọn nhóm
               </div>
 
               <div className="space-y-3 sm:space-y-4">
@@ -232,8 +292,70 @@ const HomePage = () => {
                   </span>
                 </h1>
                 <p className="max-w-xl text-base sm:text-xl text-slate-300 leading-relaxed">
-                  Trò chơi kết hợp <strong className="text-cyan-300 font-bold">Bộ Bài Vật Lý 24 Lá</strong> và <strong className="text-fuchsia-300 font-bold whitespace-nowrap">Web App Nhận Diện AI</strong>. Tạo khoảnh khắc bùng nổ, tương tác nhóm thật & lưu giữ kỉ niệm vô giá!
+                  Trò chơi kết hợp <strong className="text-cyan-300 font-bold">bộ bài vật lý 24 lá</strong> và ứng dụng web để quét mã QR, chụp ảnh, bình chọn nhóm và lưu giữ kỉ niệm.
                 </p>
+              </div>
+
+              <div className="rounded-2xl border border-cyan-500/30 bg-slate-900/60 p-4 shadow-xl shadow-cyan-500/10">
+                <p className="mb-3 text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">Chọn cách chơi</p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {[
+                    { value: 'single_device', label: 'Single-device', description: 'Mọi người cùng một màn hình, lưu local session' },
+                    { value: 'multi_device', label: 'Multi-device', description: 'Host tạo phòng và các người chơi vào qua mã/code' },
+                  ].map((option) => (
+                    <button
+                      key={option.value}
+                      onClick={() => setDeviceMode(option.value as 'single_device' | 'multi_device')}
+                      className={`rounded-2xl border p-3 text-left transition ${deviceMode === option.value ? 'border-cyan-400 bg-cyan-500/15' : 'border-white/10 bg-white/5 hover:bg-white/10'}`}
+                    >
+                      <div className="text-sm font-black text-white">{option.label}</div>
+                      <div className="mt-1 text-[11px] text-slate-300">{option.description}</div>
+                    </button>
+                  ))}
+                </div>
+
+                <div className="mt-4 grid gap-3 md:grid-cols-2">
+                  <div className="rounded-xl border border-white/10 bg-slate-950/60 p-3">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">Xác thực</p>
+                    <div className="mt-2 flex gap-2">
+                      {(['group', 'ai'] as const).map((method) => (
+                        <button
+                          key={method}
+                          onClick={() => { if (method === 'group') setVerificationMethod(method); }}
+                          disabled={method === 'ai'}
+                          title={method === 'ai' ? 'AI verification chưa được tích hợp; chọn Group.' : undefined}
+                          className={`flex-1 rounded-xl px-2 py-2 text-xs font-bold ${verificationMethod === method ? 'bg-cyan-500 text-slate-950' : method === 'ai' ? 'cursor-not-allowed bg-white/5 text-slate-500' : 'bg-white/5 text-slate-200'}`}
+                        >
+                          {method === 'group' ? 'Group' : 'AI (chưa khả dụng)'}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-white/10 bg-slate-950/60 p-3">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">Photo evidence</p>
+                    <div className="mt-2 flex gap-2">
+                      {(['off', 'optional', 'required'] as const).map((value) => (
+                        <button
+                          key={value}
+                          onClick={() => setPhotoEvidence(value)}
+                          className={`flex-1 rounded-xl px-2 py-2 text-[10px] font-bold uppercase ${photoEvidence === value ? 'bg-fuchsia-500 text-white' : 'bg-white/5 text-slate-200'}`}
+                        >
+                          {value}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <label className="mt-3 flex cursor-pointer items-center gap-2 rounded-xl border border-white/10 bg-slate-950/60 p-3 text-xs text-slate-200">
+                    <input
+                      type="checkbox"
+                      checked={photoBonusEnabled}
+                      onChange={(event) => setPhotoBonusEnabled(event.target.checked)}
+                      className="h-4 w-4 accent-fuchsia-500"
+                    />
+                    Thưởng +20 điểm khi gửi ảnh hợp lệ và được duyệt (chỉ khi ảnh không tắt)
+                  </label>
+                </div>
               </div>
 
               <div className="flex flex-col gap-4 sm:flex-row">
@@ -245,7 +367,7 @@ const HomePage = () => {
                   className="group inline-flex items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-violet-600 via-fuchsia-500 to-cyan-500 px-7 py-4 font-bold text-white shadow-2xl shadow-fuchsia-500/30 transition hover:shadow-cyan-500/40 disabled:cursor-wait disabled:opacity-70"
                 >
                   <PlayCircle className="h-6 w-6 transition group-hover:rotate-12" />
-                  {isCreatingRoom ? 'Đang tạo phòng...' : 'Vào Phòng Chơi Phygital'}
+                  {isCreatingRoom ? 'Đang tạo phòng...' : deviceMode === 'single_device' ? 'Bắt đầu local session' : 'Vào Phòng Chơi Phygital'}
                 </motion.button>
                 <motion.button
                   whileHover={{ scale: 1.04, y: -2 }}
@@ -274,7 +396,7 @@ const HomePage = () => {
               <div className="rounded-[1.75rem] border border-white/10 bg-slate-950/80 p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <span className="text-xs font-bold uppercase tracking-wider text-cyan-400">Phòng Demo Trực Tiếp</span>
+                    <span className="text-xs font-bold uppercase tracking-wider text-cyan-400">Giao diện minh họa</span>
                     <p className="text-2xl font-black text-white">ROOM-8899</p>
                   </div>
                   <div className="rounded-full bg-emerald-500/20 border border-emerald-500/40 px-3.5 py-1 text-xs font-bold text-emerald-300 flex items-center gap-1.5">
@@ -295,19 +417,19 @@ const HomePage = () => {
                   </div>
                   <p className="mt-2 text-xs text-slate-300">Cùng 3 người bạn nâng cốc và hô 23 Dzô!</p>
                   <div className="mt-4 flex justify-between text-xs font-semibold text-slate-300">
-                    <span>Độ khớp AI yêu cầu: 85%</span>
-                    <span className="text-amber-400 font-bold">+50 XP</span>
+                    <span>Minh họa · AI chưa khả dụng</span>
+                    <span className="text-amber-400 font-bold">+100 điểm khi được duyệt</span>
                   </div>
                 </div>
 
                 <div className="mt-6 grid grid-cols-2 gap-3">
                   <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                    <p className="text-xs text-slate-400">Công Nghệ AI</p>
-                    <p className="text-lg font-black text-cyan-300">Face & Pose HUD</p>
+                    <p className="text-xs text-slate-400">Xác thực hiện tại</p>
+                    <p className="text-lg font-black text-cyan-300">Bình chọn nhóm</p>
                   </div>
                   <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
                     <p className="text-xs text-slate-400">Vòng Quay Phạt</p>
-                    <p className="text-lg font-black text-amber-400">Tự Động Spin</p>
+                    <p className="text-lg font-black text-amber-400">Nhóm tự chọn</p>
                   </div>
                 </div>
               </div>
@@ -429,7 +551,7 @@ const HomePage = () => {
                   </div>
 
                   <p className="text-xs text-slate-300 leading-relaxed">
-                    Truth or Dare dễ bị bí ý tưởng, gượng gạo và gian lận khi thực hiện thách thức. <strong className="text-white font-semibold">SNAPDECK</strong> có AI trọng tài phân tích biểu cảm & tư thế, đếm ngược tự động và Vòng Quay Hình Phạt cực cay!
+                    Truth or Dare dễ bị bí ý tưởng và gượng gạo. <strong className="text-white font-semibold">SNAPDECK</strong> kết hợp thẻ bài, thử thách ảnh, bình chọn nhóm và Vòng Quay Hình Phạt.
                   </p>
                 </div>
 
@@ -440,7 +562,7 @@ const HomePage = () => {
                   </div>
                   <div className="flex items-center justify-between text-amber-300 font-semibold">
                     <span>SNAPDECK:</span>
-                    <span className="text-emerald-400">AI trọng tài & Vòng quay phạt số</span>
+                    <span className="text-emerald-400">Bình chọn nhóm & Vòng quay phạt số</span>
                   </div>
                 </div>
               </div>

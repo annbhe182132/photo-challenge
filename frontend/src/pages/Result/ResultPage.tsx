@@ -2,19 +2,55 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight, CheckCircle2, Flame, HeartHandshake, PenTool, ShieldAlert, Sparkles, Trophy } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useGame } from '../../context/GameContext';
+import { useGame } from '../../context/useGame';
 import { PUNISHMENTS, type Punishment } from '../../data/gameData';
+import type { Player } from '../../data/gameData';
+import { playerApiRequest } from '../../services/api';
 import { sound } from '../../utils/soundEngine';
+
+interface RoomAdvanceResponse {
+  success: boolean;
+  data?: {
+    players: Player[];
+    currentRound: number;
+    totalRounds: number;
+    status: 'waiting' | 'active' | 'completed';
+  };
+}
 
 const ResultPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { currentRound, setCurrentRound, getCurrentPlayer } = useGame();
+  const {
+    currentRound,
+    getCurrentPlayer,
+    totalRounds,
+    mode,
+    deviceMode,
+    roomCode,
+    currentPlayerId,
+    roomPlayerToken,
+    players,
+    currentTurnIndex,
+    gameStatus,
+    advanceLocalTurn,
+    syncRoom,
+  } = useGame();
 
-  const round = location.state?.round ?? currentRound;
-  const currentPlayer = getCurrentPlayer(round);
-  const passed = location.state?.passed ?? true;
-  const score = location.state?.score ?? (passed ? 96 : 0);
+  const query = new URLSearchParams(location.search);
+  const round = location.state?.round ?? (Number(query.get('round')) || currentRound);
+  const resultPlayerId = location.state?.playerId ?? query.get('playerId');
+  const currentPlayer = players.find((player) => player.id === resultPlayerId) ?? getCurrentPlayer(round);
+  const passed = location.state?.passed ?? query.get('passed') === 'true';
+  const timedOut = location.state?.timedOut === true || query.get('timedOut') === 'true';
+  const skipped = location.state?.skipped === true || query.get('skipped') === 'true';
+  const score = location.state?.score ?? (Number(query.get('score')) || 0);
+  const scoreBreakdown = location.state?.scoreBreakdown as {
+    basePoints: number;
+    photoBonus: number;
+    creativityBonus: number;
+    total: number;
+  } | undefined;
 
   // Penalty Section States
   const [penaltyMode, setPenaltyMode] = useState<'random' | 'custom'>('random');
@@ -23,6 +59,10 @@ const ResultPage = () => {
   const [customPenaltyTitle, setCustomPenaltyTitle] = useState('');
   const [customPenaltyDesc, setCustomPenaltyDesc] = useState('');
   const [customApplied, setCustomApplied] = useState(false);
+  const [progressError, setProgressError] = useState<string | null>(null);
+  const [advancing, setAdvancing] = useState(false);
+  const [showRoundSummary, setShowRoundSummary] = useState(false);
+  const [showFinalSummary, setShowFinalSummary] = useState(false);
 
   const handleSpinWheel = () => {
     if (spinning) return;
@@ -62,13 +102,55 @@ const ResultPage = () => {
     setCustomApplied(true);
   };
 
-  const handleNextRound = () => {
+  const handleNextRound = async () => {
+    if (advancing) return;
     sound.playClick();
-    if (round < 3) {
-      setCurrentRound(round + 1);
-      navigate('/scan');
-    } else {
-      navigate('/leaderboard');
+    if (showRoundSummary) {
+      navigate(showFinalSummary ? '/leaderboard' : '/scan', { state: { round: currentRound } });
+      return;
+    }
+    setAdvancing(true);
+    setProgressError(null);
+    try {
+      if (deviceMode === 'multi_device') {
+        if (!currentPlayerId) throw new Error('Không xác định được người chơi trong phòng.');
+        const response = await playerApiRequest<RoomAdvanceResponse>(
+          roomPlayerToken,
+          `/api/rooms/${encodeURIComponent(roomCode)}/advance`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ playerId: currentPlayerId, round }),
+          }
+        );
+        if (!response.success || !response.data) throw new Error('Máy chủ không đồng bộ được vòng tiếp theo.');
+        syncRoom(response.data);
+        if (response.data.status === 'completed') {
+          setShowRoundSummary(true);
+          setShowFinalSummary(true);
+          return;
+        }
+        if (response.data.currentRound > round) {
+          setShowRoundSummary(true);
+          return;
+        }
+      } else {
+        const transition = advanceLocalTurn(timedOut ? 'timed_out' : skipped ? 'skipped' : passed ? 'completed' : 'failed');
+        if (transition.completed) {
+          setShowRoundSummary(true);
+          setShowFinalSummary(true);
+          return;
+        }
+        if (transition.roundChanged) {
+          setShowRoundSummary(true);
+          return;
+        }
+      }
+      navigate('/scan', { state: { round: currentRound } });
+    } catch (error) {
+      setProgressError(error instanceof Error ? error.message : 'Không thể tiến sang vòng tiếp theo.');
+    } finally {
+      setAdvancing(false);
     }
   };
 
@@ -122,43 +204,58 @@ const ResultPage = () => {
                   className={`inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-bold ${passed ? 'border-cyan-500/30 bg-cyan-500/10 text-cyan-300' : 'border-red-500/30 bg-red-500/10 text-red-300'
                     }`}
                 >
-                  <Sparkles size={14} /> HOÀN THÀNH VÒNG {round} / 3
+                  <Sparkles size={14} /> KẾT QUẢ VÒNG {round} / {totalRounds || '∞'}
                 </span>
                 <h1 className="mt-3 text-3xl font-black text-white sm:text-4xl">
-                  {passed ? `Xuất Sắc! ${currentPlayer.name} Thắng Thử Thách` : `💥 ${currentPlayer.name.toUpperCase()} HẾT THỜI GIAN CHỤP ÁNH!`}
+                  {timedOut
+                    ? `${currentPlayer.name} đã hết thời gian`
+                    : skipped
+                      ? `${currentPlayer.name} đã bỏ qua lượt`
+                    : passed
+                      ? `${currentPlayer.name} hoàn thành thử thách!`
+                      : `Nhóm chưa duyệt thử thách của ${currentPlayer.name}`}
                 </h1>
                 <p className="mt-1 text-sm text-slate-300">
-                  {passed
-                    ? `${currentPlayer.name} cùng cả nhóm đã phối hợp tạo dáng ăn ý và được AI xác nhận!`
-                    : `Đồng hồ đếm ngược đã về 0. ${currentPlayer.name} phải thực hiện Vòng Quay Hình Phạt!`}
+                  {timedOut || skipped
+                    ? 'Lượt này không được cộng điểm hoàn thành.'
+                    : passed
+                      ? 'Kết quả được nhóm người chơi khác chấp thuận. Không có phân tích ảnh AI.'
+                      : 'Phiếu đồng ý không thể đạt ngưỡng hai phần ba. Thử thách này không bị trừ điểm.'}
                 </p>
               </div>
 
-              {/* Passed vs Timeout Layout */}
+              {/* Passed vs rejected layout */}
               {passed ? (
                 /* Success Layout */
-                <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
                   <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                    <div className="text-xs text-slate-400 font-bold uppercase">ĐIỂM AI MATCH</div>
-                    <div className="text-3xl font-black text-cyan-300 mt-1">{score} / 100</div>
+                    <div className="text-xs text-slate-400 font-bold uppercase">ĐIỂM CƠ BẢN</div>
+                    <div className="text-3xl font-black text-cyan-300 mt-1">+{scoreBreakdown?.basePoints ?? score}</div>
                   </div>
 
                   <div className="rounded-2xl border border-fuchsia-500/40 bg-fuchsia-500/15 p-4">
-                    <div className="text-xs text-fuchsia-300 font-bold uppercase">CỘNG XP CHO {currentPlayer.name.toUpperCase()}</div>
-                    <div className="text-3xl font-black text-amber-400 mt-1">+{score * 2} XP</div>
+                    <div className="text-xs text-fuchsia-300 font-bold uppercase">TỔNG ĐIỂM ĐƯỢC DUYỆT</div>
+                    <div className="text-3xl font-black text-amber-400 mt-1">+{score}</div>
+                  </div>
+                  </div>
+                  <div className="rounded-xl border border-white/10 bg-slate-950/60 p-3 text-left text-sm text-slate-300">
+                    Điểm cơ bản: {scoreBreakdown?.basePoints ?? score}
+                    {' · '}Thưởng ảnh: {scoreBreakdown?.photoBonus ?? 0}
+                    {' · '}Thưởng sáng tạo: {scoreBreakdown?.creativityBonus ?? 0}
                   </div>
                 </div>
-              ) : (
+              ) : !timedOut && !skipped && mode === 'spicy' ? (
                 /* Timeout / Penalty Screen Layout */
                 <div className="rounded-3xl border border-red-500/40 bg-red-950/30 p-6 space-y-6 text-left">
                   {/* Mode Selector Header */}
                   <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4">
                     <div>
                       <h3 className="text-xl font-black text-white flex items-center gap-2">
-                        <Flame className="text-fuchsia-400 animate-bounce" /> Màn Hình Áp Dụng Hình Phạt 🌶️
+                        <Flame className="text-fuchsia-400 animate-bounce" /> Hoạt động vui tùy chọn 🌶️
                       </h3>
                       <p className="text-xs text-slate-300 mt-0.5">
-                        Do không hoàn thành chụp ảnh đúng giờ, người thua/nhóm chơi phải chịu hình phạt.
+                        Không có điểm bị trừ. Nhóm có thể bỏ qua hoặc tự chọn một hoạt động vui.
                       </p>
                     </div>
 
@@ -306,32 +403,51 @@ const ResultPage = () => {
                     </p>
                   </div>
                 </div>
+              ) : timedOut || skipped ? (
+                <div className="rounded-2xl border border-red-400/25 bg-red-500/10 p-4 text-sm text-red-100">
+                  Điểm thưởng lượt này: <strong>0 XP</strong>. Ván chơi tiếp tục theo đúng thứ tự người chơi.
+                </div>
+              ) : null}
+
+              {showRoundSummary && (
+                <section className="rounded-2xl border border-amber-400/30 bg-amber-500/10 p-4 text-left">
+                  <h2 className="text-lg font-black text-amber-200">
+                    {showFinalSummary ? 'Tổng kết cuối ván' : `Tổng kết vòng ${round}`}
+                  </h2>
+                  <p className="mt-1 text-xs text-slate-300">Bảng điểm cộng dồn sau khi mọi người đã hoàn thành lượt trong vòng này.</p>
+                  <ol className="mt-3 space-y-2">
+                    {[...players].sort((a, b) => b.score - a.score).map((player, index) => (
+                      <li key={player.id} className="flex items-center justify-between rounded-xl bg-slate-950/50 px-3 py-2 text-sm">
+                        <span className="font-semibold text-white">{index + 1}. {player.name}</span>
+                        <span className="font-black text-cyan-300">{player.score} XP</span>
+                      </li>
+                    ))}
+                  </ol>
+                </section>
               )}
 
               {/* Action Buttons */}
               <div className="pt-4">
                 <div className={`grid gap-3 ${passed ? 'grid-cols-1' : 'sm:grid-cols-2'}`}>
-                  {!passed && (
-                    <button
-                      onClick={() => {
-                        sound.playClick();
-                        navigate('/scan');
-                      }}
-                      className="flex items-center justify-center gap-2 rounded-2xl border border-white/15 bg-white/10 py-4 font-bold text-white transition hover:bg-white/20"
-                    >
-                      Thử Lại Vòng Này
-                    </button>
-                  )}
-
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={handleNextRound}
-                    className="w-full flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 via-fuchsia-500 to-cyan-500 py-4 font-black text-white shadow-xl shadow-fuchsia-500/30"
+                    disabled={advancing}
+                    className="w-full flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 via-fuchsia-500 to-cyan-500 py-4 font-black text-white shadow-xl shadow-fuchsia-500/30 disabled:opacity-60"
                   >
-                    {round < 3 ? `Chuyển Sang Vòng ${round + 1}` : 'Xem Bảng Xếp Hạng Top 1'} <ArrowRight size={18} />
+                    {advancing
+                      ? 'Đang đồng bộ…'
+                      : showRoundSummary
+                        ? showFinalSummary ? 'Xem bảng xếp hạng cuối ván' : `Bắt đầu vòng ${currentRound}`
+                        : gameStatus === 'completed' || (deviceMode === 'single_device' && totalRounds > 0 && currentTurnIndex + 1 >= totalRounds * players.length)
+                          ? 'Xem bảng xếp hạng'
+                          : currentRound > round
+                            ? `Tổng kết vòng ${round}`
+                            : `Chuyển lượt · vòng ${round}`} <ArrowRight size={18} />
                   </motion.button>
                 </div>
+                {progressError && <p role="alert" className="mt-3 rounded-xl border border-red-400/40 bg-red-500/10 p-3 text-sm text-red-200">{progressError}</p>}
               </div>
             </motion.div>
           </div>

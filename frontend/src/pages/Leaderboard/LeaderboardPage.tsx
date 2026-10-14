@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { ArrowLeft, Crown, PlayCircle, Share2, Trophy } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useGame } from '../../context/GameContext';
+import { useGame } from '../../context/useGame';
 import { sound } from '../../utils/soundEngine';
 
 const LeaderboardPage = () => {
@@ -13,6 +13,7 @@ const LeaderboardPage = () => {
   const top2 = sorted[1];
   const top3 = sorted[2];
   const others = sorted.slice(3);
+  const tiedForFirst = Boolean(top1 && top2 && top1.score === top2.score);
 
   const handlePlayAgain = () => {
     sound.playClick();
@@ -36,14 +37,15 @@ const LeaderboardPage = () => {
             </button>
 
             <div className="flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-4 py-1.5 text-xs font-bold text-amber-300">
-              <Trophy size={14} className="text-amber-400" /> BẢNG XẾP HẠNG CHAMPION
+              <Trophy size={14} className="text-amber-400" /> {tiedForFirst ? 'KẾT QUẢ HÒA ĐIỂM' : 'BẢNG XẾP HẠNG CHAMPION'}
             </div>
           </div>
 
           <div className="my-auto py-8 space-y-8">
             <div className="text-center space-y-2">
-              <h1 className="text-4xl font-black text-white sm:text-5xl">Vinh Danh Người Chơi MVP</h1>
+              <h1 className="text-4xl font-black text-white sm:text-5xl">{tiedForFirst ? 'Đồng Hạng MVP' : 'Vinh Danh Người Chơi MVP'}</h1>
               <p className="text-sm text-slate-300">Tổng kết điểm số & huy hiệu qua các vòng chơi Phygital SNAPDECK</p>
+              {tiedForFirst && <p className="text-sm font-semibold text-amber-200">Nhiều người chơi cùng đạt điểm cao nhất; ván chơi được công nhận hòa.</p>}
             </div>
 
             {/* 3D Podium for Top 3 */}
@@ -54,7 +56,7 @@ const LeaderboardPage = () => {
                   <div className="relative mb-2">
                     <img src={top2.avatar} alt={top2.name} className="h-12 w-12 sm:h-16 sm:w-16 rounded-full border-2 border-slate-300 object-cover shadow-lg" />
                     <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 rounded-full bg-slate-400 px-1.5 sm:px-2 py-0.5 text-[9px] sm:text-[10px] font-black text-slate-950 whitespace-nowrap">
-                      🥈 2ND
+                      {tiedForFirst ? '🤝 ĐỒNG HẠNG 1' : '🥈 2ND'}
                     </span>
                   </div>
                   <div className="w-full rounded-t-2xl border border-slate-400/30 bg-slate-800/80 p-2 sm:p-4 text-center h-28 sm:h-36 flex flex-col justify-center">
@@ -71,7 +73,7 @@ const LeaderboardPage = () => {
                     <Crown className="h-6 w-6 sm:h-8 sm:w-8 text-amber-400 absolute -top-6 sm:-top-8 left-1/2 -translate-x-1/2 animate-bounce" />
                     <img src={top1.avatar} alt={top1.name} className="h-16 w-16 sm:h-20 sm:w-20 rounded-full border-4 border-amber-400 object-cover shadow-2xl shadow-amber-500/30" />
                     <span className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 rounded-full bg-amber-400 px-2 sm:px-3 py-0.5 text-[10px] sm:text-xs font-black text-slate-950 shadow-lg whitespace-nowrap">
-                      👑 1ST MVP
+                      {tiedForFirst ? '🤝 ĐỒNG HẠNG 1' : '👑 1ST MVP'}
                     </span>
                   </div>
                   <div className="w-full rounded-t-2xl border border-amber-400/40 bg-gradient-to-b from-amber-950/60 to-slate-900 p-2 sm:p-4 text-center h-36 sm:h-48 flex flex-col justify-center">

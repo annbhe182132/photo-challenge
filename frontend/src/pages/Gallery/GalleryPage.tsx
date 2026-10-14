@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowLeft, ChevronRight, Copy, Download, Image as ImageIcon, Layers, Share2, Sparkles, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useGame, type GalleryAlbum, type GalleryPhoto } from '../../context/GameContext';
+import type { GalleryAlbum, GalleryPhoto } from '../../context/GameContext';
+import { useGame } from '../../context/useGame';
+import { playerApiRequest } from '../../services/api';
 import { sound } from '../../utils/soundEngine';
 
 // Authentic Vector SVG Brand Logos
@@ -60,11 +62,41 @@ const NativeShareIcon = () => (
 
 const GalleryPage = () => {
   const navigate = useNavigate();
-  const { albums } = useGame();
+  const { albums, setAlbums, deviceMode, roomCode, currentPlayerId, roomPlayerToken, theme } = useGame();
 
   const [selectedAlbum, setSelectedAlbum] = useState<GalleryAlbum | null>(null);
   const [selectedPhoto, setSelectedPhoto] = useState<GalleryPhoto | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [galleryError, setGalleryError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (deviceMode !== 'multi_device' || !currentPlayerId) return;
+    let cancelled = false;
+    void playerApiRequest<{ success: boolean; data?: GalleryPhoto[] }>(
+      roomPlayerToken,
+      `/api/rooms/${encodeURIComponent(roomCode)}/gallery?playerId=${encodeURIComponent(currentPlayerId)}`
+    ).then((response) => {
+      if (cancelled || !response.success || !response.data) return;
+      const photos = response.data;
+      const syncedAlbum: GalleryAlbum = {
+        id: `room-${roomCode}`,
+        roomCode,
+        themeName: theme.name,
+        themeIcon: theme.icon,
+        date: new Date().toLocaleDateString('vi-VN'),
+        coverImage: photos[0]?.image ?? '',
+        photos,
+      };
+      setAlbums((previous) => [
+        syncedAlbum,
+        ...previous.filter((album) => album.roomCode !== roomCode),
+      ]);
+      setGalleryError(null);
+    }).catch((error: unknown) => {
+      if (!cancelled) setGalleryError(error instanceof Error ? error.message : 'Không thể đồng bộ thư viện phòng.');
+    });
+    return () => { cancelled = true; };
+  }, [currentPlayerId, deviceMode, roomCode, roomPlayerToken, setAlbums, theme.icon, theme.name]);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -84,14 +116,14 @@ const GalleryPage = () => {
   // Social Share Handlers
   const handleShareFacebook = (photo: GalleryPhoto) => {
     sound.playClick();
-    const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.origin)}&quote=${encodeURIComponent(`Khoảnh khắc ván chơi SNAPDECK - "${photo.cardTitle}" đạt ${photo.score}% AI Match!`)}`;
+    const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.origin)}&quote=${encodeURIComponent(`Khoảnh khắc ván chơi SNAPDECK - "${photo.cardTitle}" nhận ${photo.score} điểm!`)}`;
     window.open(shareUrl, '_blank', 'width=600,height=400');
     showToast('Đã mở cửa sổ chia sẻ lên Facebook!');
   };
 
   const handleShareTwitter = (photo: GalleryPhoto) => {
     sound.playClick();
-    const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(`📸 Khoảnh khắc đỉnh cao tại SNAPDECK! Bài thử thách: "${photo.cardTitle}" đạt ${photo.score}% AI Match! #SNAPDECK #Phygital`)}&url=${encodeURIComponent(window.location.origin)}`;
+    const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(`📸 Khoảnh khắc đỉnh cao tại SNAPDECK! Bài thử thách: "${photo.cardTitle}" nhận ${photo.score} điểm! #SNAPDECK #Phygital`)}&url=${encodeURIComponent(window.location.origin)}`;
     window.open(shareUrl, '_blank', 'width=600,height=400');
     showToast('Đã mở cửa sổ chia sẻ lên Twitter / X!');
   };
@@ -116,7 +148,7 @@ const GalleryPage = () => {
 
   const handleCopyLink = (photo: GalleryPhoto) => {
     sound.playClick();
-    const link = `${window.location.origin}/gallery?photo=${photo.id}`;
+    const link = `${window.location.origin}${window.location.pathname}#/gallery?photo=${photo.id}`;
     navigator.clipboard.writeText(link);
     showToast('✓ Đã sao chép liên kết ảnh kỉ niệm!');
   };
@@ -127,7 +159,7 @@ const GalleryPage = () => {
       try {
         await navigator.share({
           title: `SNAPDECK - ${photo.cardTitle}`,
-          text: `Khoảnh khắc kỉ niệm ván chơi SNAPDECK! AI Match: ${photo.score}%`,
+          text: `Khoảnh khắc kỉ niệm ván chơi SNAPDECK! Điểm thử thách: ${photo.score}`,
           url: window.location.href,
         });
         showToast('Chia sẻ hệ thống thành công!');
@@ -156,6 +188,11 @@ const GalleryPage = () => {
 
       <div className="relative isolate min-h-screen overflow-hidden">
         <div className="relative z-10 mx-auto flex min-h-screen max-w-6xl flex-col px-6 py-8">
+          {galleryError && (
+            <p role="alert" className="mb-4 rounded-xl border border-amber-400/40 bg-amber-500/10 p-3 text-sm text-amber-200">
+              {galleryError}
+            </p>
+          )}
           {/* Header */}
           <div className="flex items-center justify-between">
             <button
@@ -255,7 +292,7 @@ const GalleryPage = () => {
                             Vòng {photo.round}
                           </div>
                           <div className="absolute top-2 right-2 rounded-full bg-emerald-500/80 px-2.5 py-0.5 text-[10px] font-black text-slate-950">
-                            AI: {photo.score}%
+                            {photo.score} điểm
                           </div>
                         </div>
 
@@ -300,7 +337,7 @@ const GalleryPage = () => {
                     <img src={selectedPhoto.image} alt="Story" className="h-full w-full object-cover" />
                     <div className="absolute bottom-3 left-3 right-3 rounded-xl bg-slate-950/85 border border-white/10 p-2.5 backdrop-blur-xl text-center">
                       <div className="text-xs font-bold text-cyan-300">{selectedPhoto.cardTitle}</div>
-                      <div className="text-xs text-emerald-400 font-black mt-0.5">AI MATCH SCORE: {selectedPhoto.score}%</div>
+                      <div className="text-xs text-emerald-400 font-black mt-0.5">ĐIỂM THỬ THÁCH: {selectedPhoto.score}</div>
                     </div>
                   </div>
 

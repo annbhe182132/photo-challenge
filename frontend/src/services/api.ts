@@ -29,3 +29,14 @@ export const apiRequest = async <T>(path: string, options?: RequestInit): Promis
 
   return data as T;
 };
+
+export const playerApiRequest = <T>(
+  playerToken: string | null,
+  path: string,
+  options?: RequestInit,
+): Promise<T> => {
+  if (!playerToken) return Promise.reject(new Error('Phiên người chơi đã hết hạn. Hãy tham gia lại phòng.'));
+  const headers = new Headers(options?.headers);
+  headers.set('X-Player-Token', playerToken);
+  return apiRequest<T>(path, { ...options, headers });
+};

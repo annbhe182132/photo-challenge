@@ -54,7 +54,7 @@ const pressArticles = [
   {
     publisher: 'Forbes Asia',
     date: '20/07/2026',
-    title: 'Giải mã sức hút của Boardgame tích hợp công nghệ AI Vision tại Đông Nam Á',
+    title: 'Giải mã sức hút của Boardgame Phygital tương tác nhóm tại Đông Nam Á',
     summary: 'Khác biệt hoàn toàn so với UNO hay Ma Sói, SNAPDECK duy trì tỉ lệ tương tác nhóm thực tế lên đến 88.4%.',
     link: 'https://www.forbes.com',
     badge: 'Tạp Chí Tài Chính Quốc Tế',
@@ -175,13 +175,13 @@ const AdminPage = () => {
             className="rounded-2xl border border-amber-500/30 bg-gradient-to-br from-amber-950/40 via-slate-900/60 to-slate-950/80 p-5 backdrop-blur-xl shadow-xl"
           >
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-amber-400">Độ Chính Xác AI</span>
+              <span className="text-xs font-bold uppercase tracking-wider text-amber-400">Tình trạng AI</span>
               <div className="rounded-xl bg-amber-500/20 p-2.5 text-amber-300">
                 <BrainCircuit size={20} />
               </div>
             </div>
-            <div className="mt-4 text-3xl font-black text-white">98.4% Match</div>
-            <div className="mt-1 text-xs text-slate-400">Model: Face & Pose Mesh v2</div>
+            <div className="mt-4 text-3xl font-black text-white">Chưa kết nối</div>
+            <div className="mt-1 text-xs text-slate-400">Chưa kết nối dịch vụ phân tích AI</div>
           </motion.div>
 
           <motion.div
@@ -368,11 +368,15 @@ const AdminPage = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                    <Bot className="text-fuchsia-400" /> Cấu Hình Thuật Toán AI Verification
+                    <Bot className="text-fuchsia-400" /> Bản mô phỏng cấu hình AI
                   </h3>
                   <p className="text-xs text-slate-400 mt-1">
-                    Tùy chỉnh độ nhạy và tiêu chuẩn điểm số AI trước khi đưa vào sản xuất thương mại.
+                    AI chưa khả dụng. Các tham số bên dưới chỉ minh họa giao diện và không ảnh hưởng đến ván chơi.
                   </p>
+                </div>
+
+                <div role="status" className="rounded-xl border border-amber-400/40 bg-amber-500/10 p-3 text-sm text-amber-100">
+                  Chưa kết nối dịch vụ phân tích ảnh thật. Ván chơi hiện chỉ hỗ trợ bình chọn nhóm.
                 </div>
 
                 {/* Glowing Lightbulb Button */}
@@ -407,18 +411,8 @@ const AdminPage = () => {
                   </div>
 
                   <div className="text-xs text-slate-300 leading-relaxed space-y-2">
-                    <p>
-                      💡 **1. Cân bằng theo Môi trường Ánh sáng (Environment Calibration)**:
-                      Khi chơi tại không gian tối (Quán Bar/Karaoke), Admin có thể hạ nhẹ ngưỡng Pass Threshold (65-70%) để AI châm chước do thiếu sáng. Ngoài trời nắng sáng có thể tăng lên 85-90%.
-                    </p>
-                    <p>
-                      🎯 **2. Cân bằng Độ khó theo Loại Sự Kiện (Difficulty Balance)**:
-                      Tiệc gia đình/trẻ em cần không khí vui vẻ (ngưỡng 70%), trong khi Giải đấu Teambuilding Doanh nghiệp đòi hỏi kỷ luật cao (ngưỡng 90%).
-                    </p>
-                    <p>
-                      💼 **3. Giá trị Thương mại B2B SaaS**:
-                      Giúp dự án bán được gói WebApp Premium cho các Event Agency tùy biến tiêu chuẩn cho từng hợp đồng sự kiện lớn.
-                    </p>
+                    <p>Các thanh điều chỉnh ở trang này chỉ là bản minh họa. Không có mô hình AI hoặc ngưỡng chấm ảnh nào đang chạy hay được lưu.</p>
+                    <p>Ván chơi hiện sử dụng bình chọn nhóm; các phiếu hợp lệ và điểm số được xử lý theo quy tắc của phòng.</p>
                   </div>
                 </motion.div>
               )}
@@ -433,8 +427,9 @@ const AdminPage = () => {
                   min="50"
                   max="95"
                   value={aiThreshold}
+                  disabled
                   onChange={(e) => setAiThreshold(Number(e.target.value))}
-                  className="w-full accent-cyan-400 cursor-pointer"
+                  className="w-full cursor-not-allowed accent-cyan-400"
                 />
                 <p className="text-xs text-slate-400 mt-1">Nếu điểm ảnh bên dưới {aiThreshold}%, hệ thống tự động kích hoạt Vòng Quay Hình Phạt.</p>
               </div>
@@ -449,8 +444,9 @@ const AdminPage = () => {
                   min="40"
                   max="100"
                   value={poseWeight}
+                  disabled
                   onChange={(e) => setPoseWeight(Number(e.target.value))}
-                  className="w-full accent-fuchsia-400 cursor-pointer"
+                  className="w-full cursor-not-allowed accent-fuchsia-400"
                 />
               </div>
 
@@ -464,46 +460,44 @@ const AdminPage = () => {
                   min="40"
                   max="100"
                   value={expressionWeight}
+                  disabled
                   onChange={(e) => setExpressionWeight(Number(e.target.value))}
-                  className="w-full accent-amber-400 cursor-pointer"
+                  className="w-full cursor-not-allowed accent-amber-400"
                 />
               </div>
 
               <button
-                onClick={() => {
-                  sound.playSuccess();
-                  alert('Đã cập nhật tham số AI Model thành công!');
-                }}
-                className="w-full rounded-2xl bg-gradient-to-r from-fuchsia-600 to-purple-600 py-3.5 text-sm font-bold text-white shadow-lg shadow-fuchsia-500/20"
+                disabled
+                className="w-full cursor-not-allowed rounded-2xl bg-slate-700 py-3.5 text-sm font-bold text-slate-400"
               >
                 Lưu Cấu Hình Thuật Toán
               </button>
             </div>
 
             <div className="rounded-3xl border border-white/15 bg-slate-900/60 p-6 backdrop-blur-xl space-y-4">
-              <h3 className="text-xl font-bold text-white">Mô Hình AI Đang Sử Dụng</h3>
+              <h3 className="text-xl font-bold text-white">Trạng thái tích hợp AI</h3>
               <div className="rounded-2xl border border-cyan-500/20 bg-cyan-950/20 p-4 space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-bold text-cyan-300">FaceMesh Detection</span>
-                  <span className="text-xs text-emerald-400 font-bold">● Active (68 Landmarks)</span>
+                  <span className="text-sm font-bold text-cyan-300">Phân tích khuôn mặt</span>
+                  <span className="text-xs text-amber-300 font-bold">● Chưa kết nối</span>
                 </div>
-                <p className="text-xs text-slate-300">Nhận diện điểm mắt, miệng và cảm xúc biểu cảm khuôn mặt real-time.</p>
+                <p className="text-xs text-slate-300">Chưa có bộ phân tích khuôn mặt được tích hợp.</p>
               </div>
 
               <div className="rounded-2xl border border-fuchsia-500/20 bg-fuchsia-950/20 p-4 space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-bold text-fuchsia-300">PoseNet Action Estimator</span>
-                  <span className="text-xs text-emerald-400 font-bold">● Active (17 Keypoints)</span>
+                  <span className="text-sm font-bold text-fuchsia-300">Phân tích tư thế</span>
+                  <span className="text-xs text-amber-300 font-bold">● Chưa kết nối</span>
                 </div>
-                <p className="text-xs text-slate-300">Phân tích cử chỉ nhóm, chiều cao nhảy, trạng thái ôm và chạm ly.</p>
+                <p className="text-xs text-slate-300">Chưa có bộ phân tích tư thế được tích hợp.</p>
               </div>
 
               <div className="rounded-2xl border border-amber-500/20 bg-amber-950/20 p-4 space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-bold text-amber-300">Group Sync Algorithm</span>
-                  <span className="text-xs text-emerald-400 font-bold">● Active</span>
+                  <span className="text-sm font-bold text-amber-300">Bình chọn nhóm</span>
+                  <span className="text-xs text-emerald-400 font-bold">● Dùng bình chọn nhóm</span>
                 </div>
-                <p className="text-xs text-slate-300">Tính toán sự đồng bộ và hài hòa của toàn bộ thành viên trong khung hình.</p>
+                <p className="text-xs text-slate-300">Người chơi đủ điều kiện bỏ phiếu; đạt ngưỡng hai phần ba để duyệt.</p>
               </div>
             </div>
           </div>

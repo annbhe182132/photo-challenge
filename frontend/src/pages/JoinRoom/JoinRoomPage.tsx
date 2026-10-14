@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Camera, LoaderCircle, RotateCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useGame } from '../../context/GameContext';
+import { useGame } from '../../context/useGame';
 import type { Player } from '../../data/gameData';
 import { apiRequest } from '../../services/api';
 import { sound } from '../../utils/soundEngine';
@@ -14,11 +14,24 @@ interface CreatedRoomResponse {
     roomCode?: string;
     players?: Player[];
   };
+  playerToken?: string;
 }
 
 export default function JoinRoomPage() {
   const navigate = useNavigate();
-  const { theme, mode, setRoomCode, setPlayers } = useGame();
+  const {
+    theme,
+    mode,
+    deviceMode,
+    verificationMethod,
+    photoEvidence,
+    photoBonusEnabled,
+    setRoomCode,
+    setPlayers,
+    setCurrentPlayerId,
+    setRoomPlayerToken,
+    setCurrentRound,
+  } = useGame();
   const startedRef = useRef(false);
   const [error, setError] = useState('');
 
@@ -28,15 +41,26 @@ export default function JoinRoomPage() {
       const response = await apiRequest<CreatedRoomResponse>('/api/rooms', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ theme: theme.id, mode, hostName: 'Host' }),
+        body: JSON.stringify({
+          theme: theme.id,
+          mode,
+          deviceMode,
+          verificationMethod,
+          photoEvidence,
+          photoBonusEnabled,
+          hostName: 'Host',
+        }),
       });
 
-      if (!response.success || !response.data?.roomCode || !Array.isArray(response.data.players)) {
+      if (!response.success || !response.data?.roomCode || !Array.isArray(response.data.players) || typeof response.playerToken !== 'string') {
         throw new Error(response.message || 'Máy chủ chưa tạo được phòng mới.');
       }
 
       setRoomCode(response.data.roomCode);
       setPlayers(response.data.players);
+      setCurrentPlayerId(response.data.players[0]?.id ?? null);
+      setRoomPlayerToken(response.playerToken);
+      setCurrentRound(1);
       sound.playSuccess();
       navigate('/lobby', { replace: true, state: { isHost: true, createdFromFixedQR: true } });
     } catch (e) {

@@ -142,14 +142,14 @@ export const downloadBoxQrBadge = async () => {
   <rect x="70" y="40" width="460" height="52" rx="26" fill="#0f172a"/>
   <text x="300" y="73" font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="900" fill="#38bdf8" text-anchor="middle" letter-spacing="3">SNAPDECK</text>
   <text x="300" y="132" font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="26" font-weight="900" fill="#0f172a" text-anchor="middle">QUÉT MÃ VÀO WEB APP CHƠI NGAY</text>
-  <text x="300" y="162" font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="600" fill="#64748b" text-anchor="middle">Trải nghiệm Board Game Phygital kết hợp Trí Tuệ Nhân Tạo (AI)</text>
+  <text x="300" y="162" font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="600" fill="#64748b" text-anchor="middle">Board Game Phygital với xác thực bằng bình chọn nhóm</text>
   <rect x="90" y="185" width="420" height="420" rx="28" fill="#ffffff" stroke="#cbd5e1" stroke-width="3"/>
   <svg x="110" y="205" width="380" height="380" viewBox="${viewBox}">
     ${qrInner}
   </svg>
   <text x="300" y="640" font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="700" fill="#0284c7" text-anchor="middle">👉 annbhe182132.github.io/photo-challenge/</text>
   <text x="300" y="670" font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="600" fill="#334155" text-anchor="middle">Mở camera điện thoại quét mã • Không cần tải ứng dụng</text>
-  <text x="300" y="698" font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#94a3b8" text-anchor="middle">Bộ bài 24 lá vật lý + WebApp AI • Bản quyền © 2026 SNAPDECK</text>
+  <text x="300" y="698" font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#94a3b8" text-anchor="middle">Bộ bài 24 lá vật lý + WebApp bình chọn nhóm • AI chưa khả dụng</text>
 </svg>`;
 
   const blob = new Blob([badgeSvg], { type: 'image/svg+xml;charset=utf-8' });
@@ -212,4 +212,3 @@ const escapeXml = (value: string) => value.replace(/[<>&'"]/g, (character) => ({
   "'": '&apos;',
   '"': '&quot;',
 }[character] ?? character));
-

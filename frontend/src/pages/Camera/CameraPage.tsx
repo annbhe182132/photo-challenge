@@ -2,9 +2,12 @@ import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { AlertTriangle, ArrowLeft, Camera, Check, RotateCcw, SwitchCamera, Upload } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useGame } from '../../context/GameContext';
+import { useGame } from '../../context/useGame';
+import type { Player } from '../../data/gameData';
+import { playerApiRequest } from '../../services/api';
+import { apiRequest } from '../../services/api';
 import { sound } from '../../utils/soundEngine';
-import { isInAppBrowser } from '../ScanQR/ScanQRPage';
+import { isInAppBrowser } from '../../utils/browser';
 
 type CameraStatus = 'idle' | 'requesting' | 'live' | 'error';
 
@@ -47,7 +50,21 @@ const stopStream = (stream: MediaStream) => {
 const CameraPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { activeCard, currentRound, getCurrentPlayer, addPhotoToCurrentAlbum } = useGame();
+  const {
+    activeCard,
+    currentRound,
+    getCurrentPlayer,
+    deviceMode,
+    photoEvidence,
+    roomCode,
+    currentPlayerId,
+    roomPlayerToken,
+    addLocalSubmission,
+    turnDeadline,
+    turnDurationSeconds,
+    currentTurnIndex,
+    syncRoom,
+  } = useGame();
 
   const round = location.state?.round ?? currentRound;
   const currentPlayer = getCurrentPlayer(round);
@@ -63,10 +80,12 @@ const CameraPage = () => {
   const [canSwitchCamera, setCanSwitchCamera] = useState(false);
   const [currentDeviceId, setCurrentDeviceId] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState(captureTime);
+  const [turnTimeLeft, setTurnTimeLeft] = useState<number | null>(null);
   const [captured, setCaptured] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [flash, setFlash] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
+  const timeoutHandledRef = useRef(false);
 
   const stopCamera = () => {
     const stream = streamRef.current;
@@ -79,6 +98,73 @@ const CameraPage = () => {
     requestIdRef.current += 1;
     stopCamera();
   }, []);
+
+  useEffect(() => {
+    if (!turnDeadline) {
+      return undefined;
+    }
+    let cancelled = false;
+    const updateTurnTimer = async () => {
+      const remaining = Math.max(0, Math.ceil((new Date(turnDeadline).getTime() - Date.now()) / 1000));
+      setTurnTimeLeft(remaining);
+      if (remaining !== 0 || timeoutHandledRef.current) return;
+      timeoutHandledRef.current = true;
+      requestIdRef.current += 1;
+      stopCamera();
+      if (deviceMode === 'single_device') {
+        navigate('/result', { replace: true, state: { round, passed: false, score: 0, timedOut: true } });
+        return;
+      }
+      try {
+        const response = await apiRequest<{
+          success: boolean;
+          data?: {
+            players: Player[];
+            currentRound: number;
+            totalRounds: number;
+            status: 'waiting' | 'active' | 'completed';
+            currentTurnIndex: number;
+            activePlayerId: string | null;
+            turnStartedAt: string | null;
+            turnDeadline: string | null;
+            turnDurationSeconds: 0 | 15 | 30 | 60;
+            turnHistory?: Array<{
+              turnIndex: number;
+              round: number;
+              playerId: string;
+              status: 'completed' | 'failed' | 'timed_out' | 'skipped';
+              score: number;
+            }>;
+          };
+        }>(`/api/rooms/${encodeURIComponent(roomCode)}`);
+        if (cancelled || !response.data) return;
+        syncRoom(response.data);
+        const resolvedTurn = response.data.turnHistory?.find((turn) => turn.turnIndex === currentTurnIndex);
+        navigate('/result', {
+          replace: true,
+          state: {
+            round: resolvedTurn?.round ?? round,
+            playerId: resolvedTurn?.playerId ?? currentPlayer.id,
+            passed: resolvedTurn?.status === 'completed',
+            timedOut: resolvedTurn ? resolvedTurn.status === 'timed_out' : true,
+            skipped: resolvedTurn?.status === 'skipped',
+            score: resolvedTurn?.score ?? 0,
+          },
+        });
+      } catch (error) {
+        if (!cancelled) {
+          setCameraError(error instanceof Error ? error.message : 'Không thể xác nhận lượt đã hết giờ với máy chủ.');
+          timeoutHandledRef.current = false;
+        }
+      }
+    };
+    void updateTurnTimer();
+    const interval = window.setInterval(() => { void updateTurnTimer(); }, 500);
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+    };
+  }, [currentPlayer.id, currentTurnIndex, deviceMode, navigate, roomCode, round, syncRoom, turnDeadline]);
 
   const startCamera = async (
     video: MediaTrackConstraints,
@@ -177,6 +263,7 @@ const CameraPage = () => {
   };
 
   const handleOpenCamera = () => {
+    setTimeLeft(captureTime);
     void startCamera({ facingMode: { ideal: 'user' } }, 'error');
   };
 
@@ -204,10 +291,13 @@ const CameraPage = () => {
   useEffect(() => {
     if (cameraStatus !== 'live' || captured) return;
     if (timeLeft <= 0) {
-      sound.playScanBeep();
-      stopCamera();
-      navigate('/result', { state: { round, passed: false, score: 0 } });
-      return;
+      const timeout = window.setTimeout(() => {
+        sound.playScanBeep();
+        stopCamera();
+        setCameraStatus('idle');
+        setCameraError('Thời gian chụp đã hết. Thử thách chưa bị từ chối; hãy mở camera lại hoặc tải ảnh lên.');
+      }, 0);
+      return () => window.clearTimeout(timeout);
     }
 
     const timer = window.setInterval(() => {
@@ -235,12 +325,13 @@ const CameraPage = () => {
     }
 
     sound.playClick();
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    const scale = Math.min(1, 1024 / video.videoWidth);
+    canvas.width = Math.round(video.videoWidth * scale);
+    canvas.height = Math.round(video.videoHeight * scale);
     context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
     try {
-      setPreviewImage(canvas.toDataURL('image/jpeg', 0.9));
+      setPreviewImage(canvas.toDataURL('image/jpeg', 0.68));
       setCaptured(true);
       setCameraStatus('idle');
       setCameraError(null);
@@ -261,44 +352,102 @@ const CameraPage = () => {
     setCameraError(null);
   };
 
-  const handlePhotoFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const result = e.target?.result as string;
-      if (result) {
+    event.target.value = '';
+    try {
+      const objectUrl = URL.createObjectURL(file);
+      try {
+        const image = new Image();
+        image.src = objectUrl;
+        await new Promise<void>((resolve, reject) => {
+          image.onload = () => resolve();
+          image.onerror = () => reject(new Error('Không thể đọc ảnh đã chọn.'));
+        });
+        const scale = Math.min(1, 1024 / image.naturalWidth);
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(image.naturalWidth * scale);
+        canvas.height = Math.round(image.naturalHeight * scale);
+        const context = canvas.getContext('2d');
+        if (!context) throw new Error('Không thể xử lý ảnh đã chọn.');
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+        const evidence = canvas.toDataURL('image/jpeg', 0.68);
+        if (evidence.length > 1_400_000) throw new Error('Ảnh sau khi nén vẫn quá lớn. Hãy chọn ảnh khác.');
         sound.playClick();
-        setPreviewImage(result);
+        setPreviewImage(evidence);
         setCaptured(true);
         setCameraStatus('idle');
         setCameraError(null);
         stopCamera();
+      } finally {
+        URL.revokeObjectURL(objectUrl);
       }
-    };
-    reader.readAsDataURL(file);
-    event.target.value = '';
+    } catch (error) {
+      setCameraError(error instanceof Error ? error.message : 'Không thể đọc ảnh đã chọn.');
+    }
   };
 
-  const handleUsePhoto = () => {
-    if (!previewImage || isConfirming) return;
-    sound.playClick();
+  const handleUsePhoto = async (evidence = previewImage) => {
+    if (isConfirming) return;
+    if (deviceMode === 'multi_device' && currentPlayerId !== currentPlayer.id) {
+      setCameraError(`Lượt này thuộc về ${currentPlayer.name}. Bạn không thể gửi thử thách thay người chơi đó.`);
+      return;
+    }
+    if (photoEvidence === 'required' && !evidence) {
+      setCameraError('Cần chụp hoặc tải ảnh lên trước khi gửi thử thách.');
+      return;
+    }
+    if (deviceMode === 'multi_device' && !currentPlayerId) {
+      setCameraError('Không xác định được người chơi trên thiết bị này. Hãy tham gia lại phòng.');
+      return;
+    }
     setIsConfirming(true);
+    setCameraError(null);
+    sound.playClick();
     stopCamera();
-    const galleryPhotoId = addPhotoToCurrentAlbum({
-      round,
-      image: previewImage,
-      cardTitle: activeCard.title,
-      score: 0,
-      mission: activeCard.mission,
-    });
-    navigate('/verify', {
-      state: {
-        round,
-        image: previewImage,
-        galleryPhotoId,
-      },
-    });
+    try {
+      let submissionId: string;
+      if (deviceMode === 'single_device') {
+        const local = addLocalSubmission({
+          round,
+          playerId: currentPlayer.id,
+          cardCode: activeCard.code,
+          cardTitle: activeCard.title,
+          mission: activeCard.mission,
+          evidence: photoEvidence === 'off' ? null : evidence,
+        });
+        submissionId = local.id;
+      } else {
+        const response = await playerApiRequest<{
+          success: boolean;
+          data?: { _id: string };
+        }>(roomPlayerToken, `/api/rooms/${encodeURIComponent(roomCode)}/submissions`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            playerId: currentPlayerId,
+            round,
+            missionCode: activeCard.id,
+            cardCode: activeCard.code,
+            evidence: photoEvidence === 'off' ? null : evidence,
+          }),
+        });
+        if (!response.success || !response.data?._id) throw new Error('Máy chủ không xác nhận được lượt gửi.');
+        submissionId = response.data._id;
+      }
+      navigate(`/verify?round=${round}&submissionId=${encodeURIComponent(submissionId)}`, {
+        state: { round, submissionId },
+      });
+    } catch (error) {
+      setCameraError(error instanceof Error ? error.message : 'Không thể gửi thử thách. Hãy thử lại.');
+      setIsConfirming(false);
+    }
+  };
+
+  const handleContinueWithoutPhoto = () => {
+    if (photoEvidence !== 'optional' && photoEvidence !== 'off') return;
+    void handleUsePhoto(null);
   };
 
   const handleBack = () => {
@@ -336,7 +485,7 @@ const CameraPage = () => {
                     <span>Lượt của: {currentPlayer.name}</span>
                   </div>
                   <span className="rounded-full border border-cyan-400/30 bg-cyan-500/20 px-4 py-1.5 text-xs font-bold text-cyan-300">
-                    Vòng {round}
+                    Vòng {round} {turnDurationSeconds === 0 ? '· ∞' : turnTimeLeft !== null ? `· Lượt còn ${turnTimeLeft}s` : ''}
                   </span>
                   <div className="min-w-16 text-right">
                     <span className="block text-[10px] font-bold uppercase text-slate-400">Thời Gian Chụp</span>
@@ -484,6 +633,16 @@ const CameraPage = () => {
                       </motion.button>
                     </>
                   )}
+                  {(photoEvidence === 'optional' || photoEvidence === 'off') && (
+                    <button
+                      type="button"
+                      onClick={handleContinueWithoutPhoto}
+                      disabled={isConfirming}
+                      className="min-h-12 rounded-2xl border border-amber-400/35 bg-amber-500/10 px-5 py-3 text-sm font-bold text-amber-200 transition hover:bg-amber-500/20 disabled:opacity-60"
+                    >
+                      {isConfirming ? 'Đang gửi...' : photoEvidence === 'off' ? 'Tiếp tục (không lưu ảnh)' : 'Tiếp tục không ảnh'}
+                    </button>
+                  )}
                 </div>
               ) : (
                 <div className="grid gap-3 sm:grid-cols-2">
@@ -498,7 +657,7 @@ const CameraPage = () => {
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    onClick={handleUsePhoto}
+                    onClick={() => { void handleUsePhoto(); }}
                     disabled={isConfirming}
                     className="flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 via-fuchsia-500 to-cyan-500 py-3 font-bold text-white shadow-xl shadow-fuchsia-500/20 disabled:opacity-70"
                   >
