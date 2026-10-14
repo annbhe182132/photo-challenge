@@ -245,7 +245,7 @@ const ResultPage = () => {
                     {' · '}Thưởng sáng tạo: {scoreBreakdown?.creativityBonus ?? 0}
                   </div>
                 </div>
-              ) : !timedOut && !skipped && mode === 'spicy' ? (
+              ) : mode === 'spicy' ? (
                 /* Timeout / Penalty Screen Layout */
                 <div className="rounded-3xl border border-red-500/40 bg-red-950/30 p-6 space-y-6 text-left">
                   {/* Mode Selector Header */}
