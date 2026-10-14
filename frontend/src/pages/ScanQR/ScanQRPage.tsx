@@ -9,6 +9,7 @@ import { apiRequest } from '../../services/api';
 import { parseQRCodePayload } from '../../utils/qrPayload';
 import { sound } from '../../utils/soundEngine';
 import { isInAppBrowser } from '../../utils/browser';
+import { scanVideoElementFrame, scanQrImageFile } from '../../utils/qrScanner';
 
 interface MissionApiResponse {
   success: boolean;
@@ -142,8 +143,17 @@ const ScanQRPage = () => {
   const seenQrRef = useRef(new Set<string>());
   const qrReaderId = `${isFromHomeScan ? 'room' : 'card'}-qr-reader-${componentId}`;
   const entryTurnIndexRef = useRef(currentTurnIndex);
+  const frameIntervalRef = useRef<number | null>(null);
+
+  const stopFrameSampling = useCallback(() => {
+    if (frameIntervalRef.current !== null) {
+      window.clearInterval(frameIntervalRef.current);
+      frameIntervalRef.current = null;
+    }
+  }, []);
 
   const disposeScanner = useCallback((scanner: Html5QrcodeType, failedStart = false): Promise<boolean> => {
+    stopFrameSampling();
     const existingDisposal = disposalPromisesRef.current.get(scanner);
     if (existingDisposal) return existingDisposal;
 
@@ -183,6 +193,7 @@ const ScanQRPage = () => {
   }, [qrReaderId]);
 
   const stopScanner = useCallback(async (nextStatus: ScanStatus = 'stopped') => {
+    stopFrameSampling();
     sessionRef.current += 1;
     const stopSession = sessionRef.current;
     if (mountedRef.current) setScanStatus(nextStatus === 'stopped' ? 'stopping' : nextStatus);
@@ -290,6 +301,7 @@ const ScanQRPage = () => {
     mountedRef.current = true;
     return () => {
       mountedRef.current = false;
+      stopFrameSampling();
       sessionRef.current += 1;
       const pendingStart = startPromiseRef.current;
       void (async () => {
@@ -298,7 +310,7 @@ const ScanQRPage = () => {
         if (scanner) await disposeScanner(scanner);
       })();
     };
-  }, [disposeScanner]);
+  }, [disposeScanner, stopFrameSampling]);
 
   const loadCardMission = async (code: string, manualCard?: PhysicalCard, requestSession = sessionRef.current) => {
     setScanStatus('processing');
@@ -492,7 +504,6 @@ const ScanQRPage = () => {
 
   const handleDecodedQr = async (rawValue: string, session: number) => {
     if (session !== sessionRef.current || handledQrRef.current || seenQrRef.current.has(rawValue)) return;
-    seenQrRef.current.add(rawValue);
 
     const payload = parseQRCodePayload(rawValue);
     if (!payload) {
@@ -500,15 +511,15 @@ const ScanQRPage = () => {
       return;
     }
 
-    const expectedType = isFromHomeScan ? 'room' : 'card';
-    if (payload.type !== expectedType) {
-      setErrorMessage(expectedType === 'room'
-        ? 'Đây là QR lá bài, không phải QR phòng. Hãy quét mã phòng để tham gia.'
-        : 'Đây là QR phòng, không phải QR lá bài. Hãy quét mã trên lá bài thử thách.');
+    // Nếu đang trong lượt chơi nhiều thiết bị (multi_device) thì bắt buộc phải là QR lá bài
+    if (!isFromHomeScan && deviceMode === 'multi_device' && payload.type !== 'card') {
+      setErrorMessage('Đây là QR phòng, không phải QR lá bài. Hãy quét mã trên lá bài thử thách của bạn.');
       return;
     }
 
+    seenQrRef.current.add(rawValue);
     handledQrRef.current = true;
+    stopFrameSampling();
     const processingSession = ++sessionRef.current;
     setScanStatus('processing');
     const scanner = scannerRef.current;
@@ -549,17 +560,26 @@ const ScanQRPage = () => {
         const { Html5Qrcode } = await import('html5-qrcode');
         if (session !== sessionRef.current) return;
 
-        scanner = new Html5Qrcode(qrReaderId, { verbose: false });
+        scanner = new Html5Qrcode(qrReaderId, {
+          verbose: false,
+          experimentalFeatures: {
+            useBarCodeDetectorIfSupported: true,
+          },
+        });
         scannerRef.current = scanner;
 
         const videoConfig = {
-          fps: 10,
+          fps: 15,
           qrbox: (viewWidth: number, viewHeight: number) => {
-            const size = Math.floor(Math.min(viewWidth, viewHeight, 280));
+            const minDim = Math.min(viewWidth, viewHeight);
+            const size = Math.max(260, Math.floor(minDim * 0.8));
             return { width: size, height: size };
           },
         };
-        const onDecoded = (decodedText: string) => { void handleDecodedQr(decodedText, session); };
+        const onDecoded = (decodedText: string) => {
+          stopFrameSampling();
+          void handleDecodedQr(decodedText, session);
+        };
         const onDecodeError = () => {};
 
         try {
@@ -601,6 +621,36 @@ const ScanQRPage = () => {
           await disposeScanner(scanner);
           return;
         }
+
+        // Bắt đầu chu kỳ quét frame hỗ trợ QR đảo màu và BarcodeDetector song song
+        stopFrameSampling();
+        let isScanningFrame = false;
+        const pollVideoFrame = async () => {
+          if (session !== sessionRef.current || handledQrRef.current) {
+            stopFrameSampling();
+            return;
+          }
+          if (isScanningFrame) return;
+          const video = document.getElementById(qrReaderId)?.querySelector('video');
+          if (!video || video.readyState < 2 || video.paused || video.ended) return;
+
+          isScanningFrame = true;
+          try {
+            const decoded = await scanVideoElementFrame(video);
+            if (decoded && session === sessionRef.current && !handledQrRef.current) {
+              stopFrameSampling();
+              void handleDecodedQr(decoded, session);
+            }
+          } catch {
+            // bỏ qua lỗi đọc frame tạm thời
+          } finally {
+            isScanningFrame = false;
+          }
+        };
+
+        frameIntervalRef.current = window.setInterval(() => {
+          void pollVideoFrame();
+        }, 120);
 
         try {
           setSelectedCameraId(cameraId ?? scanner.getRunningTrackSettings().deviceId ?? null);
@@ -659,6 +709,7 @@ const ScanQRPage = () => {
     handledQrRef.current = false;
     setErrorMessage(null);
     setScanStatus('processing');
+    stopFrameSampling();
 
     try {
       const currentScanner = scannerRef.current;
@@ -667,10 +718,15 @@ const ScanQRPage = () => {
       }
 
       const { Html5Qrcode } = await import('html5-qrcode');
-      const fileScanner = new Html5Qrcode(qrReaderId, { verbose: false });
+      const fileScanner = new Html5Qrcode(qrReaderId, {
+        verbose: false,
+        experimentalFeatures: {
+          useBarCodeDetectorIfSupported: true,
+        },
+      });
       let decodedText: string;
       try {
-        decodedText = await fileScanner.scanFile(file, false);
+        decodedText = await scanQrImageFile(file, (f) => fileScanner.scanFile(f, false));
       } finally {
         try {
           fileScanner.clear();
