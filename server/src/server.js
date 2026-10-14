@@ -10,7 +10,7 @@ import punishmentRoutes from './routes/punishmentRoutes.js';
 import roomRoutes from './routes/roomRoutes.js';
 import galleryRoutes from './routes/galleryRoutes.js';
 import aiRoutes from './routes/aiRoutes.js';
-import missionRoutes from './routes/missionRoutes.js';  
+import missionRoutes from './routes/missionRoutes.js';
 
 dotenv.config();
 
@@ -21,14 +21,22 @@ const PORT = process.env.PORT || 5000;
 connectDB();
 
 // Middlewares
-const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173')
+
+const allowedOrigins = (
+  process.env.CLIENT_URL ||
+  'http://localhost:5173,https://annbhe182132.github.io'
+)
   .split(',')
   .map((value) => value.trim())
   .filter(Boolean);
 
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
+    if (
+      !origin ||
+      allowedOrigins.includes(origin) ||
+      allowedOrigins.includes('*')
+    ) {
       callback(null, true);
       return;
     }
@@ -37,6 +45,7 @@ app.use(cors({
   },
   credentials: false,
 }));
+
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true, limit: '2mb' }));
 app.use(morgan('dev'));
