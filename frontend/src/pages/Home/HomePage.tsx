@@ -274,7 +274,7 @@ const HomePage = () => {
 
         {/* Main Hero */}
         <main id="home" className="relative z-10 mx-auto flex max-w-7xl flex-col px-4 pb-16 sm:px-8 sm:pb-20 lg:px-10">
-          <section className="grid items-center gap-8 py-8 sm:gap-12 sm:py-12 lg:grid-cols-[1.1fr_0.9fr] lg:py-20">
+          <section className="mx-auto grid w-full max-w-3xl items-center gap-8 py-6 sm:gap-10 sm:py-10 lg:py-14">
             <motion.div
               initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
@@ -408,66 +408,6 @@ const HomePage = () => {
               )}
             </motion.div>
 
-            {/* Interactive Showcase Card */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.6, delay: 0.1 }}
-              className="rounded-[2.5rem] border border-cyan-500/30 bg-slate-900/60 p-6 shadow-2xl shadow-black/50 backdrop-blur-2xl"
-            >
-              <div className="rounded-[1.75rem] border border-white/10 bg-slate-950/80 p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <span className="text-xs font-bold uppercase tracking-wider text-cyan-400">Giao diện minh họa</span>
-                    <p className="text-2xl font-black text-white">ROOM-8899</p>
-                  </div>
-                  <div className="rounded-full bg-emerald-500/20 border border-emerald-500/40 px-3.5 py-1 text-xs font-bold text-emerald-300 flex items-center gap-1.5">
-                    <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
-                    4 Người Chơi
-                  </div>
-                </div>
-
-                <div className="mt-6 rounded-2xl border border-fuchsia-500/30 bg-gradient-to-br from-fuchsia-950/30 to-violet-950/40 p-5">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-xs font-bold uppercase text-fuchsia-400">Thử Thách Đang Chơi</p>
-                      <p className="text-lg font-bold text-white mt-1">Cạn Ly Đồng Điệu</p>
-                    </div>
-                    <div className="rounded-xl bg-fuchsia-500/20 p-3 text-fuchsia-300">
-                      <Flame className="h-6 w-6" />
-                    </div>
-                  </div>
-                  <p className="mt-2 text-xs text-slate-300">Cùng 3 người bạn nâng cốc và hô 23 Dzô!</p>
-                  <div className="mt-4 flex justify-between text-xs font-semibold text-slate-300">
-                    <span className="flex items-center gap-1.5 text-cyan-300">
-                      {verificationMethod === 'ai' ? (
-                        <>
-                          <Bot size={13} className="text-cyan-400" /> Chế độ: AI Gemini chấm điểm
-                        </>
-                      ) : (
-                        <>
-                          <Users size={13} className="text-amber-400" /> Chế độ: Bình chọn nhóm
-                        </>
-                      )}
-                    </span>
-                    <span className="text-amber-400 font-bold">+100 điểm khi được duyệt</span>
-                  </div>
-                </div>
-
-                <div className="mt-6 grid grid-cols-2 gap-3">
-                  <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                    <p className="text-xs text-slate-400">Xác thực hiện tại</p>
-                    <p className="text-base sm:text-lg font-black text-cyan-300 flex items-center gap-1.5 mt-1">
-                      {verificationMethod === 'ai' ? '🤖 AI Gemini Judge' : '👥 Bình chọn nhóm'}
-                    </p>
-                  </div>
-                  <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                    <p className="text-xs text-slate-400">Vòng Quay Phạt</p>
-                    <p className="text-base sm:text-lg font-black text-amber-400 mt-1">Nhóm tự chọn</p>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
           </section>
 
           {/* Comparison Section vs Traditional Games */}
