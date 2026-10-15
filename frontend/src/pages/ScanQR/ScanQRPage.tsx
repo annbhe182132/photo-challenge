@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { AlertTriangle, ArrowLeft, Camera, CheckCircle2, QrCode, Sparkles, StopCircle, SwitchCamera, Upload, Zap } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, Camera, CheckCircle2, QrCode, Sparkles, StopCircle, SwitchCamera, Zap } from 'lucide-react';
 import type { Html5Qrcode as Html5QrcodeType } from 'html5-qrcode';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useGame } from '../../context/useGame';
@@ -9,7 +9,7 @@ import { apiRequest } from '../../services/api';
 import { parseQRCodePayload, normalizeCardCode } from '../../utils/qrPayload';
 import { sound } from '../../utils/soundEngine';
 import { isInAppBrowser } from '../../utils/browser';
-import { scanVideoElementFrame, scanQrImageFile } from '../../utils/qrScanner';
+import { scanVideoElementFrame } from '../../utils/qrScanner';
 
 interface MissionApiResponse {
   success: boolean;
@@ -702,47 +702,47 @@ const ScanQRPage = () => {
     });
   };
 
-  const handleFileScan = async (file: File) => {
-    if (scanStatus === 'processing') return;
-    const session = ++sessionRef.current;
-    handledQrRef.current = false;
-    setErrorMessage(null);
-    setScanStatus('processing');
-    stopFrameSampling();
+  // const handleFileScan = async (file: File) => {
+  //   if (scanStatus === 'processing') return;
+  //   const session = ++sessionRef.current;
+  //   handledQrRef.current = false;
+  //   setErrorMessage(null);
+  //   setScanStatus('processing');
+  //   stopFrameSampling();
 
-    try {
-      const currentScanner = scannerRef.current;
-      if (currentScanner) {
-        await disposeScanner(currentScanner);
-      }
+  //   try {
+  //     const currentScanner = scannerRef.current;
+  //     if (currentScanner) {
+  //       await disposeScanner(currentScanner);
+  //     }
 
-      const { Html5Qrcode } = await import('html5-qrcode');
-      const fileScanner = new Html5Qrcode(qrReaderId, {
-        verbose: false,
-        experimentalFeatures: {
-          useBarCodeDetectorIfSupported: true,
-        },
-      });
-      let decodedText: string;
-      try {
-        decodedText = await scanQrImageFile(file, (f) => fileScanner.scanFile(f, false));
-      } finally {
-        try {
-          fileScanner.clear();
-        } catch {
-          // ignore cleanup error
-        }
-      }
+  //     const { Html5Qrcode } = await import('html5-qrcode');
+  //     const fileScanner = new Html5Qrcode(qrReaderId, {
+  //       verbose: false,
+  //       experimentalFeatures: {
+  //         useBarCodeDetectorIfSupported: true,
+  //       },
+  //     });
+  //     let decodedText: string;
+  //     try {
+  //       decodedText = await scanQrImageFile(file, (f) => fileScanner.scanFile(f, false));
+  //     } finally {
+  //       try {
+  //         fileScanner.clear();
+  //       } catch {
+  //         // ignore cleanup error
+  //       }
+  //     }
 
-      if (session !== sessionRef.current) return;
-      await handleDecodedQr(decodedText, session);
-    } catch (error) {
-      if (session !== sessionRef.current) return;
-      console.warn('[QR File Scan] Failed:', error);
-      setErrorMessage('Không nhận diện được mã QR trong ảnh. Hãy chụp ảnh cận cảnh, vuông góc và đủ sáng rồi thử lại.');
-      setScanStatus('error');
-    }
-  };
+  //     if (session !== sessionRef.current) return;
+  //     await handleDecodedQr(decodedText, session);
+  //   } catch (error) {
+  //     if (session !== sessionRef.current) return;
+  //     console.warn('[QR File Scan] Failed:', error);
+  //     setErrorMessage('Không nhận diện được mã QR trong ảnh. Hãy chụp ảnh cận cảnh, vuông góc và đủ sáng rồi thử lại.');
+  //     setScanStatus('error');
+  //   }
+  // };
 
   // QR in each printed card opens this page directly and loads that card's mission.
   useEffect(() => {
