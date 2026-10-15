@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowRight, CheckCircle2, Flame, HeartHandshake, PenTool, ShieldAlert, Sparkles, Trophy } from 'lucide-react';
+import { ArrowRight, Bot, CheckCircle2, Flame, HeartHandshake, PenTool, ShieldAlert, Sparkles, Trophy } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useGame } from '../../context/useGame';
 import { PUNISHMENTS, type Punishment } from '../../data/gameData';
@@ -51,6 +51,7 @@ const ResultPage = () => {
     creativityBonus: number;
     total: number;
   } | undefined;
+  const aiFeedback = location.state?.aiFeedback as string | undefined;
 
   // Penalty Section States
   const [penaltyMode, setPenaltyMode] = useState<'random' | 'custom'>('random');
@@ -219,9 +220,19 @@ const ResultPage = () => {
                   {timedOut || skipped
                     ? 'Lượt này không được cộng điểm hoàn thành.'
                     : passed
-                      ? 'Kết quả được nhóm người chơi khác chấp thuận. Không có phân tích ảnh AI.'
-                      : 'Phiếu đồng ý không thể đạt ngưỡng hai phần ba. Thử thách này không bị trừ điểm.'}
+                      ? (aiFeedback ? 'Thử thách được AI Judge công nhận xuất sắc!' : 'Kết quả được ghi nhận và tính điểm thành công!')
+                      : (aiFeedback ? 'Thử thách chưa đạt yêu cầu từ AI Judge.' : 'Thử thách chưa thể hoàn thành ở vòng này.')}
                 </p>
+                {aiFeedback && (
+                  <div className="mt-3 rounded-2xl border border-cyan-500/30 bg-cyan-950/50 p-4 text-left shadow-lg">
+                    <div className="flex items-center gap-2 text-xs font-bold text-cyan-300">
+                      <Bot size={16} /> Nhận xét từ SNAPDECK AI:
+                    </div>
+                    <p className="mt-1.5 text-sm italic leading-relaxed text-slate-100">
+                      "{aiFeedback}"
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Passed vs rejected layout */}

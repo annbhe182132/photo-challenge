@@ -368,15 +368,15 @@ const AdminPage = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                    <Bot className="text-fuchsia-400" /> Bản mô phỏng cấu hình AI
+                    <Bot className="text-cyan-400" /> Hệ thống AI Judge (Gemini Vision)
                   </h3>
                   <p className="text-xs text-slate-400 mt-1">
-                    AI chưa khả dụng. Các tham số bên dưới chỉ minh họa giao diện và không ảnh hưởng đến ván chơi.
+                    Đã tích hợp Gemini API phân tích ảnh, nhận diện thần thái và chấm điểm theo tiêu chí thẻ bài.
                   </p>
                 </div>
 
-                <div role="status" className="rounded-xl border border-amber-400/40 bg-amber-500/10 p-3 text-sm text-amber-100">
-                  Chưa kết nối dịch vụ phân tích ảnh thật. Ván chơi hiện chỉ hỗ trợ bình chọn nhóm.
+                <div role="status" className="rounded-xl border border-emerald-400/40 bg-emerald-500/10 p-3 text-sm text-emerald-200">
+                  ✅ Đã kích hoạt AI Judge (Gemini). Hỗ trợ cả AI và Bình chọn nhóm.
                 </div>
 
                 {/* Glowing Lightbulb Button */}

@@ -33,7 +33,7 @@ const turnState = (room) => {
   };
 };
 
-const advanceTurn = async (room, status, score = 0, session, expectedSubmissionId = null) => {
+export const advanceTurn = async (room, status, score = 0, session, expectedSubmissionId = null) => {
   const { turnIndex, activePlayerId } = turnState(room);
   const playerCount = room.players.length;
   const roundLimit = room.totalRounds === 24 ? 5 : room.totalRounds;
@@ -449,8 +449,8 @@ export const createSubmission = async (req, res) => {
     if (room.status !== 'active') {
       return res.status(409).json({ success: false, message: 'Phòng chơi chưa bắt đầu hoặc đã kết thúc.' });
     }
-    if (room.verificationMethod !== 'group') {
-      return res.status(409).json({ success: false, message: 'Xác thực AI chưa khả dụng. Hãy tạo ván mới với xác thực nhóm.' });
+    if (room.verificationMethod !== 'group' && room.verificationMethod !== 'ai') {
+      return res.status(409).json({ success: false, message: 'Phương thức xác thực không hợp lệ.' });
     }
 
     const { playerId, round, missionCode, cardCode, evidence } = req.body;
@@ -531,8 +531,11 @@ export const createSubmission = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Phòng này đã tắt ảnh bằng chứng.' });
     }
 
-    const eligibleVoterIds = room.players.map((player) => player.id).filter((id) => id !== playerId);
-    if (!eligibleVoterIds.length) {
+    const isAi = room.verificationMethod === 'ai';
+    const eligibleVoterIds = isAi
+      ? ['ai-judge']
+      : room.players.map((player) => player.id).filter((id) => id !== playerId);
+    if (!isAi && !eligibleVoterIds.length) {
       return res.status(409).json({
         success: false,
         message: 'Xác thực nhóm cần người đánh giá khác. Thêm người chơi; không thể tự duyệt thử thách.',
@@ -585,7 +588,7 @@ export const createSubmission = async (req, res) => {
           evidenceFileId: storedEvidenceId,
           hasEvidence: Boolean(storedEvidenceId),
           eligibleVoterIds,
-          requiredVotes: calculateApprovalThreshold(eligibleVoterIds.length),
+          requiredVotes: isAi ? 1 : calculateApprovalThreshold(eligibleVoterIds.length),
         }], { session });
       });
     } finally {

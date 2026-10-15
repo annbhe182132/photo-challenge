@@ -142,6 +142,27 @@ class SoundEngine {
     osc.start();
     osc.stop(this.ctx.currentTime + 0.03);
   }
+
+  // Failure / Buzzer sound
+  playFailure() {
+    if (!this.enabled) return;
+    this.initCtx();
+    if (!this.ctx) return;
+
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(220, this.ctx.currentTime);
+    osc.frequency.setValueAtTime(160, this.ctx.currentTime + 0.15);
+
+    gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.3);
+
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start();
+    osc.stop(this.ctx.currentTime + 0.3);
+  }
 }
 
 export const sound = new SoundEngine();

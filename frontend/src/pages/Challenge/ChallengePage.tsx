@@ -50,6 +50,7 @@ const ChallengePage = () => {
     totalRounds,
     players,
     photoEvidence,
+    verificationMethod,
     deviceMode,
     currentPlayerId,
     roomPlayerToken,
@@ -315,7 +316,7 @@ const ChallengePage = () => {
                 </button>
                 {showHint && (
                   <p className="mt-3 text-xs text-cyan-200 leading-relaxed border-t border-white/10 pt-3">
-                    💡 Hãy làm theo hướng dẫn trên thẻ. Xác thực nhóm sẽ do những người chơi khác bình chọn; không có phân tích ảnh AI thật.
+                    💡 Hãy làm theo hướng dẫn trên thẻ. {verificationMethod === 'ai' ? '🤖 SNAPDECK AI Judge sẽ quét ảnh và tự động chấm điểm độ sáng tạo & thần thái cho bạn!' : '👥 Các bạn cùng bàn sẽ bình chọn để duyệt thử thách.'}
                     <span className="mt-2 block">Ảnh bằng chứng: {photoEvidence === 'required' ? 'bắt buộc' : photoEvidence === 'optional' ? 'không bắt buộc' : 'đang tắt'}.</span>
                   </p>
                 )}

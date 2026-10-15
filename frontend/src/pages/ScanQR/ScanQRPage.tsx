@@ -6,7 +6,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useGame } from '../../context/useGame';
 import { DECK_CARDS, THEMES, type PhysicalCard, type Player } from '../../data/gameData';
 import { apiRequest } from '../../services/api';
-import { parseQRCodePayload } from '../../utils/qrPayload';
+import { parseQRCodePayload, normalizeCardCode } from '../../utils/qrPayload';
 import { sound } from '../../utils/soundEngine';
 import { isInAppBrowser } from '../../utils/browser';
 import { scanVideoElementFrame, scanQrImageFile } from '../../utils/qrScanner';
@@ -122,9 +122,10 @@ const ScanQRPage = () => {
   } = useGame();
 
   const isFromHomeScan = location.state?.fromHomeScan ?? false;
-  const rawDirectCardCode = new URLSearchParams(location.search).get('cardCode')?.trim().toUpperCase() ?? null;
-  const directCardCode = rawDirectCardCode ? rawDirectCardCode.replace(/^PC-/, 'SD-') : null;
-  const isDirectCardQr = !isFromHomeScan && Boolean(directCardCode && /^(?:SD|PC)-CARD-\d{3}$/.test(rawDirectCardCode ?? ''));
+  const searchParams = new URLSearchParams(location.search);
+  const rawDirectCard = searchParams.get('cardCode') ?? searchParams.get('card') ?? searchParams.get('c');
+  const directCardCode = normalizeCardCode(rawDirectCard);
+  const isDirectCardQr = !isFromHomeScan && Boolean(directCardCode);
   const [mode, setScanMode] = useState<'camera' | 'deck'>(isFromHomeScan || isDirectCardQr ? 'camera' : 'deck');
   const [scanStatus, setScanStatus] = useState<ScanStatus>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -316,12 +317,12 @@ const ScanQRPage = () => {
     setScanStatus('processing');
     setErrorMessage(null);
 
-    // Chuẩn hóa mã thẻ để hỗ trợ cả định dạng mới SD- và định dạng cũ PC-
-    const normalizedCode = code.toUpperCase().replace(/^PC-/, 'SD-');
-    const legacyCode = code.toUpperCase().replace(/^SD-/, 'PC-');
+    // Chuẩn hóa mã thẻ sang định dạng chuẩn SD-CARD-xxx
+    const canonicalCode = normalizeCardCode(code) ?? code.toUpperCase().replace(/^PC-/, 'SD-');
+    const legacyCode = canonicalCode.replace(/^SD-/, 'PC-');
     let verifiedTurnIndex: number | null = null;
     const matchingDeckCard = manualCard ?? DECK_CARDS.find((card) =>
-      card.code === normalizedCode || card.code === legacyCode || card.code === code.toUpperCase()
+      card.code === canonicalCode || card.code === legacyCode || card.code === code.toUpperCase()
     );
 
     try {
@@ -355,31 +356,49 @@ const ScanQRPage = () => {
         }
       }
 
-      // Gọi API lấy nhiệm vụ từ máy chủ
-      const data = await apiRequest<MissionApiResponse>(`/api/missions/qr/${encodeURIComponent(code)}`);
-      if (requestSession !== sessionRef.current) return;
-      const mission = data.mission;
-      if (data.success !== true) {
-        throw new Error(data.message || 'Máy chủ không trả về thử thách hợp lệ.');
+      // Thử lấy thử thách từ API máy chủ (chứa các biến thể thử thách AI)
+      let missionData: {
+        missionCode: string;
+        title: string;
+        instruction: string;
+        difficulty: number;
+        xp: number;
+        themeId?: string;
+      } | null = null;
+
+      try {
+        const data = await apiRequest<MissionApiResponse>(`/api/missions/qr/${encodeURIComponent(canonicalCode)}`);
+        if (requestSession !== sessionRef.current) return;
+        if (data.success && data.mission && typeof data.mission.instruction === 'string') {
+          missionData = {
+            missionCode: data.mission.missionCode || `${canonicalCode}-M01`,
+            title: data.mission.title || matchingDeckCard?.title || 'Thử thách lá bài',
+            instruction: data.mission.instruction,
+            difficulty: typeof data.mission.difficulty === 'number' ? data.mission.difficulty : (matchingDeckCard?.difficulty ?? 2),
+            xp: typeof data.mission.xp === 'number' ? data.mission.xp : (matchingDeckCard?.xp ?? 20),
+            themeId: data.card?.themeId || matchingDeckCard?.theme,
+          };
+        }
+      } catch (apiError) {
+        console.warn('[ScanQRPage] Server mission API không phản hồi, tự động dùng thẻ cục bộ:', apiError);
       }
 
-      // Chuẩn hóa mã bài trả về từ backend để so sánh tương thích (SD-CARD-xxx <-> PC-CARD-xxx)
-      const apiCardCode = data.card?.code?.toUpperCase().replace(/^PC-/, 'SD-');
-      const apiMissionCode = mission?.cardCode?.toUpperCase().replace(/^PC-/, 'SD-');
-
-      const isMatch = (apiCardCode === normalizedCode || data.card?.code?.toUpperCase() === code.toUpperCase()) &&
-                      (apiMissionCode === normalizedCode || mission?.cardCode?.toUpperCase() === code.toUpperCase());
-
-      if (
-        !isMatch ||
-        typeof mission?.title !== 'string' ||
-        typeof mission.missionCode !== 'string' ||
-        typeof mission?.instruction !== 'string' ||
-        typeof mission?.difficulty !== 'number' ||
-        typeof mission?.xp !== 'number'
-      ) {
-        throw new Error('Dữ liệu thử thách không khớp với mã lá bài vừa quét.');
+      // Fallback tự động: nếu API không có dữ liệu hoặc gặp sự cố, dùng ngay dữ liệu gốc của bộ bài 24 lá
+      if (!missionData) {
+        if (matchingDeckCard) {
+          missionData = {
+            missionCode: `${matchingDeckCard.code}-LOCAL`,
+            title: matchingDeckCard.title,
+            instruction: matchingDeckCard.mission,
+            difficulty: matchingDeckCard.difficulty,
+            xp: matchingDeckCard.xp,
+            themeId: matchingDeckCard.theme,
+          };
+        } else {
+          throw new Error(`Không tìm thấy lá bài ${code} trong bộ bài 24 lá.`);
+        }
       }
+
       if (deviceMode === 'multi_device') {
         const latestResponse = await apiRequest<{
           success: boolean;
@@ -412,14 +431,14 @@ const ScanQRPage = () => {
       }
 
       const activeCard: PhysicalCard = {
-        id: mission.missionCode,
-        code: normalizedCode,
+        id: missionData.missionCode,
+        code: canonicalCode,
         category: matchingDeckCard?.category ?? 'Creative',
-        theme: matchingDeckCard?.theme ?? data.card?.themeId ?? 'pose',
-        title: mission.title,
-        mission: mission.instruction,
-        difficulty: mission.difficulty,
-        xp: mission.xp,
+        theme: missionData.themeId ?? matchingDeckCard?.theme ?? 'pose',
+        title: missionData.title,
+        mission: missionData.instruction,
+        difficulty: missionData.difficulty,
+        xp: missionData.xp,
         tags: matchingDeckCard?.tags ?? [],
         ...(matchingDeckCard?.arOverlay ? { arOverlay: matchingDeckCard.arOverlay } : {}),
       };
@@ -757,10 +776,10 @@ const ScanQRPage = () => {
   useEffect(() => {
     if (isFromHomeScan) return;
     const params = new URLSearchParams(location.search);
-    const rawCardCode = params.get('cardCode')?.trim().toUpperCase();
-    if (!rawCardCode || !/^(?:SD|PC)-CARD-\d{3}$/.test(rawCardCode)) return;
-    const cardCode = rawCardCode.replace(/^PC-/, 'SD-');
-    const card = DECK_CARDS.find((item) => item.code === cardCode);
+    const rawCardParam = params.get('cardCode') ?? params.get('card') ?? params.get('c');
+    const normalized = normalizeCardCode(rawCardParam);
+    if (!normalized) return;
+    const card = DECK_CARDS.find((item) => item.code === normalized);
     if (!card || handledQrRef.current) return;
     handledQrRef.current = true;
     const requestSession = ++sessionRef.current;

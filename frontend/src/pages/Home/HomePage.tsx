@@ -11,6 +11,8 @@ import {
   Volume2,
   VolumeX,
   Zap,
+  Bot,
+  Users,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useGame } from '../../context/useGame';
@@ -39,8 +41,8 @@ const featureCards = [
   },
   {
     icon: Brain,
-    title: 'Bình chọn xác thực nhóm',
-    description: 'Người chơi đủ điều kiện cùng đánh giá thử thách; tính năng xác thực AI chưa khả dụng.',
+    title: 'Trọng tài AI & Đánh giá nhóm',
+    description: 'Tùy chọn AI Gemini Vision tự động chấm điểm độ sáng tạo hoặc để cả bàn cùng bỏ phiếu.',
   },
   {
     icon: Crown,
@@ -66,9 +68,9 @@ const steps = [
     tag: 'Camera Thử Thách',
   },
   {
-    title: 'Nhóm bình chọn',
-    desc: 'Người chơi khác bỏ phiếu duyệt hoặc từ chối. AI chưa khả dụng; điểm chỉ được cộng sau khi được duyệt.',
-    tag: 'Xác thực nhóm',
+    title: 'Chấm Điểm & Đánh Giá',
+    desc: 'Chọn AI Gemini tự động soi ảnh chấm điểm thần thái, hoặc để bạn bè cùng bàn bỏ phiếu biểu quyết.',
+    tag: 'AI & Nhóm',
   },
 ];
 
@@ -222,7 +224,7 @@ const HomePage = () => {
           <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 text-xs">
             <div className="flex items-center gap-2 text-cyan-300 font-semibold">
               <Sparkles className="h-4 w-4 animate-spin text-cyan-400" />
-              <span>CHẾ ĐỘ DEMO: Trò chơi phygital với xác thực nhóm (AI chưa khả dụng)</span>
+              <span>NỀN TẢNG PHYGITAL: Trò chơi thẻ bài với Trọng tài AI Gemini & Bình chọn nhóm</span>
             </div>
             <div className="flex items-center gap-3">
               <button
@@ -300,7 +302,7 @@ const HomePage = () => {
                 <p className="mb-3 text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">Chọn cách chơi</p>
                 <div className="grid gap-3 sm:grid-cols-2">
                   {[
-                    { value: 'single_device', label: 'Single-device', description: 'Mọi người cùng một màn hình, lưu local session' },
+                    { value: 'single_device', label: 'Single-device', description: 'Mọi người cùng chơi chung trên một màn hình' },
                     { value: 'multi_device', label: 'Multi-device', description: 'Host tạo phòng và các người chơi vào qua mã/code' },
                   ].map((option) => (
                     <button
@@ -316,19 +318,39 @@ const HomePage = () => {
 
                 <div className="mt-4 grid gap-3 md:grid-cols-2">
                   <div className="rounded-xl border border-white/10 bg-slate-950/60 p-3">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">Xác thực</p>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">Phương thức Xác thực</p>
                     <div className="mt-2 flex gap-2">
-                      {(['group', 'ai'] as const).map((method) => (
-                        <button
-                          key={method}
-                          onClick={() => { if (method === 'group') setVerificationMethod(method); }}
-                          disabled={method === 'ai'}
-                          title={method === 'ai' ? 'AI verification chưa được tích hợp; chọn Group.' : undefined}
-                          className={`flex-1 rounded-xl px-2 py-2 text-xs font-bold ${verificationMethod === method ? 'bg-cyan-500 text-slate-950' : method === 'ai' ? 'cursor-not-allowed bg-white/5 text-slate-500' : 'bg-white/5 text-slate-200'}`}
-                        >
-                          {method === 'group' ? 'Group' : 'AI (chưa khả dụng)'}
-                        </button>
-                      ))}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          sound.playClick();
+                          setVerificationMethod('group');
+                        }}
+                        className={`flex-1 rounded-xl px-2.5 py-2 text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+                          verificationMethod === 'group'
+                            ? 'bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/25'
+                            : 'bg-white/5 text-slate-200 hover:bg-white/10'
+                        }`}
+                      >
+                        <Users size={14} />
+                        <span>Group</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          sound.playClick();
+                          setVerificationMethod('ai');
+                        }}
+                        className={`flex-1 rounded-xl px-2.5 py-2 text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+                          verificationMethod === 'ai'
+                            ? 'bg-gradient-to-r from-cyan-400 to-fuchsia-500 text-slate-950 font-black shadow-md shadow-fuchsia-500/25'
+                            : 'bg-white/5 text-slate-200 hover:bg-white/10'
+                        }`}
+                      >
+                        <Bot size={14} className={verificationMethod === 'ai' ? 'text-slate-950' : 'text-cyan-400'} />
+                        <span>AI (Gemini)</span>
+                      </button>
                     </div>
                   </div>
 
@@ -367,7 +389,7 @@ const HomePage = () => {
                   className="group inline-flex items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-violet-600 via-fuchsia-500 to-cyan-500 px-7 py-4 font-bold text-white shadow-2xl shadow-fuchsia-500/30 transition hover:shadow-cyan-500/40 disabled:cursor-wait disabled:opacity-70"
                 >
                   <PlayCircle className="h-6 w-6 transition group-hover:rotate-12" />
-                  {isCreatingRoom ? 'Đang tạo phòng...' : deviceMode === 'single_device' ? 'Bắt đầu local session' : 'Vào Phòng Chơi Phygital'}
+                  {isCreatingRoom ? 'Đang tạo phòng...' : deviceMode === 'single_device' ? 'Bắt đầu chơi' : 'Tạo phòng & Bắt đầu chơi'}
                 </motion.button>
                 <motion.button
                   whileHover={{ scale: 1.04, y: -2 }}
@@ -417,7 +439,17 @@ const HomePage = () => {
                   </div>
                   <p className="mt-2 text-xs text-slate-300">Cùng 3 người bạn nâng cốc và hô 23 Dzô!</p>
                   <div className="mt-4 flex justify-between text-xs font-semibold text-slate-300">
-                    <span>Minh họa · AI chưa khả dụng</span>
+                    <span className="flex items-center gap-1.5 text-cyan-300">
+                      {verificationMethod === 'ai' ? (
+                        <>
+                          <Bot size={13} className="text-cyan-400" /> Chế độ: AI Gemini chấm điểm
+                        </>
+                      ) : (
+                        <>
+                          <Users size={13} className="text-amber-400" /> Chế độ: Bình chọn nhóm
+                        </>
+                      )}
+                    </span>
                     <span className="text-amber-400 font-bold">+100 điểm khi được duyệt</span>
                   </div>
                 </div>
@@ -425,11 +457,13 @@ const HomePage = () => {
                 <div className="mt-6 grid grid-cols-2 gap-3">
                   <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
                     <p className="text-xs text-slate-400">Xác thực hiện tại</p>
-                    <p className="text-lg font-black text-cyan-300">Bình chọn nhóm</p>
+                    <p className="text-base sm:text-lg font-black text-cyan-300 flex items-center gap-1.5 mt-1">
+                      {verificationMethod === 'ai' ? '🤖 AI Gemini Judge' : '👥 Bình chọn nhóm'}
+                    </p>
                   </div>
                   <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
                     <p className="text-xs text-slate-400">Vòng Quay Phạt</p>
-                    <p className="text-lg font-black text-amber-400">Nhóm tự chọn</p>
+                    <p className="text-base sm:text-lg font-black text-amber-400 mt-1">Nhóm tự chọn</p>
                   </div>
                 </div>
               </div>

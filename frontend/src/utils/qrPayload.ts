@@ -5,18 +5,68 @@ export type QRCodePayload =
   | { type: 'card'; code: string };
 
 const ROOM_CODE_PATTERN = /^ROOM-[A-Z0-9]{4,12}$/i;
-const CARD_CODE_PATTERN = /^(?:SD|PC)-CARD-\d{3}$/i;
+
+/**
+ * Chuẩn hóa mọi định dạng mã lá bài:
+ * - SD-CARD-001, PC-CARD-001, SD-CARD-1, PC-CARD-1
+ * - CARD-001, CARD-01, CARD-1
+ * - SD-001, SD-01, SD-1, PC-001, PC-01, PC-1, SD01, PC01
+ * - 1..24, 01..24, 001..024
+ */
+export const normalizeCardCode = (rawInput?: string | null): string | null => {
+  if (!rawInput) return null;
+  const raw = rawInput.trim().toUpperCase();
+
+  // 1. Dạng chuẩn SD-CARD-xxx hoặc PC-CARD-xxx
+  const m1 = raw.match(/^(?:SD|PC)-CARD-0*(\d{1,3})$/);
+  if (m1) {
+    const num = parseInt(m1[1], 10);
+    if (num >= 1 && num <= 24) {
+      return `SD-CARD-${String(num).padStart(3, '0')}`;
+    }
+  }
+
+  // 2. Dạng CARD-xxx
+  const m2 = raw.match(/^CARD-0*(\d{1,3})$/);
+  if (m2) {
+    const num = parseInt(m2[1], 10);
+    if (num >= 1 && num <= 24) {
+      return `SD-CARD-${String(num).padStart(3, '0')}`;
+    }
+  }
+
+  // 3. Dạng SD-xx, PC-xx, SDxx, PCxx
+  const m3 = raw.match(/^(?:SD|PC)-?0*(\d{1,3})$/);
+  if (m3) {
+    const num = parseInt(m3[1], 10);
+    if (num >= 1 && num <= 24) {
+      return `SD-CARD-${String(num).padStart(3, '0')}`;
+    }
+  }
+
+  // 4. Số nguyên thuần túy từ 1 đến 24 (ví dụ bốc số 1, 01, 24)
+  const m4 = raw.match(/^0*(\d{1,2})$/);
+  if (m4) {
+    const num = parseInt(m4[1], 10);
+    if (num >= 1 && num <= 24) {
+      return `SD-CARD-${String(num).padStart(3, '0')}`;
+    }
+  }
+
+  return null;
+};
 
 const parseTypedPayload = (value: string): QRCodePayload | null => {
   const match = value.match(/^(?:SNAPDECK|PHOTO-CHALLENGE):(ROOM|CARD):(.+)$/i);
   if (!match) return null;
 
-  const code = match[2].trim().toUpperCase();
-  if (match[1].toUpperCase() === 'ROOM' && ROOM_CODE_PATTERN.test(code)) {
-    return { type: 'room', code };
+  const rawCode = match[2].trim().toUpperCase();
+  if (match[1].toUpperCase() === 'ROOM' && ROOM_CODE_PATTERN.test(rawCode)) {
+    return { type: 'room', code: rawCode };
   }
-  if (match[1].toUpperCase() === 'CARD' && CARD_CODE_PATTERN.test(code)) {
-    return { type: 'card', code: code.replace(/^PC-/, 'SD-') };
+  const normalizedCard = normalizeCardCode(rawCode);
+  if (match[1].toUpperCase() === 'CARD' && normalizedCard) {
+    return { type: 'card', code: normalizedCard };
   }
   return null;
 };
@@ -28,13 +78,43 @@ export const parseQRCodePayload = (rawValue: string): QRCodePayload | null => {
 
   const normalized = value.toUpperCase();
   if (ROOM_CODE_PATTERN.test(normalized)) return { type: 'room', code: normalized };
-  if (CARD_CODE_PATTERN.test(normalized)) return { type: 'card', code: normalized.replace(/^PC-/, 'SD-') };
+
+  const directCard = normalizeCardCode(normalized);
+  if (directCard) return { type: 'card', code: directCard };
 
   let url: URL;
   try {
     url = new URL(value);
   } catch {
+    // Nếu không phải URL hoàn chỉnh, thử trích xuất mã card hoặc room từ chuỗi bất kỳ
+    const subMatch = normalized.match(/(?:CARDCODE|CARD|C)=([^&#]+)/i);
+    if (subMatch) {
+      const extractedCard = normalizeCardCode(subMatch[1]);
+      if (extractedCard) return { type: 'card', code: extractedCard };
+    }
+    const roomMatch = normalized.match(/ROOM-[A-Z0-9]{4,12}/i);
+    if (roomMatch) return { type: 'room', code: roomMatch[0].toUpperCase() };
     return null;
+  }
+
+  // Quét các query parameters thông dụng (cardCode, card, c, code, id)
+  const hashQuery = url.hash.includes('?') ? new URLSearchParams(url.hash.slice(url.hash.indexOf('?') + 1)) : null;
+
+  const roomKeys = ['roomCode', 'room', 'r'];
+  for (const key of roomKeys) {
+    const candidate = url.searchParams.get(key) ?? hashQuery?.get(key);
+    if (candidate && ROOM_CODE_PATTERN.test(candidate.toUpperCase())) {
+      return { type: 'room', code: candidate.toUpperCase() };
+    }
+  }
+
+  const cardKeys = ['cardCode', 'card', 'c', 'code', 'id'];
+  for (const key of cardKeys) {
+    const candidate = url.searchParams.get(key) ?? hashQuery?.get(key);
+    if (candidate) {
+      const normalizedCard = normalizeCardCode(candidate);
+      if (normalizedCard) return { type: 'card', code: normalizedCard };
+    }
   }
 
   const paths = [url.pathname];
@@ -50,36 +130,32 @@ export const parseQRCodePayload = (rawValue: string): QRCodePayload | null => {
     });
     const upperSegments = segments.map((segment) => segment.toUpperCase());
 
-    for (let index = 0; index < upperSegments.length - 1; index += 1) {
-      const marker = upperSegments[index];
-      const code = upperSegments[index + 1];
-      if (['ROOM', 'ROOMS'].includes(marker) && ROOM_CODE_PATTERN.test(code)) {
-        return { type: 'room', code };
+    for (let index = 0; index < upperSegments.length; index += 1) {
+      const segment = upperSegments[index];
+      // Kiểm tra trực tiếp segment có phải card code không
+      const cardFromSegment = normalizeCardCode(segment);
+      if (cardFromSegment) {
+        return { type: 'card', code: cardFromSegment };
       }
-      if (['CARD', 'CARDS'].includes(marker) && CARD_CODE_PATTERN.test(code)) {
-        return { type: 'card', code: code.replace(/^PC-/, 'SD-') };
+
+      if (ROOM_CODE_PATTERN.test(segment)) {
+        return { type: 'room', code: segment };
       }
-      if (marker === 'QR' && upperSegments[index - 1] === 'MISSIONS' && CARD_CODE_PATTERN.test(code)) {
-        return { type: 'card', code: code.replace(/^PC-/, 'SD-') };
+
+      if (index < upperSegments.length - 1) {
+        const marker = segment;
+        const code = upperSegments[index + 1];
+        if (['ROOM', 'ROOMS', 'JOIN'].includes(marker) && ROOM_CODE_PATTERN.test(code)) {
+          return { type: 'room', code };
+        }
+        if (['CARD', 'CARDS', 'QR'].includes(marker)) {
+          const nextCard = normalizeCardCode(code);
+          if (nextCard) return { type: 'card', code: nextCard };
+        }
       }
     }
-
-    const joinIndex = upperSegments.indexOf('JOIN');
-    const joinCode = upperSegments[joinIndex + 1];
-    if (joinIndex >= 0 && ROOM_CODE_PATTERN.test(joinCode ?? '')) {
-      return { type: 'room', code: joinCode };
-    }
   }
 
-  const hashQuery = url.hash.includes('?') ? new URLSearchParams(url.hash.slice(url.hash.indexOf('?') + 1)) : null;
-  const roomQueryCode = url.searchParams.get('roomCode') ?? hashQuery?.get('roomCode');
-  if (roomQueryCode && ROOM_CODE_PATTERN.test(roomQueryCode.toUpperCase())) {
-    return { type: 'room', code: roomQueryCode.toUpperCase() };
-  }
-  const cardQueryCode = url.searchParams.get('cardCode') ?? hashQuery?.get('cardCode');
-  if (cardQueryCode && CARD_CODE_PATTERN.test(cardQueryCode.toUpperCase())) {
-    return { type: 'card', code: cardQueryCode.toUpperCase().replace(/^PC-/, 'SD-') };
-  }
   return null;
 };
 
@@ -142,14 +218,14 @@ export const downloadBoxQrBadge = async () => {
   <rect x="70" y="40" width="460" height="52" rx="26" fill="#0f172a"/>
   <text x="300" y="73" font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="900" fill="#38bdf8" text-anchor="middle" letter-spacing="3">SNAPDECK</text>
   <text x="300" y="132" font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="26" font-weight="900" fill="#0f172a" text-anchor="middle">QUÉT MÃ VÀO WEB APP CHƠI NGAY</text>
-  <text x="300" y="162" font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="600" fill="#64748b" text-anchor="middle">Board Game Phygital với xác thực bằng bình chọn nhóm</text>
+  <text x="300" y="162" font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="15" font-weight="600" fill="#64748b" text-anchor="middle">Board Game Phygital với Trọng tài AI & Bình chọn nhóm</text>
   <rect x="90" y="185" width="420" height="420" rx="28" fill="#ffffff" stroke="#cbd5e1" stroke-width="3"/>
   <svg x="110" y="205" width="380" height="380" viewBox="${viewBox}">
     ${qrInner}
   </svg>
   <text x="300" y="640" font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="700" fill="#0284c7" text-anchor="middle">👉 annbhe182132.github.io/photo-challenge/</text>
   <text x="300" y="670" font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="14" font-weight="600" fill="#334155" text-anchor="middle">Mở camera điện thoại quét mã • Không cần tải ứng dụng</text>
-  <text x="300" y="698" font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#94a3b8" text-anchor="middle">Bộ bài 24 lá vật lý + WebApp bình chọn nhóm • AI chưa khả dụng</text>
+  <text x="300" y="698" font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#94a3b8" text-anchor="middle">Bộ bài 24 lá vật lý + WebApp Trọng tài AI Gemini & Bình chọn nhóm</text>
 </svg>`;
 
   const blob = new Blob([badgeSvg], { type: 'image/svg+xml;charset=utf-8' });

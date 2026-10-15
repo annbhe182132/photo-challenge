@@ -33,6 +33,7 @@ const LobbyPage = () => {
     setMode,
     deviceMode,
     verificationMethod,
+    setVerificationMethod,
     photoEvidence,
     photoBonusEnabled,
     currentPlayerId,
@@ -306,7 +307,60 @@ const LobbyPage = () => {
                 </div>
               </div>
 
-              <section className="grid gap-4 rounded-2xl border border-white/10 bg-slate-950/60 p-4 sm:grid-cols-3">
+              {/* 2. Verification Method Selection */}
+              <div>
+                <h3 className="text-base font-bold text-white mb-3">2. Trọng Tài & Chấm Điểm Thử Thách</h3>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      sound.playClick();
+                      if (isSingleDevice || (isHost && roomStatus === 'waiting')) setVerificationMethod('ai');
+                    }}
+                    disabled={!isSingleDevice && (!isHost || roomStatus !== 'waiting')}
+                    className={`rounded-2xl border p-4 text-left transition ${
+                      verificationMethod === 'ai'
+                        ? 'border-cyan-400 bg-cyan-500/20 shadow-[0_0_20px_rgba(34,211,238,0.25)]'
+                        : 'border-white/10 bg-white/5 hover:bg-white/10'
+                    }`}
+                  >
+                    <div className="font-bold text-white text-sm flex items-center justify-between">
+                      <span className="flex items-center gap-2">🤖 SNAPDECK AI Judge (Gemini)</span>
+                      {verificationMethod === 'ai' && <CheckCircle2 size={16} className="text-cyan-400" />}
+                    </div>
+                    <p className="text-xs text-slate-300 mt-1.5 leading-relaxed">
+                      AI tự động quét ảnh, chấm điểm sáng tạo & nhận xét hóm hỉnh. Rất hợp cho cả chơi 1 mình lẫn nhóm bạn!
+                    </p>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      sound.playClick();
+                      if (isSingleDevice || (isHost && roomStatus === 'waiting')) setVerificationMethod('group');
+                    }}
+                    disabled={!isSingleDevice && (!isHost || roomStatus !== 'waiting')}
+                    className={`rounded-2xl border p-4 text-left transition ${
+                      verificationMethod === 'group'
+                        ? 'border-amber-400 bg-amber-500/20 shadow-[0_0_20px_rgba(251,191,36,0.25)]'
+                        : 'border-white/10 bg-white/5 hover:bg-white/10'
+                    }`}
+                  >
+                    <div className="font-bold text-white text-sm flex items-center justify-between">
+                      <span className="flex items-center gap-2">👥 Bình Chọn Nhóm (Group Vote)</span>
+                      {verificationMethod === 'group' && <CheckCircle2 size={16} className="text-amber-400" />}
+                    </div>
+                    <p className="text-xs text-slate-300 mt-1.5 leading-relaxed">
+                      Những người chơi còn lại trên bàn sẽ nhấn Chấp thuận hoặc Từ chối để quyết định tính hợp lệ.
+                    </p>
+                  </button>
+                </div>
+              </div>
+
+              {/* 3. Duration & Rounds */}
+              <div>
+                <h3 className="text-base font-bold text-white mb-3">3. Cài Đặt Thời Gian & Vòng Chơi</h3>
+                <section className="grid gap-4 rounded-2xl border border-white/10 bg-slate-950/60 p-4 sm:grid-cols-3">
                 <label className="space-y-2 text-sm font-semibold text-slate-200">
                   <span className="flex items-center gap-2"><Clock3 size={16} className="text-cyan-300" /> Thời gian mỗi lượt</span>
                   <select
@@ -347,13 +401,14 @@ const LobbyPage = () => {
                   </button>
                 </div>
               </section>
+              </div>
 
               {/* Player Roster */}
               <div>
                 <div className="mb-3 flex items-center justify-between">
                   <h3 className="text-base font-bold text-white flex items-center gap-2">
                     <Users size={18} className="text-cyan-300" />
-                    2. Danh Sách Thành Viên Trong Phòng ({players.length} Thành Viên)
+                    4. Danh Sách Thành Viên Trong Phòng ({players.length} Thành Viên)
                   </h3>
                 </div>
 

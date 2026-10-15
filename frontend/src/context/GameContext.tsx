@@ -230,6 +230,7 @@ export interface GameContextType {
   submissions: GameSubmission[];
   addLocalSubmission: (submission: Omit<GameSubmission, 'id' | 'turnIndex' | 'eligibleVoterIds' | 'requiredVotes' | 'votes' | 'status' | 'scoreBreakdown'>) => GameSubmission;
   castLocalVote: (submissionId: string, voterId: string, approve: boolean) => GameSubmission | null;
+  resolveLocalAiSubmission: (submissionId: string, passed: boolean, scoreBreakdown: ScoreBreakdown, aiFeedback?: string) => GameSubmission | null;
   syncRoom: (room: {
     players: Player[];
     currentRound: number;
@@ -444,8 +445,11 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const addLocalSubmission = (
     data: Omit<GameSubmission, 'id' | 'turnIndex' | 'eligibleVoterIds' | 'requiredVotes' | 'votes' | 'status' | 'scoreBreakdown'>
   ) => {
-    const eligibleVoterIds = players.filter((player) => player.id !== data.playerId).map((player) => player.id);
-    if (eligibleVoterIds.length === 0) {
+    const isAi = verificationMethod === 'ai';
+    const eligibleVoterIds = isAi
+      ? ['ai-judge']
+      : players.filter((player) => player.id !== data.playerId).map((player) => player.id);
+    if (!isAi && eligibleVoterIds.length === 0) {
       throw new Error('Xác thực nhóm cần ít nhất một người chơi khác để đánh giá.');
     }
     if (submissions.some((submission) =>
@@ -504,6 +508,41 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setSubmissions((previous) => previous.map((submission) => submission.id === submissionId ? updated : submission));
 
     if (status === 'approved') {
+      addScoreToPlayer(current.playerId, approvedScore.total);
+      if (current.evidence) {
+        addPhotoToCurrentAlbum({
+          round: current.round,
+          image: current.evidence,
+          cardTitle: current.cardTitle,
+          score: approvedScore.total,
+          mission: current.mission,
+        });
+      }
+    }
+    return updated;
+  };
+
+  const resolveLocalAiSubmission = (
+    submissionId: string,
+    passed: boolean,
+    scoreBreakdown: ScoreBreakdown,
+    _aiFeedback?: string
+  ) => {
+    const current = submissions.find((submission) => submission.id === submissionId);
+    if (!current || current.status !== 'pending') return current ?? null;
+
+    const status = passed ? 'approved' : 'rejected';
+    const approvedScore = passed
+      ? scoreBreakdown
+      : { basePoints: 0, photoBonus: 0, creativityBonus: 0, total: 0 };
+    const updated: GameSubmission = {
+      ...current,
+      status,
+      scoreBreakdown: approvedScore,
+    };
+    setSubmissions((previous) => previous.map((submission) => submission.id === submissionId ? updated : submission));
+
+    if (passed) {
       addScoreToPlayer(current.playerId, approvedScore.total);
       if (current.evidence) {
         addPhotoToCurrentAlbum({
@@ -693,6 +732,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         submissions,
         addLocalSubmission,
         castLocalVote,
+        resolveLocalAiSubmission,
         syncRoom,
         beginLocalGame,
         resetGame,
