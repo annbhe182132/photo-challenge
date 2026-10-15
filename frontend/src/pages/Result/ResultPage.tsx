@@ -45,6 +45,7 @@ const ResultPage = () => {
   const timedOut = location.state?.timedOut === true || query.get('timedOut') === 'true';
   const skipped = location.state?.skipped === true || query.get('skipped') === 'true';
   const score = location.state?.score ?? (Number(query.get('score')) || 0);
+  const groupScore = location.state?.groupScore as number | undefined;
   const scoreBreakdown = location.state?.scoreBreakdown as {
     basePoints: number;
     photoBonus: number;
@@ -234,6 +235,17 @@ const ResultPage = () => {
                   </div>
                 )}
               </div>
+
+              {typeof groupScore === 'number' && (
+                <div className="rounded-2xl border border-cyan-400/25 bg-cyan-950/30 p-4">
+                  <p className="text-xs font-bold uppercase tracking-wide text-cyan-200">Điểm đánh giá nhóm</p>
+                  <p className="mt-1 text-3xl font-black text-white">
+                    {Number.isInteger(groupScore) ? groupScore : groupScore.toFixed(1)}
+                    <span className="ml-1 text-base font-semibold text-slate-300">/ 100</span>
+                  </p>
+                  <p className="mt-1 text-xs text-slate-300">Điểm đánh giá tách biệt với XP nhận được.</p>
+                </div>
+              )}
 
               {/* Passed vs rejected layout */}
               {passed ? (

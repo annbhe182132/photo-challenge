@@ -4,7 +4,6 @@ import {
   ArrowLeft,
   CheckCircle2,
   LoaderCircle,
-  ShieldCheck,
   ShieldX,
   Sparkles,
   Bot,
@@ -13,6 +12,7 @@ import {
   Users,
   Zap,
   Tag,
+  X,
 } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import type { GameSubmission } from '../../context/GameContext';
@@ -37,6 +37,12 @@ interface AIAnalysisResult {
   modelUsed?: string;
 }
 
+interface AIResponse {
+  success: boolean;
+  data?: AIAnalysisResult;
+  message?: string;
+}
+
 interface SubmissionResponse {
   success: boolean;
   data?: GameSubmission | {
@@ -55,6 +61,7 @@ interface SubmissionResponse {
     requiredVotes: number;
     voteCount: number;
     hasVoted: boolean;
+    groupScore?: number | null;
     status: 'pending' | 'approved' | 'rejected';
     scoreBreakdown: GameSubmission['scoreBreakdown'];
   };
@@ -71,6 +78,7 @@ interface RoomResponse {
     activePlayerId?: string | null;
     turnStartedAt?: string | null;
     turnDeadline?: string | null;
+    turnRemainingSeconds?: number | null;
     turnDurationSeconds?: 0 | 15 | 30 | 60;
   };
 }
@@ -89,6 +97,41 @@ const AI_SCANNING_TIPS = [
   '📝 Đang tính toán điểm số và soạn lời nhận xét...',
 ];
 
+const EvidenceImage = ({ src, onOpen }: { src: string; onOpen: () => void }) => {
+  const [loaded, setLoaded] = useState(false);
+  const [loadError, setLoadError] = useState(false);
+
+  return (
+    <>
+      {!loaded && !loadError && (
+        <div className="absolute inset-0 z-10 flex items-center justify-center text-sm text-slate-300">
+          <LoaderCircle className="mr-2 animate-spin" /> Đang tải ảnh…
+        </div>
+      )}
+      {loadError ? (
+        <div role="alert" className="absolute inset-0 flex items-center justify-center p-4 text-center text-sm text-red-200">
+          Không thể tải ảnh bằng chứng.
+        </div>
+      ) : (
+        <button
+          type="button"
+          className="absolute inset-0 h-full w-full cursor-zoom-in"
+          onClick={onOpen}
+          aria-label="Mở ảnh bằng chứng kích thước lớn"
+        >
+          <img
+            src={src}
+            alt="Bằng chứng thử thách"
+            onLoad={() => setLoaded(true)}
+            onError={() => setLoadError(true)}
+            className="h-full w-full object-contain"
+          />
+        </button>
+      )}
+    </>
+  );
+};
+
 const asGameSubmission = (submission: NonNullable<SubmissionResponse['data']>): GameSubmission => ({
   id: 'id' in submission ? submission.id : submission._id,
   round: submission.round,
@@ -105,6 +148,7 @@ const asGameSubmission = (submission: NonNullable<SubmissionResponse['data']>): 
   status: submission.status,
   scoreBreakdown: submission.scoreBreakdown,
   hasVoted: 'hasVoted' in submission ? submission.hasVoted : undefined,
+  groupScore: 'groupScore' in submission ? submission.groupScore : undefined,
 });
 
 const AIVerifyPage = () => {
@@ -145,6 +189,10 @@ const AIVerifyPage = () => {
   const [aiError, setAiError] = useState<string | null>(null);
   const [tipIndex, setTipIndex] = useState(0);
   const hasTriggeredAi = useRef(false);
+  const aiRequestInProgress = useRef(false);
+  const submittingVoteRef = useRef(false);
+  const [selectedGroupScore, setSelectedGroupScore] = useState(80);
+  const [showPhotoPreview, setShowPhotoPreview] = useState(false);
 
   const submission = deviceMode === 'single_device'
     ? submissions.find((candidate) => candidate.id === submissionId) ?? null
@@ -215,22 +263,20 @@ const AIVerifyPage = () => {
 
   // AI Analysis Execution
   const triggerAiEvaluation = useCallback(async (targetSubmission: GameSubmission) => {
+    if (aiRequestInProgress.current) return;
     if (!targetSubmission.evidence) {
       setAiError('Không tìm thấy ảnh bằng chứng để AI phân tích. Bạn có thể chuyển sang chế độ đánh giá nhóm.');
       setAiState('error');
       return;
     }
 
+    aiRequestInProgress.current = true;
     setAiState('analyzing');
     setAiError(null);
     sound.playClick();
 
     try {
-      const res = await apiRequest<{
-        success: boolean;
-        data?: AIAnalysisResult;
-        message?: string;
-      }>('/api/ai/verify', {
+      const requestOptions: RequestInit = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -242,8 +288,12 @@ const AIVerifyPage = () => {
           difficulty: activeCard?.difficulty || 2,
           xp: activeCard?.xp || 20,
           submissionId: targetSubmission.id,
+          playerId: currentPlayerId,
         }),
-      });
+      };
+      const res = deviceMode === 'multi_device'
+        ? await playerApiRequest<AIResponse>(roomPlayerToken, '/api/ai/verify', requestOptions)
+        : await apiRequest<AIResponse>('/api/ai/verify', requestOptions);
 
       if (!res.success || !res.data) {
         throw new Error(res.message || 'Không thể nhận diện ảnh qua AI.');
@@ -254,7 +304,7 @@ const AIVerifyPage = () => {
       setAiState('completed');
 
       if (deviceMode === 'single_device') {
-        resolveLocalAiSubmission(targetSubmission.id, result.passed, result.scoreBreakdown, result.feedback);
+        resolveLocalAiSubmission(targetSubmission.id, result.passed, result.scoreBreakdown);
       } else {
         void loadMultiplayerState();
       }
@@ -269,29 +319,36 @@ const AIVerifyPage = () => {
       setAiError(evalError instanceof Error ? evalError.message : 'Lỗi kết nối máy chủ AI.');
       setAiState('error');
       sound.playFailure();
+    } finally {
+      aiRequestInProgress.current = false;
     }
-  }, [activeCard?.difficulty, activeCard?.xp, deviceMode, loadMultiplayerState, resolveLocalAiSubmission, theme?.name]);
+  }, [activeCard, currentPlayerId, deviceMode, loadMultiplayerState, resolveLocalAiSubmission, roomPlayerToken, theme]);
 
   // Auto trigger AI evaluation once submission is loaded
   useEffect(() => {
     if (verificationMethod !== 'ai' || !submission || hasTriggeredAi.current) return;
+    let timer: number | undefined;
     if (submission.status === 'pending') {
       hasTriggeredAi.current = true;
-      void triggerAiEvaluation(submission);
+      timer = window.setTimeout(() => { void triggerAiEvaluation(submission); }, 0);
     } else if (aiState === 'idle') {
-      setAiState('completed');
+      timer = window.setTimeout(() => setAiState('completed'), 0);
     }
+    return () => {
+      if (timer !== undefined) window.clearTimeout(timer);
+    };
   }, [verificationMethod, submission, triggerAiEvaluation, aiState]);
 
-  const submitVote = async (approve: boolean) => {
-    if (!submission || !activeVoterId || submittingVote) return;
+  const submitVote = async (score: number) => {
+    if (!submission || !activeVoterId || submittingVoteRef.current) return;
+    submittingVoteRef.current = true;
     setSubmittingVote(true);
     setError(null);
     sound.playClick();
     try {
       let updated: GameSubmission;
       if (deviceMode === 'single_device') {
-        const result = castLocalVote(submission.id, activeVoterId, approve);
+        const result = castLocalVote(submission.id, activeVoterId, score);
         if (!result) throw new Error('Không tìm thấy lượt gửi thử thách.');
         updated = result;
       } else {
@@ -301,18 +358,20 @@ const AIVerifyPage = () => {
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ playerId: activeVoterId, approve }),
+            body: JSON.stringify({ playerId: activeVoterId, score }),
           }
         );
         if (!response.data) throw new Error('Máy chủ không trả về trạng thái bình chọn.');
         updated = asGameSubmission(response.data);
       }
       if (deviceMode === 'multi_device') setRemoteSubmission(updated);
+      setSelectedGroupScore(80);
       if (updated.status !== 'pending') sound.playSuccess();
     } catch (voteError) {
       setError(voteError instanceof Error ? voteError.message : 'Không thể gửi phiếu bầu.');
       if (deviceMode === 'multi_device') void loadMultiplayerState();
     } finally {
+      submittingVoteRef.current = false;
       setSubmittingVote(false);
     }
   };
@@ -330,6 +389,7 @@ const AIVerifyPage = () => {
         round: submission.round,
         passed,
         score,
+        groupScore: submission.groupScore,
         playerId: submission.playerId,
         scoreBreakdown: submission.scoreBreakdown.total > 0
           ? submission.scoreBreakdown
@@ -388,8 +448,8 @@ const AIVerifyPage = () => {
             </h1>
             <p className="mt-1.5 text-xs text-slate-300 sm:text-sm">
               {verificationMethod === 'ai'
-                ? 'Mô hình AI Gemini tự động phân tích hình ảnh, phát hiện chi tiết và đối chiếu theo tiêu chí thẻ bài.'
-                : 'Người gửi không được tự bỏ phiếu. Cần ít nhất 2/3 phiếu hợp lệ để duyệt.'}
+                ? 'Gemini đánh giá ảnh theo thử thách.'
+                : 'Chấm điểm từ 0 đến 100. Người gửi không tự chấm bài của mình.'}
             </p>
           </header>
 
@@ -408,7 +468,7 @@ const AIVerifyPage = () => {
           {submission && (
             <>
               {/* Challenge Information */}
-              <article className="grid gap-4 rounded-2xl border border-white/10 bg-slate-950/60 p-4 sm:grid-cols-[minmax(0,1fr)_180px]">
+              <article className="space-y-3 rounded-2xl border border-white/10 bg-slate-950/60 p-3 sm:p-4">
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="rounded-md bg-fuchsia-500/20 px-2 py-0.5 text-[11px] font-bold text-fuchsia-300">
@@ -423,13 +483,13 @@ const AIVerifyPage = () => {
                 </div>
 
                 {/* Evidence Photo Viewport with Futuristic AI Scanner Line */}
-                <div className="relative overflow-hidden rounded-xl border border-cyan-500/30 bg-slate-900">
+                <div className="relative h-[55vh] min-h-[280px] max-h-[640px] w-full overflow-hidden rounded-xl border border-cyan-500/30 bg-black">
                   {submission.evidence ? (
-                    <div className="relative h-44 w-full sm:h-full">
-                      <img
+                    <div className="relative h-full w-full">
+                      <EvidenceImage
+                        key={submission.evidence}
                         src={submission.evidence}
-                        alt="Bằng chứng thử thách"
-                        className="h-full w-full object-cover"
+                        onOpen={() => setShowPhotoPreview(true)}
                       />
                       {/* Laser Scanner Animation when AI is analyzing */}
                       {verificationMethod === 'ai' && aiState === 'analyzing' && (
@@ -625,9 +685,6 @@ const AIVerifyPage = () => {
                 </div>
               )}
 
-              {/* ========================================================= */}
-              {/* CHẾ ĐỘ 2: BỎ PHIẾU NHÓM (GROUP VOTE MODE)                  */}
-              {/* ========================================================= */}
               {verificationMethod === 'group' && (
                 <>
                   {submission.status === 'pending' && (
@@ -637,7 +694,7 @@ const AIVerifyPage = () => {
                         <span className="text-xs text-slate-300">Đã bỏ phiếu: {votesCast} / {eligibleCount}</span>
                       </div>
                       <p className="mt-2 text-sm text-slate-300">
-                        Cần {submission.requiredVotes} phiếu đồng ý. Tỷ lệ đồng ý được giữ kín trong lúc bỏ phiếu.
+                        Điểm nhóm là trung bình các phiếu. Cần ít nhất {submission.requiredVotes} đánh giá đạt 50 điểm để duyệt.
                       </p>
                       {deviceMode === 'single_device' && voter && (
                         <p className="mt-3 rounded-xl bg-slate-950/70 p-3 text-sm font-bold text-amber-200">
@@ -649,28 +706,58 @@ const AIVerifyPage = () => {
                           Bạn đã gửi thử thách này. Đang chờ người chơi khác đánh giá trên thiết bị của họ.
                         </p>
                       )}
+                      {deviceMode === 'multi_device' && submission.hasVoted && submission.playerId !== currentPlayerId && (
+                        <p className="mt-3 rounded-xl bg-slate-950/70 p-3 text-sm text-slate-200">
+                          Bạn đã gửi điểm. Đang chờ những người đánh giá còn lại.
+                        </p>
+                      )}
                       {Boolean(
                         submission
                         && activeVoterId
                         && submission.status === 'pending'
                         && submission.playerId !== activeVoterId
                         && submission.eligibleVoterIds.includes(activeVoterId)
+                        && !submission.hasVoted
                         && !submission.votes.some((v) => v.playerId === activeVoterId)
                       ) && (
-                        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                        <div className="mt-4 space-y-4">
+                          <div className="flex items-center justify-between gap-4">
+                            <label htmlFor="group-score" className="font-semibold text-white">Điểm đánh giá</label>
+                            <output htmlFor="group-score" className="min-w-16 rounded-xl bg-cyan-400 px-3 py-1 text-center text-xl font-black text-slate-950">
+                              {selectedGroupScore}
+                            </output>
+                          </div>
+                          <input
+                            id="group-score"
+                            type="range"
+                            min="0"
+                            max="100"
+                            step="1"
+                            value={selectedGroupScore}
+                            onChange={(event) => setSelectedGroupScore(Number(event.target.value))}
+                            className="h-3 w-full cursor-pointer accent-cyan-400"
+                            aria-label={`Điểm đang chọn: ${selectedGroupScore} trên 100`}
+                          />
+                          <div className="grid grid-cols-3 gap-2">
+                            {[50, 80, 100].map((score) => (
+                              <button
+                                key={score}
+                                type="button"
+                                onClick={() => setSelectedGroupScore(score)}
+                                aria-pressed={selectedGroupScore === score}
+                                className={`min-h-11 rounded-xl border px-3 font-bold ${selectedGroupScore === score ? 'border-cyan-300 bg-cyan-400/20 text-cyan-100' : 'border-white/15 bg-white/5 text-slate-200'}`}
+                              >
+                                {score}
+                              </button>
+                            ))}
+                          </div>
                           <button
-                            onClick={() => { void submitVote(true); }}
+                            type="button"
+                            onClick={() => { void submitVote(selectedGroupScore); }}
                             disabled={submittingVote}
-                            className="flex min-h-12 items-center justify-center gap-2 rounded-xl bg-emerald-500/20 px-4 py-3 font-bold text-emerald-200 disabled:opacity-50"
+                            className="min-h-12 w-full rounded-xl bg-cyan-400 px-4 py-3 font-black text-slate-950 disabled:opacity-50"
                           >
-                            <ShieldCheck /> Chấp thuận
-                          </button>
-                          <button
-                            onClick={() => { void submitVote(false); }}
-                            disabled={submittingVote}
-                            className="flex min-h-12 items-center justify-center gap-2 rounded-xl bg-rose-500/20 px-4 py-3 font-bold text-rose-200 disabled:opacity-50"
-                          >
-                            <ShieldX /> Từ chối
+                            {submittingVote ? 'Đang gửi điểm…' : 'Xác nhận điểm'}
                           </button>
                         </div>
                       )}
@@ -698,9 +785,14 @@ const AIVerifyPage = () => {
                       </div>
                       <p className="mt-2 text-sm text-slate-200">
                         {submission.status === 'approved'
-                          ? `Điểm: ${submission.scoreBreakdown.basePoints} cơ bản + ${submission.scoreBreakdown.photoBonus} ảnh = ${submission.scoreBreakdown.total}.`
-                          : 'Thử thách bị từ chối khi không đạt ngưỡng hai phần ba phiếu đồng ý.'}
+                          ? `XP: ${submission.scoreBreakdown.basePoints} cơ bản + ${submission.scoreBreakdown.photoBonus} ảnh = ${submission.scoreBreakdown.total}.`
+                          : 'Thử thách không đạt điều kiện duyệt nhóm.'}
                       </p>
+                      {typeof submission.groupScore === 'number' && (
+                        <p className="mt-2 text-sm font-bold text-cyan-200">
+                          Điểm nhóm trung bình: {Number.isInteger(submission.groupScore) ? submission.groupScore : submission.groupScore.toFixed(1)} / 100
+                        </p>
+                      )}
                       <button onClick={finishResult} className="mt-4 min-h-12 w-full rounded-xl bg-cyan-500 px-5 py-3 font-black text-slate-950">
                         Xem kết quả vòng này
                       </button>
@@ -712,6 +804,24 @@ const AIVerifyPage = () => {
           )}
         </motion.div>
       </section>
+      {showPhotoPreview && submission?.evidence && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-3 sm:p-8"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Xem ảnh bằng chứng"
+          onClick={() => setShowPhotoPreview(false)}
+        >
+          <button
+            type="button"
+            onClick={() => setShowPhotoPreview(false)}
+            className="absolute right-3 top-3 z-10 flex min-h-12 items-center gap-2 rounded-full bg-white/15 px-4 text-sm font-bold text-white"
+          >
+            <X size={18} /> Đóng
+          </button>
+          <img src={submission.evidence} alt="Ảnh bằng chứng kích thước lớn" className="max-h-full max-w-full object-contain" />
+        </div>
+      )}
     </main>
   );
 };

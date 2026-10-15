@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { AlertTriangle, ArrowLeft, Camera, CheckCircle2, Layers, QrCode, Sparkles, StopCircle, SwitchCamera, Upload, Zap } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, Camera, CheckCircle2, QrCode, Sparkles, StopCircle, SwitchCamera, Upload, Zap } from 'lucide-react';
 import type { Html5Qrcode as Html5QrcodeType } from 'html5-qrcode';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useGame } from '../../context/useGame';
@@ -45,6 +45,7 @@ interface JoinedRoomResponse {
     activePlayerId?: string | null;
     turnStartedAt?: string | null;
     turnDeadline?: string | null;
+    turnRemainingSeconds?: number | null;
     turnDurationSeconds?: 0 | 15 | 30 | 60;
     status?: 'waiting' | 'active' | 'completed';
     players?: Player[];
@@ -126,10 +127,8 @@ const ScanQRPage = () => {
   const rawDirectCard = searchParams.get('cardCode') ?? searchParams.get('card') ?? searchParams.get('c');
   const directCardCode = normalizeCardCode(rawDirectCard);
   const isDirectCardQr = !isFromHomeScan && Boolean(directCardCode);
-  const [mode, setScanMode] = useState<'camera' | 'deck'>(isFromHomeScan || isDirectCardQr ? 'camera' : 'deck');
   const [scanStatus, setScanStatus] = useState<ScanStatus>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
   const [selectedCameraId, setSelectedCameraId] = useState<string | null>(null);
   const [availableCameras, setAvailableCameras] = useState<{ id: string; label: string }[]>([]);
   const [turnTimeLeft, setTurnTimeLeft] = useState<number | null>(null);
@@ -366,38 +365,19 @@ const ScanQRPage = () => {
         themeId?: string;
       } | null = null;
 
-      try {
-        const data = await apiRequest<MissionApiResponse>(`/api/missions/qr/${encodeURIComponent(canonicalCode)}`);
-        if (requestSession !== sessionRef.current) return;
-        if (data.success && data.mission && typeof data.mission.instruction === 'string') {
-          missionData = {
-            missionCode: data.mission.missionCode || `${canonicalCode}-M01`,
-            title: data.mission.title || matchingDeckCard?.title || 'Thử thách lá bài',
-            instruction: data.mission.instruction,
-            difficulty: typeof data.mission.difficulty === 'number' ? data.mission.difficulty : (matchingDeckCard?.difficulty ?? 2),
-            xp: typeof data.mission.xp === 'number' ? data.mission.xp : (matchingDeckCard?.xp ?? 20),
-            themeId: data.card?.themeId || matchingDeckCard?.theme,
-          };
-        }
-      } catch (apiError) {
-        console.warn('[ScanQRPage] Server mission API không phản hồi, tự động dùng thẻ cục bộ:', apiError);
+      const data = await apiRequest<MissionApiResponse>(`/api/missions/qr/${encodeURIComponent(canonicalCode)}`);
+      if (requestSession !== sessionRef.current) return;
+      if (!data.success || !data.mission || typeof data.mission.instruction !== 'string' || !data.mission.instruction.trim()) {
+        throw new Error(data.message || 'Máy chủ không trả về nhiệm vụ hợp lệ cho mã QR này.');
       }
-
-      // Fallback tự động: nếu API không có dữ liệu hoặc gặp sự cố, dùng ngay dữ liệu gốc của bộ bài 24 lá
-      if (!missionData) {
-        if (matchingDeckCard) {
-          missionData = {
-            missionCode: `${matchingDeckCard.code}-LOCAL`,
-            title: matchingDeckCard.title,
-            instruction: matchingDeckCard.mission,
-            difficulty: matchingDeckCard.difficulty,
-            xp: matchingDeckCard.xp,
-            themeId: matchingDeckCard.theme,
-          };
-        } else {
-          throw new Error(`Không tìm thấy lá bài ${code} trong bộ bài 24 lá.`);
-        }
-      }
+      missionData = {
+        missionCode: data.mission.missionCode || `${canonicalCode}-M01`,
+        title: data.mission.title || matchingDeckCard?.title || 'Thử thách lá bài',
+        instruction: data.mission.instruction,
+        difficulty: typeof data.mission.difficulty === 'number' ? data.mission.difficulty : (matchingDeckCard?.difficulty ?? 2),
+        xp: typeof data.mission.xp === 'number' ? data.mission.xp : (matchingDeckCard?.xp ?? 20),
+        themeId: data.card?.themeId || matchingDeckCard?.theme,
+      };
 
       if (deviceMode === 'multi_device') {
         const latestResponse = await apiRequest<{
@@ -764,14 +744,6 @@ const ScanQRPage = () => {
     }
   };
 
-  const handleSelectCard = async (card: PhysicalCard) => {
-    if (scanStatus === 'processing') return;
-    const requestSession = ++sessionRef.current;
-    sound.playCardFlip();
-    setSelectedCardId(card.id);
-    await loadCardMission(card.code, card, requestSession);
-  };
-
   // QR in each printed card opens this page directly and loads that card's mission.
   useEffect(() => {
     if (isFromHomeScan) return;
@@ -779,12 +751,10 @@ const ScanQRPage = () => {
     const rawCardParam = params.get('cardCode') ?? params.get('card') ?? params.get('c');
     const normalized = normalizeCardCode(rawCardParam);
     if (!normalized) return;
-    const card = DECK_CARDS.find((item) => item.code === normalized);
-    if (!card || handledQrRef.current) return;
+    if (handledQrRef.current) return;
     handledQrRef.current = true;
     const requestSession = ++sessionRef.current;
-    setSelectedCardId(card.id);
-    void loadCardMission(card.code, card, requestSession);
+    void loadCardMission(normalized, undefined, requestSession);
   // Only handle the initial cardCode query when a printed-card URL is opened.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.search, isFromHomeScan]);
@@ -826,17 +796,17 @@ const ScanQRPage = () => {
               <div>
                 <span className="inline-flex items-center gap-2 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3.5 py-1 text-xs font-bold text-cyan-300">
                   <Sparkles size={14} className="animate-spin text-cyan-400" />
-                  Mô Hình Phygital: Lá Bài Thật + WebApp
+                  Mô Hình Phygital
                 </span>
                 <h1 className="mt-2 text-2xl font-black text-white sm:text-4xl">
-                  {isFromHomeScan ? 'Quét QR Tham Gia Phòng' : isDirectCardQr ? `Đang mở lá bài ${directCardCode}` : 'Quét & Chọn Lá Bài Thử Thách'}
+                  {isFromHomeScan ? 'Quét QR Tham Gia Phòng' : isDirectCardQr ? `Đang mở lá bài ${directCardCode}` : 'Quét Lá Bài Thử Thách'}
                 </h1>
                 <p className="mt-1 text-sm text-slate-300">
                   {isFromHomeScan
                     ? 'Quét mã phòng đang hoạt động để tham gia qua máy chủ.'
                     : isDirectCardQr
                       ? 'Đang tải đúng nhiệm vụ được liên kết với mã QR này.'
-                      : `Vòng ${currentRound} — Quét mã QR trên lá bài hoặc chọn bài demo.`}
+                      : `Vòng ${currentRound} — Quét mã QR trên lá bài.`}
                 </p>
                 {!isFromHomeScan && deviceMode === 'multi_device' && (
                   <div className="mt-3 flex flex-wrap items-center gap-3 text-xs">
@@ -855,35 +825,6 @@ const ScanQRPage = () => {
                 )}
               </div>
 
-              {!isFromHomeScan && !isDirectCardQr && (
-                <div className="flex rounded-2xl border border-white/15 bg-slate-950 p-1.5">
-                  <button
-                    onClick={() => {
-                      sound.playClick();
-                      void stopScanner();
-                      setScanMode('deck');
-                      setErrorMessage(null);
-                    }}
-                    className={`flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold transition sm:px-4 ${mode === 'deck'
-                      ? 'bg-gradient-to-r from-violet-600 to-fuchsia-500 text-white shadow-lg'
-                      : 'text-slate-400 hover:text-white'}`}
-                  >
-                    <Layers size={16} /> Bộ Bài 3D (Demo)
-                  </button>
-                  <button
-                    onClick={() => {
-                      sound.playClick();
-                      setScanMode('camera');
-                      setErrorMessage(null);
-                    }}
-                    className={`flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold transition sm:px-4 ${mode === 'camera'
-                      ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg'
-                      : 'text-slate-400 hover:text-white'}`}
-                  >
-                    <Camera size={16} /> Quét QR thật
-                  </button>
-                </div>
-              )}
             </div>
 
             {isDirectCardQr ? (
@@ -893,9 +834,9 @@ const ScanQRPage = () => {
                 </div>
                 <h2 className="text-xl font-bold text-white">{scanStatus === 'error' ? 'Không tải được nhiệm vụ' : scanStatus === 'success' ? 'Đã tải nhiệm vụ' : 'Đang tải nhiệm vụ...'}</h2>
                 <p className="text-sm text-slate-300">{scanStatus === 'error' ? (errorMessage ?? 'Vui lòng thử lại sau.') : `Mã lá bài: ${directCardCode}`}</p>
-                {scanStatus === 'error' && <button onClick={() => { handledQrRef.current = false; const card = DECK_CARDS.find((item) => item.code === directCardCode); if (card) { const requestSession = ++sessionRef.current; handledQrRef.current = true; void loadCardMission(card.code, card, requestSession); } }} className="rounded-xl bg-cyan-600 px-5 py-3 font-bold text-white hover:bg-cyan-500">Thử tải lại</button>}
+                {scanStatus === 'error' && <button onClick={() => { if (directCardCode) { handledQrRef.current = true; void loadCardMission(directCardCode, undefined, ++sessionRef.current); } }} className="min-h-12 rounded-xl bg-cyan-600 px-5 py-3 font-bold text-white hover:bg-cyan-500">Thử tải lại</button>}
               </div>
-            ) : mode === 'camera' && (
+            ) : (
               <div className="space-y-4 text-center">
                 {isInAppBrowser() && (
                   <div className="mx-auto max-w-lg rounded-2xl border border-amber-500/40 bg-amber-500/10 p-4 text-left text-xs text-amber-200">
@@ -967,26 +908,6 @@ const ScanQRPage = () => {
                       <Camera size={19} /> {scanButtonLabel()}
                     </button>
                   )}
-
-                  <label
-                    className="flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-2xl border border-cyan-400/40 bg-cyan-500/15 px-6 py-3 font-bold text-cyan-200 shadow-lg backdrop-blur-md transition hover:bg-cyan-500/25"
-                  >
-                    <Upload size={18} />
-                    <span>Chụp / Tải ảnh QR</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      capture="environment"
-                      className="hidden"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          void handleFileScan(file);
-                          e.target.value = '';
-                        }
-                      }}
-                    />
-                  </label>
                 </div>
 
                 {scanStatus === 'scanning' && (
@@ -999,55 +920,6 @@ const ScanQRPage = () => {
                     {errorMessage}
                   </p>
                 )}
-              </div>
-            )}
-
-            {mode === 'deck' && !isFromHomeScan && !isDirectCardQr && (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                    Chọn bài thủ công — đây là luồng demo, không phải quét QR:
-                  </p>
-                </div>
-                {errorMessage && (
-                  <p role="alert" className="rounded-xl border border-red-400/40 bg-red-500/10 px-4 py-3 text-center text-sm font-semibold text-red-200">
-                    {errorMessage}
-                  </p>
-                )}
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {DECK_CARDS.map((card) => {
-                    const isSelected = selectedCardId === card.id;
-                    return (
-                      <motion.button
-                        type="button"
-                        key={card.id}
-                        whileHover={{ scale: 1.03, y: -4 }}
-                        whileTap={{ scale: 0.96 }}
-                        onClick={() => { void handleSelectCard(card); }}
-                        disabled={scanStatus === 'processing'}
-                        className={`relative overflow-hidden rounded-2xl border p-5 text-left backdrop-blur-xl transition disabled:cursor-wait disabled:opacity-70 ${isSelected
-                          ? 'border-cyan-400 bg-gradient-to-br from-cyan-950/80 to-slate-900 shadow-[0_0_30px_rgba(34,211,238,0.4)] ring-2 ring-cyan-400'
-                          : 'border-white/15 bg-slate-950/60 hover:border-cyan-500/40 hover:bg-white/10'}`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="font-mono text-xs font-bold text-cyan-400">{card.code}</span>
-                          <span className="rounded-full border border-cyan-500/30 bg-cyan-500/20 px-2.5 py-0.5 text-[10px] font-bold text-cyan-300">
-                            {card.category}
-                          </span>
-                        </div>
-                        <div className="mt-3 text-lg font-bold text-white">{card.title}</div>
-                        <p className="mt-1 line-clamp-2 text-xs text-slate-400">{card.mission}</p>
-                        <div className="mt-4 flex items-center justify-between border-t border-white/10 pt-3 text-xs">
-                          <span className="font-bold text-amber-400">{'⭐'.repeat(card.difficulty)}</span>
-                          <span className="font-bold text-emerald-400">+{card.xp} XP</span>
-                        </div>
-                        <div className="mt-3 flex items-center justify-center gap-2 rounded-xl border border-cyan-400/30 bg-cyan-500/10 py-2 text-xs font-bold text-cyan-300">
-                          <QrCode size={14} /> {scanStatus === 'processing' && isSelected ? 'ĐANG TẢI...' : 'CHỌN BÀI DEMO'}
-                        </div>
-                      </motion.button>
-                    );
-                  })}
-                </div>
               </div>
             )}
           </motion.div>

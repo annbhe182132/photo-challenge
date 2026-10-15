@@ -3,6 +3,21 @@ export const ROUND_LIMITS = [0, 3, 5, 10];
 
 export const isValidTurnDuration = (seconds) => TURN_DURATIONS.includes(seconds);
 export const isValidRoundLimit = (rounds) => ROUND_LIMITS.includes(rounds);
+export const isValidGroupScore = (score) => Number.isInteger(score) && score >= 0 && score <= 100;
+export const isGroupRatingApproval = (score) => score >= 50;
+export const calculateGroupScore = (votes) => {
+  const scores = votes
+    .map((vote) => (
+      isValidGroupScore(vote.score)
+        ? vote.score
+        : typeof vote.score === 'undefined' && typeof vote.approve === 'boolean'
+          ? vote.approve ? 100 : 0
+          : null
+    ))
+    .filter((score) => score !== null);
+  if (!scores.length) return null;
+  return scores.reduce((total, score) => total + score, 0) / scores.length;
+};
 
 export const getTurnPosition = (turnIndex, playerCount) => {
   if (!Number.isInteger(turnIndex) || turnIndex < 0 || !Number.isInteger(playerCount) || playerCount < 1) {
@@ -22,7 +37,6 @@ export const buildTurnTransition = ({
   turnIndex,
   playerCount,
   roundLimit,
-  turnDurationSeconds,
   status,
   score = 0,
   resolvedAt = new Date(),
@@ -41,8 +55,9 @@ export const buildTurnTransition = ({
     nextRound: completed ? roundLimit : next.round,
     nextPlayerIndex: completed ? null : next.playerIndex,
     gameStatus: completed ? 'completed' : 'active',
-    turnStartedAt: completed ? null : new Date(resolvedAt),
-    turnDeadline: completed ? null : getTurnDeadline(resolvedAt, turnDurationSeconds),
+    // A new turn stays unstarted until its player confirms a live camera feed.
+    turnStartedAt: null,
+    turnDeadline: null,
     turnRecord: {
       turnIndex,
       round: current.round,

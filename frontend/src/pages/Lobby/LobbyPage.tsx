@@ -20,6 +20,7 @@ interface RoomResponse {
     activePlayerId?: string | null;
     turnStartedAt?: string | null;
     turnDeadline?: string | null;
+    turnRemainingSeconds?: number | null;
     turnDurationSeconds?: 0 | 15 | 30 | 60;
   };
 }
@@ -49,7 +50,6 @@ const LobbyPage = () => {
     players,
     setPlayers,
     syncRoom,
-    startLocalTurn,
   } = useGame();
 
   const [copied, setCopied] = useState(false);
@@ -149,7 +149,7 @@ const LobbyPage = () => {
         syncRoom(response.data);
         setRoomStatus(response.data.status);
       } else {
-        if (roomStatus !== 'active') startLocalTurn();
+        // The local turn starts when CameraPage confirms the camera is live.
         setRoomStatus('active');
       }
       navigate('/scan');
@@ -223,7 +223,7 @@ const LobbyPage = () => {
                 <div className="flex flex-col items-center gap-4 rounded-2xl border border-cyan-400/30 bg-slate-950/80 p-4 text-center sm:flex-row sm:justify-center">
                   {isSingleDevice ? (
                     <div className="rounded-2xl border border-emerald-400/30 bg-emerald-500/10 p-4 text-center">
-                      <p className="text-xs font-bold uppercase tracking-wider text-emerald-200">Local session · Không cần mạng</p>
+                      <p className="text-xs font-bold uppercase tracking-wider text-emerald-200">Local session</p>
                       <p className="mt-1 text-2xl font-black text-white">{roomCode}</p>
                     </div>
                   ) : (
@@ -347,11 +347,11 @@ const LobbyPage = () => {
                     }`}
                   >
                     <div className="font-bold text-white text-sm flex items-center justify-between">
-                      <span className="flex items-center gap-2">👥 Bình Chọn Nhóm (Group Vote)</span>
+                      <span className="flex items-center gap-2">👥 Bình Chọn Nhóm</span>
                       {verificationMethod === 'group' && <CheckCircle2 size={16} className="text-amber-400" />}
                     </div>
                     <p className="text-xs text-slate-300 mt-1.5 leading-relaxed">
-                      Những người chơi còn lại trên bàn sẽ nhấn Chấp thuận hoặc Từ chối để quyết định tính hợp lệ.
+                      Những người chơi còn lại trên bàn sẽ chấm điểm để quyết định.
                     </p>
                   </button>
                 </div>
@@ -473,7 +473,7 @@ const LobbyPage = () => {
                 className="inline-flex w-full items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-violet-600 via-fuchsia-500 to-cyan-500 px-6 py-4 text-lg font-black text-white shadow-2xl shadow-fuchsia-500/30 transition hover:shadow-cyan-500/40"
               >
                 <PlayCircle className="h-6 w-6" />
-                {starting ? 'Đang bắt đầu...' : roomStatus === 'active' ? 'Tiếp tục ván chơi → Quét lá bài' : 'Bắt đầu ván chơi → Chọn & quét lá bài'}
+                {starting ? 'Đang bắt đầu...' : roomStatus === 'active' ? 'Tiếp tục ván chơi → Quét lá bài' : 'Bắt đầu ván chơi'}
               </motion.button>
             </motion.div>
           </div>

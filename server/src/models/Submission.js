@@ -3,8 +3,9 @@ import mongoose from 'mongoose';
 const voteSchema = new mongoose.Schema(
   {
     playerId: { type: String, required: true },
-    missionCode: { type: String, required: true },
-    approve: { type: Boolean, required: true },
+    missionCode: { type: String },
+    approve: { type: Boolean, required: false },
+    score: { type: Number, min: 0, max: 100 },
     createdAt: { type: Date, default: Date.now },
   },
   { _id: false }
@@ -24,6 +25,14 @@ const submissionSchema = new mongoose.Schema(
     eligibleVoterIds: { type: [String], default: [] },
     requiredVotes: { type: Number, required: true, min: 1 },
     votes: { type: [voteSchema], default: [] },
+    groupScore: { type: Number, min: 0, max: 100, default: null },
+    aiEvaluationStatus: {
+      type: String,
+      enum: ['idle', 'processing', 'ready', 'completed'],
+      default: 'idle',
+    },
+    aiEvaluationStartedAt: { type: Date, default: null },
+    aiResult: { type: mongoose.Schema.Types.Mixed, default: null },
     status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
     decisionAt: { type: Date, default: null },
     scoreBreakdown: {

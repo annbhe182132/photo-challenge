@@ -5,6 +5,26 @@ export type ScoreBreakdown = {
   total: number;
 };
 
+export const isValidGroupScore = (score: unknown): score is number => (
+  typeof score === 'number' && Number.isInteger(score) && score >= 0 && score <= 100
+);
+
+export const isGroupRatingApproval = (score: number): boolean => score >= 50;
+
+export const calculateGroupScore = (votes: Array<{ score?: number; approve?: boolean }>): number | null => {
+  const scores = votes
+    .map((vote) => (
+      isValidGroupScore(vote.score)
+        ? vote.score
+        : typeof vote.score === 'undefined' && typeof vote.approve === 'boolean'
+          ? vote.approve ? 100 : 0
+          : null
+    ))
+    .filter((score): score is number => score !== null);
+  if (!scores.length) return null;
+  return scores.reduce((total, score) => total + score, 0) / scores.length;
+};
+
 export const calculateApprovalThreshold = (eligibleVoterCount: number): number => {
   if (!Number.isFinite(eligibleVoterCount) || eligibleVoterCount <= 0) {
     return 0;

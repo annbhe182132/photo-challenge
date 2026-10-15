@@ -1,7 +1,13 @@
 import { buildGeminiPrompt, SNAPDECK_SYSTEM_INSTRUCTION } from '../prompts/geminiChallengePrompt.js';
+import mongoose from 'mongoose';
 import { Room } from '../models/Room.js';
 import { Submission } from '../models/Submission.js';
 import { advanceTurn } from './roomController.js';
+import { readEvidenceDataUrl } from '../utils/evidenceStore.js';
+import { verifyPlayerToken } from '../utils/playerAuth.js';
+
+const localAiEvaluations = new Map();
+const localEvaluationTtl = 30 * 60 * 1000;
 
 /**
  * Trích xuất mimeType và dữ liệu base64 thô từ Data URL
@@ -69,6 +75,7 @@ async function callGeminiVision({ apiKey, promptText, imageBase64, mimeType }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(30_000),
       });
 
       if (!response.ok) {
@@ -138,6 +145,9 @@ async function callGeminiVision({ apiKey, promptText, imageBase64, mimeType }) {
  * POST /api/ai/verify
  */
 export const verifyPhoto = async (req, res) => {
+  let claimedSubmissionId = null;
+  let claimedLocalId = null;
+  let resultPersisted = false;
   try {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey || apiKey === 'your_gemini_api_key_here') {
@@ -154,7 +164,16 @@ export const verifyPhoto = async (req, res) => {
       theme,
       difficulty,
       xp,
+      submissionId,
+      playerId,
     } = req.body;
+
+    if (typeof submissionId !== 'string' || !submissionId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Thiếu mã lượt gửi để xác minh.',
+      });
+    }
 
     if (!evidence) {
       return res.status(400).json({
@@ -163,94 +182,291 @@ export const verifyPhoto = async (req, res) => {
       });
     }
 
-    if (!cardTitle || !mission) {
+    if (typeof cardTitle !== 'string' || !cardTitle.trim() || typeof mission !== 'string' || !mission.trim()) {
       return res.status(400).json({
         success: false,
         message: 'Thiếu thông tin thử thách (cardTitle hoặc mission).',
       });
     }
 
-    const parsedImage = parseBase64Image(evidence);
-    if (!parsedImage) {
-      return res.status(400).json({
-        success: false,
-        message: 'Định dạng ảnh không hợp lệ. Cần chuỗi base64 JPEG, PNG hoặc WebP.',
-      });
+    let evaluationEvidence = evidence;
+    let evaluationCardTitle = cardTitle;
+    let evaluationMission = mission;
+    let evaluationTheme = theme || 'Chung';
+    let room = null;
+    let submission = null;
+    let parsedImage;
+    const isLocalSubmission = /^local-[A-Za-z0-9-]{1,100}$/.test(submissionId);
+
+    if (isLocalSubmission) {
+      parsedImage = parseBase64Image(evaluationEvidence);
+      if (!parsedImage) {
+        return res.status(400).json({
+          success: false,
+          message: 'Định dạng ảnh không hợp lệ. Cần chuỗi base64 JPEG, PNG hoặc WebP.',
+        });
+      }
+      const now = Date.now();
+      for (const [id, cached] of localAiEvaluations) {
+        if (now - cached.updatedAt > localEvaluationTtl) localAiEvaluations.delete(id);
+      }
+      const cached = localAiEvaluations.get(submissionId);
+      if (cached?.status === 'completed' || cached?.status === 'ready') {
+        return res.json({ success: true, data: cached.result });
+      }
+      if (cached?.status === 'processing') {
+        return res.status(409).json({ success: false, message: 'AI đang xác minh lượt gửi này. Vui lòng đợi.' });
+      }
+      claimedLocalId = submissionId;
+      localAiEvaluations.set(submissionId, { status: 'processing', updatedAt: now });
+    } else {
+      if (!/^[a-f\d]{24}$/i.test(submissionId) || typeof playerId !== 'string') {
+        return res.status(400).json({ success: false, message: 'Mã lượt gửi không hợp lệ.' });
+      }
+      submission = await Submission.findById(submissionId).select('+evidenceFileId');
+      if (!submission) {
+        return res.status(404).json({ success: false, message: 'Không tìm thấy lượt gửi thử thách.' });
+      }
+      room = await Room.findOne({ roomCode: submission.roomCode }).select('+players.authTokenHash');
+      const player = room?.players.find((candidate) => candidate.id === playerId);
+      if (!room || !player || !verifyPlayerToken(req.get('x-player-token'), player.authTokenHash)) {
+        return res.status(403).json({ success: false, message: 'Phiên người chơi không hợp lệ. Hãy tham gia lại phòng.' });
+      }
+      if (room.verificationMethod !== 'ai') {
+        return res.status(409).json({ success: false, message: 'Phòng này không sử dụng AI để xác minh.' });
+      }
+      if (submission.aiEvaluationStatus === 'completed' && submission.aiResult) {
+        return res.json({ success: true, data: submission.aiResult });
+      }
+      if (submission.status !== 'pending') {
+        return res.status(409).json({ success: false, message: 'Lượt gửi này đã được xử lý.' });
+      }
+      if (!submission.evidenceFileId) {
+        return res.status(400).json({ success: false, message: 'Không tìm thấy ảnh bằng chứng đã lưu cho lượt gửi này.' });
+      }
+      evaluationEvidence = await readEvidenceDataUrl(submission.evidenceFileId, submission.roomCode);
+      if (!evaluationEvidence) {
+        return res.status(404).json({ success: false, message: 'Không tìm thấy ảnh bằng chứng đã lưu.' });
+      }
+      parsedImage = parseBase64Image(evaluationEvidence);
+      if (!parsedImage) {
+        return res.status(400).json({
+          success: false,
+          message: 'Định dạng ảnh bằng chứng đã lưu không hợp lệ.',
+        });
+      }
+      evaluationCardTitle = submission.cardTitle;
+      evaluationMission = submission.mission;
+      evaluationTheme = room.theme || 'Chung';
+
+      if (submission.aiEvaluationStatus !== 'ready') {
+        const staleProcessingBefore = new Date(Date.now() - 120_000);
+        const claimed = await Submission.findOneAndUpdate(
+          {
+            _id: submission._id,
+            status: 'pending',
+            $or: [
+              { aiEvaluationStatus: { $ne: 'processing' } },
+              { aiEvaluationStartedAt: { $lt: staleProcessingBefore } },
+            ],
+          },
+          {
+            $set: {
+              aiEvaluationStatus: 'processing',
+              aiEvaluationStartedAt: new Date(),
+            },
+          },
+          { new: true }
+        );
+        if (!claimed) {
+          const latest = await Submission.findById(submission._id);
+          if (latest?.aiEvaluationStatus === 'completed' && latest.aiResult) {
+            return res.json({ success: true, data: latest.aiResult });
+          }
+          if (latest?.aiEvaluationStatus === 'ready' && latest.aiResult) {
+            submission.aiResult = latest.aiResult;
+            submission.aiEvaluationStatus = 'ready';
+          } else {
+            return res.status(409).json({ success: false, message: 'AI đang xác minh lượt gửi này. Vui lòng đợi.' });
+          }
+        } else {
+          claimedSubmissionId = String(submission._id);
+        }
+      }
     }
 
     const promptText = buildGeminiPrompt({
-      cardTitle,
-      mission,
-      theme: theme || 'Chung',
+      cardTitle: evaluationCardTitle,
+      mission: evaluationMission,
+      theme: evaluationTheme,
       difficulty: Number(difficulty) || 2,
       xp: Number(xp) || 20,
     });
 
-    console.log(`[AI Controller] Đang gửi ảnh cho Gemini chấm thử thách: "${cardTitle}"...`);
-    const result = await callGeminiVision({
-      apiKey,
-      promptText,
-      imageBase64: parsedImage.data,
-      mimeType: parsedImage.mimeType,
-    });
-
-    console.log(`[AI Controller] Hoàn tất chấm điểm: ${result.passed ? 'ĐẠT' : 'KHÔNG ĐẠT'} (${result.score} pts)`);
-
-    const { submissionId } = req.body;
-    let syncedSubmission = null;
-    if (submissionId) {
-      try {
-        const submission = await Submission.findById(submissionId);
-        if (submission && submission.status === 'pending') {
-          const room = await Room.findOne({ roomCode: submission.roomCode });
-          if (room) {
-            const status = result.passed ? 'approved' : 'rejected';
-            const approvedScore = result.passed
-              ? (result.scoreBreakdown || {
-                  basePoints: Number(xp) || 20,
-                  photoBonus: 10,
-                  creativityBonus: 10,
-                  total: (Number(xp) || 20) + 20,
-                })
-              : { basePoints: 0, photoBonus: 0, creativityBonus: 0, total: 0 };
-
-            submission.status = status;
-            submission.decisionAt = new Date();
-            submission.scoreBreakdown = approvedScore;
-            await submission.save();
-
-            if (result.passed) {
-              await Room.updateOne(
-                { _id: room._id, 'players.id': submission.playerId },
-                {
-                  $inc: {
-                    'players.$.score': approvedScore.total,
-                    'players.$.approvedChallenges': 1,
-                  },
-                }
-              );
-            }
-            await advanceTurn(room, status === 'approved' ? 'completed' : 'failed', approvedScore.total, null, submission._id);
-            syncedSubmission = submission;
-          }
-        }
-      } catch (dbError) {
-        console.warn('[AI Controller] Lưu database submission lỗi:', dbError.message);
-      }
+    let result = submission?.aiEvaluationStatus === 'ready' ? submission.aiResult : null;
+    if (!result) {
+      console.log(`[AI Controller] Đang gửi ảnh cho Gemini chấm thử thách: "${evaluationCardTitle}"...`);
+      result = await callGeminiVision({
+        apiKey,
+        promptText,
+        imageBase64: parsedImage.data,
+        mimeType: parsedImage.mimeType,
+      });
     }
 
+    if (typeof result.passed !== 'boolean') {
+      throw new Error('Gemini returned an invalid verification result.');
+    }
+    const scoreBreakdown = result.scoreBreakdown;
+    if (
+      !scoreBreakdown
+      || !['basePoints', 'photoBonus', 'creativityBonus', 'total'].every((key) => Number.isFinite(scoreBreakdown[key]))
+    ) {
+      throw new Error('Gemini returned an invalid score breakdown.');
+    }
+    result = { ...result, scoreBreakdown };
+
+    if (claimedLocalId) {
+      localAiEvaluations.set(claimedLocalId, { status: 'ready', result, updatedAt: Date.now() });
+      localAiEvaluations.set(claimedLocalId, { status: 'completed', result, updatedAt: Date.now() });
+    } else if (claimedSubmissionId) {
+      const savedResult = await Submission.updateOne(
+        { _id: claimedSubmissionId, status: 'pending', aiEvaluationStatus: 'processing' },
+        {
+          $set: {
+            aiEvaluationStatus: 'ready',
+            aiResult: result,
+          },
+        }
+      );
+      if (savedResult.matchedCount !== 1) {
+        const latest = await Submission.findById(claimedSubmissionId);
+        if (latest?.aiEvaluationStatus === 'completed' && latest.aiResult) {
+          return res.json({ success: true, data: latest.aiResult });
+        }
+        throw new Error('Submission changed before AI result could be saved.');
+      }
+      resultPersisted = true;
+    }
+
+    if (submission && room) {
+      const session = await mongoose.startSession();
+      try {
+        await session.withTransaction(async () => {
+          const [latestSubmission, latestRoom] = await Promise.all([
+            Submission.findById(submission._id).session(session),
+            Room.findOne({ roomCode: submission.roomCode }).select('+players.authTokenHash').session(session),
+          ]);
+          if (!latestSubmission || !latestRoom) {
+            const error = new Error('Không tìm thấy lượt gửi hoặc phòng chơi.');
+            error.status = 404;
+            throw error;
+          }
+          if (latestSubmission.status !== 'pending') {
+            if (latestSubmission.aiEvaluationStatus === 'completed' && latestSubmission.aiResult) {
+              result = latestSubmission.aiResult;
+              return;
+            }
+            const error = new Error('Lượt gửi này đã được xử lý.');
+            error.status = 409;
+            throw error;
+          }
+          if (
+            latestSubmission.aiEvaluationStatus !== 'ready'
+            || latestRoom.status !== 'active'
+            || latestRoom.verificationMethod !== 'ai'
+            || latestRoom.activeSubmissionId?.toString() !== latestSubmission._id.toString()
+            || latestRoom.currentTurnIndex !== latestSubmission.turnIndex
+            || latestRoom.activePlayerId !== latestSubmission.playerId
+          ) {
+            const error = new Error('Lượt chơi đã thay đổi. Hãy đồng bộ lại phòng.');
+            error.status = 409;
+            throw error;
+          }
+
+          const status = result.passed ? 'approved' : 'rejected';
+          const approvedScore = result.passed
+            ? scoreBreakdown
+            : { basePoints: 0, photoBonus: 0, creativityBonus: 0, total: 0 };
+          const resolved = await Submission.findOneAndUpdate(
+            {
+              _id: latestSubmission._id,
+              status: 'pending',
+              aiEvaluationStatus: 'ready',
+            },
+            {
+              $set: {
+                status,
+                decisionAt: new Date(),
+                scoreBreakdown: approvedScore,
+                aiEvaluationStatus: 'completed',
+              },
+            },
+            { new: true, session }
+          );
+          if (!resolved) {
+            const error = new Error('Lượt gửi đã được xử lý đồng thời.');
+            error.status = 409;
+            throw error;
+          }
+          if (result.passed) {
+            const updatedRoom = await Room.updateOne(
+              { _id: latestRoom._id, 'players.id': resolved.playerId },
+              {
+                $inc: {
+                  'players.$.score': approvedScore.total,
+                  'players.$.approvedChallenges': 1,
+                },
+              },
+              { session }
+            );
+            if (updatedRoom.matchedCount !== 1) {
+              const error = new Error('Không thể cập nhật điểm người chơi trong phòng.');
+              error.status = 409;
+              throw error;
+            }
+          }
+          const moved = await advanceTurn(
+            latestRoom,
+            status === 'approved' ? 'completed' : 'failed',
+            approvedScore.total,
+            session,
+            resolved._id
+          );
+          if (!moved) {
+            const error = new Error('Lượt đã được cập nhật đồng thời. Hãy đồng bộ trạng thái phòng.');
+            error.status = 409;
+            throw error;
+          }
+        });
+      } finally {
+        await session.endSession();
+      }
+      const latestSubmission = await Submission.findById(submission._id);
+      if (latestSubmission?.aiResult) result = latestSubmission.aiResult;
+    }
+
+    console.log(`[AI Controller] Hoàn tất chấm điểm: ${result.passed ? 'ĐẠT' : 'KHÔNG ĐẠT'} (${result.score} pts)`);
     return res.json({
       success: true,
-      data: {
-        ...result,
-        submission: syncedSubmission,
-      },
+      data: result,
     });
   } catch (error) {
     console.error('[AI Controller] Lỗi khi xử lý chấm điểm AI:', error);
-    return res.status(500).json({
+    if (claimedSubmissionId && !resultPersisted) {
+      await Submission.updateOne(
+        { _id: claimedSubmissionId, status: 'pending', aiEvaluationStatus: 'processing' },
+        { $set: { aiEvaluationStatus: 'idle', aiEvaluationStartedAt: null } }
+      ).catch((releaseError) => {
+        console.error('[AI Controller] Không thể mở khóa lượt gửi AI sau lỗi:', releaseError);
+      });
+    }
+    if (claimedLocalId && !resultPersisted) localAiEvaluations.delete(claimedLocalId);
+    return res.status(error.status || 500).json({
       success: false,
-      message: error instanceof Error ? error.message : 'Lỗi nội bộ máy chủ khi gọi AI.',
+      message: error.status
+        ? error.message
+        : 'Chưa thể xác minh thử thách do lỗi kỹ thuật. Vui lòng thử lại.',
     });
   }
 };

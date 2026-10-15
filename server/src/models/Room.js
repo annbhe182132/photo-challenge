@@ -18,6 +18,7 @@ const roomSchema = new mongoose.Schema(
     activeSubmissionId: { type: mongoose.Schema.Types.ObjectId, ref: 'Submission', default: null },
     turnStartedAt: { type: Date, default: null },
     turnDeadline: { type: Date, default: null },
+    turnRemainingSeconds: { type: Number, default: null, min: 0, max: 3600 },
     turnHistory: [{
       turnIndex: { type: Number, required: true },
       round: { type: Number, required: true },
