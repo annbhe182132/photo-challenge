@@ -13,6 +13,9 @@ import {
   Users,
   Zap,
   Tag,
+  Maximize2,
+  X,
+  ZoomIn,
 } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import type { GameSubmission } from '../../context/GameContext';
@@ -23,6 +26,7 @@ import { sound } from '../../utils/soundEngine';
 
 interface AIAnalysisResult {
   passed: boolean;
+  matchPercentage?: number;
   verdict: string;
   score: number;
   scoreBreakdown: {
@@ -144,7 +148,19 @@ const AIVerifyPage = () => {
   const [aiResult, setAiResult] = useState<AIAnalysisResult | null>(null);
   const [aiError, setAiError] = useState<string | null>(null);
   const [tipIndex, setTipIndex] = useState(0);
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const hasTriggeredAi = useRef(false);
+
+  // Close image modal on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsImageModalOpen(false);
+    };
+    if (isImageModalOpen) {
+      window.addEventListener('keydown', handleKeyDown);
+    }
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isImageModalOpen]);
 
   const submission = deviceMode === 'single_device'
     ? submissions.find((candidate) => candidate.id === submissionId) ?? null
@@ -319,18 +335,34 @@ const AIVerifyPage = () => {
 
   const finishResult = () => {
     if (!submission) return;
-    const passed = submission.status === 'approved' || (aiResult?.passed ?? false);
+
+    // Tính percentage thực tế do AI chấm
+    const rawPercentage = typeof aiResult?.matchPercentage === 'number'
+      ? aiResult.matchPercentage
+      : typeof aiResult?.score === 'number' && aiResult.score > 0
+        ? aiResult.score
+        : (aiResult?.passed ? 85 : 26);
+    const matchPercentage = Math.max(0, Math.min(100, Math.round(rawPercentage)));
+
+    // Ngưỡng phân định: >= 50% là ĐẠT, < 50% là KHÔNG ĐẠT
+    const isAiApproved = aiResult ? matchPercentage >= 50 : false;
+    const passed = verificationMethod === 'ai'
+      ? isAiApproved
+      : (submission.status === 'approved' || isAiApproved);
+
     const score = submission.scoreBreakdown.total > 0
       ? submission.scoreBreakdown.total
-      : (aiResult?.scoreBreakdown?.total ?? 0);
+      : (passed ? (aiResult?.scoreBreakdown?.total ?? 0) : 0);
 
-    navigate(`/result?round=${submission.round}&passed=${passed}&score=${score}`, {
+    navigate(`/result?round=${submission.round}&passed=${passed}&score=${score}&matchPercentage=${matchPercentage}`, {
       replace: true,
       state: {
         round: submission.round,
         passed,
         score,
         playerId: submission.playerId,
+        evidence: submission.evidence,
+        matchPercentage,
         scoreBreakdown: submission.scoreBreakdown.total > 0
           ? submission.scoreBreakdown
           : aiResult?.scoreBreakdown,
@@ -422,15 +454,30 @@ const AIVerifyPage = () => {
                   <p className="mt-2 text-xs leading-5 text-slate-300 sm:text-sm">{submission.mission}</p>
                 </div>
 
-                {/* Evidence Photo Viewport with Futuristic AI Scanner Line */}
+                {/* Evidence Photo Viewport with Futuristic AI Scanner Line and Zoom In Button */}
                 <div className="relative overflow-hidden rounded-xl border border-cyan-500/30 bg-slate-900">
                   {submission.evidence ? (
-                    <div className="relative h-44 w-full sm:h-full">
+                    <button
+                      type="button"
+                      onClick={() => setIsImageModalOpen(true)}
+                      className="group relative h-44 w-full cursor-zoom-in text-left sm:h-full focus:outline-none"
+                      title="Nhấn để phóng to xem lại ảnh đã chọn"
+                    >
                       <img
                         src={submission.evidence}
                         alt="Bằng chứng thử thách"
-                        className="h-full w-full object-cover"
+                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                       />
+                      {/* Hover Overlay Hint to Zoom */}
+                      <div className="absolute inset-0 flex items-end justify-between bg-gradient-to-t from-black/80 via-black/20 to-transparent p-2.5 opacity-90 transition-opacity duration-200 group-hover:opacity-100">
+                        <span className="flex items-center gap-1.5 rounded-full bg-slate-950/80 px-2.5 py-1 text-[11px] font-bold text-cyan-300 backdrop-blur-md border border-cyan-500/30">
+                          <ZoomIn size={13} /> Nhấn để phóng to
+                        </span>
+                        <span className="rounded-full bg-cyan-500/20 p-1.5 text-cyan-300 backdrop-blur-md">
+                          <Maximize2 size={13} />
+                        </span>
+                      </div>
+
                       {/* Laser Scanner Animation when AI is analyzing */}
                       {verificationMethod === 'ai' && aiState === 'analyzing' && (
                         <>
@@ -447,7 +494,7 @@ const AIVerifyPage = () => {
                       <div className="pointer-events-none absolute top-1.5 right-1.5 h-3 w-3 border-t-2 border-r-2 border-cyan-400" />
                       <div className="pointer-events-none absolute bottom-1.5 left-1.5 h-3 w-3 border-b-2 border-l-2 border-cyan-400" />
                       <div className="pointer-events-none absolute bottom-1.5 right-1.5 h-3 w-3 border-b-2 border-r-2 border-cyan-400" />
-                    </div>
+                    </button>
                   ) : (
                     <div className="flex h-32 items-center justify-center p-3 text-center text-xs text-slate-400 sm:h-full">
                       Không có ảnh bằng chứng
@@ -488,98 +535,179 @@ const AIVerifyPage = () => {
                   )}
 
                   {/* Status 2: AI Evaluation Completed */}
-                  {aiState === 'completed' && aiResult && (
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.96 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      className={`space-y-4 rounded-2xl border p-5 ${
-                        aiResult.passed
-                          ? 'border-emerald-500/40 bg-emerald-950/30'
-                          : 'border-rose-500/40 bg-rose-950/30'
-                      }`}
-                    >
-                      {/* Top Result Banner */}
-                      <div className="flex flex-wrap items-center justify-between gap-3">
-                        <div className="flex items-center gap-2.5">
-                          {aiResult.passed ? (
-                            <CheckCircle2 size={26} className="text-emerald-400" />
-                          ) : (
-                            <ShieldX size={26} className="text-rose-400" />
-                          )}
-                          <div>
-                            <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">
-                              KẾT QUẢ TỪ AI JUDGE
-                            </span>
-                            <h3 className="text-lg font-black text-white sm:text-xl">
-                              {aiResult.verdict || (aiResult.passed ? 'HOÀN THÀNH XUẤT SẮC' : 'CHƯA ĐẠT YÊU CẦU')}
-                            </h3>
+                  {aiState === 'completed' && aiResult && (() => {
+                    // Trích xuất % thực tế do AI chấm (ví dụ 85%, 26%, 73%...)
+                    const rawScore = typeof aiResult.matchPercentage === 'number'
+                      ? aiResult.matchPercentage
+                      : typeof aiResult.score === 'number' && aiResult.score > 0
+                        ? aiResult.score
+                        : (aiResult.passed ? 85 : 26);
+                    const percentage = Math.max(0, Math.min(100, Math.round(rawScore)));
+
+                    // Ngưỡng validate: >= 50% là ĐẠT, < 50% là KHÔNG ĐẠT
+                    const isPass = percentage >= 50;
+
+                    return (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.96 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className={`space-y-4 rounded-2xl border p-5 ${
+                          isPass
+                            ? 'border-emerald-500/40 bg-emerald-950/30'
+                            : 'border-rose-500/40 bg-rose-950/30'
+                        }`}
+                      >
+                        {/* Top Result Banner */}
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                          <div className="flex items-center gap-3">
+                            <div className={`flex h-12 w-12 items-center justify-center rounded-2xl border ${
+                              isPass
+                                ? 'border-emerald-400/40 bg-emerald-500/20 text-emerald-300'
+                                : 'border-rose-400/40 bg-rose-500/20 text-rose-300'
+                            }`}>
+                              {isPass ? <CheckCircle2 size={28} /> : <ShieldX size={28} />}
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                                  KẾT QUẢ TỪ AI JUDGE
+                                </span>
+                                <span
+                                  className={`rounded-full px-2.5 py-0.5 text-xs font-black border ${
+                                    isPass
+                                      ? 'border-emerald-400/50 bg-emerald-500/25 text-emerald-300'
+                                      : 'border-rose-400/50 bg-rose-500/25 text-rose-300'
+                                  }`}
+                                >
+                                  {isPass ? `ĐẠT (${percentage}%)` : `KHÔNG ĐẠT (${percentage}%)`}
+                                </span>
+                              </div>
+                              <h3 className="mt-1 text-lg font-black text-white sm:text-xl">
+                                {aiResult.verdict || (isPass ? 'HOÀN THÀNH XUẤT SẮC' : 'CHƯA ĐẠT YÊU CẦU')}
+                                <span className={`ml-2 text-base font-extrabold sm:text-lg ${isPass ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                  · {percentage}%
+                                </span>
+                              </h3>
+                            </div>
                           </div>
+
+                          {isPass ? (
+                            <div className="rounded-xl border border-emerald-400/30 bg-emerald-500/20 px-3.5 py-1.5 text-center">
+                              <span className="text-[10px] font-bold text-emerald-300">TỔNG ĐIỂM</span>
+                              <p className="text-xl font-black text-white">+{aiResult.scoreBreakdown.total} XP</p>
+                            </div>
+                          ) : (
+                            <div className="rounded-xl border border-rose-400/30 bg-rose-500/20 px-3.5 py-1.5 text-center">
+                              <span className="text-[10px] font-bold text-rose-300">TỔNG ĐIỂM</span>
+                              <p className="text-lg font-black text-rose-200">0 XP</p>
+                            </div>
+                          )}
                         </div>
 
-                        {aiResult.passed && (
-                          <div className="rounded-xl border border-emerald-400/30 bg-emerald-500/20 px-3.5 py-1.5 text-center">
-                            <span className="text-[10px] font-bold text-emerald-300">TỔNG ĐIỂM</span>
-                            <p className="text-xl font-black text-white">+{aiResult.scoreBreakdown.total} XP</p>
+                        {/* Thanh đo % hoàn thành (AI Match Meter với mốc chuẩn 50%) */}
+                        <div className="rounded-xl border border-white/10 bg-slate-950/70 p-3.5 space-y-2.5">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="font-bold flex items-center gap-1.5 text-slate-200">
+                              <Sparkles size={14} className={isPass ? 'text-emerald-400' : 'text-rose-400'} />
+                              Mức độ hoàn thành thử thách:
+                            </span>
+                            <span className={`font-black text-sm ${isPass ? 'text-emerald-300' : 'text-rose-300'}`}>
+                              {percentage}% {isPass ? '(Vượt chuẩn)' : '(Dưới chuẩn)'}
+                            </span>
+                          </div>
+
+                          {/* Progress Bar with 50% Threshold Marker */}
+                          <div className="relative h-3.5 w-full overflow-hidden rounded-full bg-slate-800">
+                            <motion.div
+                              initial={{ width: 0 }}
+                              animate={{ width: `${percentage}%` }}
+                              transition={{ duration: 0.9, ease: 'easeOut' }}
+                              className={`h-full rounded-full ${
+                                isPass
+                                  ? 'bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-400 shadow-[0_0_12px_rgba(52,211,153,0.5)]'
+                                  : 'bg-gradient-to-r from-rose-600 via-pink-600 to-amber-500 shadow-[0_0_12px_rgba(244,63,94,0.5)]'
+                              }`}
+                            />
+                            {/* 50% Threshold Marker Line */}
+                            <div
+                              className="absolute top-0 bottom-0 w-0.5 bg-white/80 z-10"
+                              style={{ left: '50%' }}
+                              title="Ngưỡng đạt: 50%"
+                            />
+                          </div>
+
+                          <div className="flex items-center justify-between text-[11px] text-slate-400">
+                            <span>0%</span>
+                            <span className="text-amber-300 font-bold bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/30">
+                              Ngưỡng đạt: ≥ 50%
+                            </span>
+                            <span>100%</span>
+                          </div>
+
+                          <p className="text-xs text-slate-300 leading-relaxed pt-0.5">
+                            {isPass
+                              ? `✓ AI chấm đạt ${percentage}%. Bức ảnh đáp ứng tốt tinh thần và chi tiết nhiệm vụ (vượt ngưỡng yêu cầu 50%).`
+                              : `✗ AI chấm chỉ đạt ${percentage}%. Bức ảnh thiếu các yếu tố cốt lõi hoặc có nhiều biến số chưa đáp ứng (yêu cầu từ 50% trở lên).`}
+                          </p>
+                        </div>
+
+                        {/* Score Breakdown Pills */}
+                        {isPass && (
+                          <div className="grid grid-cols-3 gap-2 rounded-xl bg-slate-950/60 p-2.5 text-center text-xs">
+                            <div>
+                              <span className="text-slate-400">Điểm gốc</span>
+                              <p className="font-bold text-slate-100">+{aiResult.scoreBreakdown.basePoints} XP</p>
+                            </div>
+                            <div>
+                              <span className="text-slate-400">Ảnh chụp</span>
+                              <p className="font-bold text-cyan-300">+{aiResult.scoreBreakdown.photoBonus} XP</p>
+                            </div>
+                            <div>
+                              <span className="text-slate-400">Sáng tạo</span>
+                              <p className="font-bold text-fuchsia-300">+{aiResult.scoreBreakdown.creativityBonus} XP</p>
+                            </div>
                           </div>
                         )}
-                      </div>
 
-                      {/* Score Breakdown Pills */}
-                      {aiResult.passed && (
-                        <div className="grid grid-cols-3 gap-2 rounded-xl bg-slate-950/60 p-2.5 text-center text-xs">
-                          <div>
-                            <span className="text-slate-400">Điểm gốc</span>
-                            <p className="font-bold text-slate-100">+{aiResult.scoreBreakdown.basePoints} XP</p>
+                        {/* AI Feedback Bubble */}
+                        <div className="rounded-xl border border-white/10 bg-slate-900/90 p-3.5">
+                          <div className="flex items-center gap-2 text-xs font-bold text-cyan-300">
+                            <Bot size={15} /> Lời nhận xét của AI:
                           </div>
-                          <div>
-                            <span className="text-slate-400">Ảnh chụp</span>
-                            <p className="font-bold text-cyan-300">+{aiResult.scoreBreakdown.photoBonus} XP</p>
-                          </div>
-                          <div>
-                            <span className="text-slate-400">Sáng tạo</span>
-                            <p className="font-bold text-fuchsia-300">+{aiResult.scoreBreakdown.creativityBonus} XP</p>
-                          </div>
+                          <p className="mt-1 text-xs italic leading-relaxed text-slate-200 sm:text-sm">
+                            "{aiResult.feedback}"
+                          </p>
                         </div>
-                      )}
 
-                      {/* AI Feedback Bubble */}
-                      <div className="rounded-xl border border-white/10 bg-slate-900/90 p-3.5">
-                        <div className="flex items-center gap-2 text-xs font-bold text-cyan-300">
-                          <Bot size={15} /> Lời nhận xét của AI:
-                        </div>
-                        <p className="mt-1 text-xs italic leading-relaxed text-slate-200 sm:text-sm">
-                          "{aiResult.feedback}"
-                        </p>
-                      </div>
-
-                      {/* Detected Elements Pills */}
-                      {aiResult.detectedElements && aiResult.detectedElements.length > 0 && (
-                        <div>
-                          <p className="text-[11px] font-semibold text-slate-400">Chi tiết nhận diện được trong ảnh:</p>
-                          <div className="mt-1.5 flex flex-wrap gap-1.5">
-                            {aiResult.detectedElements.map((elem, i) => (
-                              <span
-                                key={i}
-                                className="flex items-center gap-1 rounded-md border border-cyan-500/20 bg-cyan-950/40 px-2.5 py-0.5 text-[11px] font-medium text-cyan-200"
-                              >
-                                <Tag size={10} /> {elem}
-                              </span>
-                            ))}
+                        {/* Detected Elements Pills */}
+                        {aiResult.detectedElements && aiResult.detectedElements.length > 0 && (
+                          <div>
+                            <p className="text-[11px] font-semibold text-slate-400">Chi tiết nhận diện được trong ảnh:</p>
+                            <div className="mt-1.5 flex flex-wrap gap-1.5">
+                              {aiResult.detectedElements.map((elem, i) => (
+                                <span
+                                  key={i}
+                                  className="flex items-center gap-1 rounded-md border border-cyan-500/20 bg-cyan-950/40 px-2.5 py-0.5 text-[11px] font-medium text-cyan-200"
+                                >
+                                  <Tag size={10} /> {elem}
+                                </span>
+                              ))}
+                            </div>
                           </div>
-                        </div>
-                      )}
+                        )}
 
-                      {/* Action buttons */}
-                      <div className="pt-2">
-                        <button
-                          onClick={finishResult}
-                          className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 px-5 py-3 font-black text-slate-950 shadow-lg shadow-cyan-500/25 transition hover:brightness-110 active:scale-98"
-                        >
-                          <Zap size={18} /> Xem Kết Quả Vòng Này
-                        </button>
-                      </div>
-                    </motion.div>
-                  )}
+                        {/* Action buttons */}
+                        <div className="pt-2">
+                          <button
+                            onClick={finishResult}
+                            className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 px-5 py-3 font-black text-slate-950 shadow-lg shadow-cyan-500/25 transition hover:brightness-110 active:scale-98"
+                          >
+                            <Zap size={18} /> Xem Kết Quả Vòng Này
+                          </button>
+                        </div>
+                      </motion.div>
+                    );
+                  })()}
 
                   {/* Status 3: AI Error / Retry */}
                   {aiState === 'error' && (
@@ -712,6 +840,66 @@ const AIVerifyPage = () => {
           )}
         </motion.div>
       </section>
+
+      {/* Lightbox Modal: Phóng to xem lại ảnh đã chọn */}
+      <AnimatePresence>
+        {isImageModalOpen && submission?.evidence && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4 backdrop-blur-md"
+            onClick={() => setIsImageModalOpen(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.92, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.92, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative flex max-h-[92vh] w-full max-w-4xl flex-col rounded-3xl border border-cyan-500/40 bg-slate-950 p-4 shadow-2xl shadow-cyan-500/20 sm:p-5"
+            >
+              <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                <div>
+                  <span className="text-[10px] font-black uppercase tracking-wider text-cyan-400">
+                    Chi Tiết Ảnh Bằng Chứng Đã Chọn · Vòng {submission.round}
+                  </span>
+                  <h4 className="text-base font-black text-white sm:text-lg">{submission.cardTitle}</h4>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsImageModalOpen(false)}
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white transition hover:bg-white/25 active:scale-95"
+                  title="Đóng xem ảnh"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="mt-3 flex flex-1 items-center justify-center overflow-hidden rounded-2xl bg-black/75 p-2">
+                <img
+                  src={submission.evidence}
+                  alt="Ảnh đã chọn phóng to"
+                  className="max-h-[72vh] w-auto max-w-full rounded-xl object-contain shadow-2xl"
+                />
+              </div>
+
+              <div className="mt-3 flex items-center justify-between text-xs text-slate-400">
+                <span className="flex items-center gap-1.5">
+                  <span className="inline-block h-2 w-2 rounded-full bg-cyan-400 animate-pulse" />
+                  Người thực hiện: <strong className="text-slate-200">{submitter?.name ?? 'Bạn'}</strong>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setIsImageModalOpen(false)}
+                  className="rounded-xl border border-white/15 bg-white/10 px-4 py-1.5 text-xs font-bold text-white transition hover:bg-white/20 active:scale-95"
+                >
+                  Đóng (ESC)
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </main>
   );
 };

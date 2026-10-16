@@ -1,6 +1,19 @@
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { ArrowRight, Bot, CheckCircle2, Flame, HeartHandshake, PenTool, ShieldAlert, Sparkles, Trophy } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  ArrowRight,
+  Bot,
+  CheckCircle2,
+  Flame,
+  HeartHandshake,
+  Maximize2,
+  PenTool,
+  ShieldAlert,
+  Sparkles,
+  Trophy,
+  X,
+  ZoomIn,
+} from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useGame } from '../../context/useGame';
 import { PUNISHMENTS, type Punishment } from '../../data/gameData';
@@ -45,6 +58,11 @@ const ResultPage = () => {
   const timedOut = location.state?.timedOut === true || query.get('timedOut') === 'true';
   const skipped = location.state?.skipped === true || query.get('skipped') === 'true';
   const score = location.state?.score ?? (Number(query.get('score')) || 0);
+  const evidence = (location.state?.evidence as string | undefined) ?? null;
+  const rawMatchPercentage = location.state?.matchPercentage ?? query.get('matchPercentage');
+  const matchPercentage = rawMatchPercentage !== null && rawMatchPercentage !== undefined && !Number.isNaN(Number(rawMatchPercentage))
+    ? Math.max(0, Math.min(100, Math.round(Number(rawMatchPercentage))))
+    : undefined;
   const scoreBreakdown = location.state?.scoreBreakdown as {
     basePoints: number;
     photoBonus: number;
@@ -52,6 +70,20 @@ const ResultPage = () => {
     total: number;
   } | undefined;
   const aiFeedback = location.state?.aiFeedback as string | undefined;
+
+  // Image zoom modal
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+
+  // Close image modal on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsImageModalOpen(false);
+    };
+    if (isImageModalOpen) {
+      window.addEventListener('keydown', handleKeyDown);
+    }
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isImageModalOpen]);
 
   // Penalty Section States
   const [penaltyMode, setPenaltyMode] = useState<'random' | 'custom'>('random');
@@ -207,22 +239,76 @@ const ResultPage = () => {
                 >
                   <Sparkles size={14} /> KẾT QUẢ VÒNG {round} / {totalRounds || '∞'}
                 </span>
+
                 <h1 className="mt-3 text-3xl font-black text-white sm:text-4xl">
                   {timedOut
                     ? `${currentPlayer.name} đã hết thời gian`
                     : skipped
                       ? `${currentPlayer.name} đã bỏ qua lượt`
                     : passed
-                      ? `${currentPlayer.name} hoàn thành thử thách!`
-                      : `Nhóm chưa duyệt thử thách của ${currentPlayer.name}`}
+                      ? `${currentPlayer.name} hoàn thành thử thách!${matchPercentage !== undefined ? ` (${matchPercentage}%)` : ''}`
+                      : `${currentPlayer.name} chưa đạt thử thách${matchPercentage !== undefined ? ` (${matchPercentage}%)` : ''}`}
                 </h1>
-                <p className="mt-1 text-sm text-slate-300">
+
+                {/* Badge tỷ lệ % cụ thể sau thông báo ĐẠT / KHÔNG ĐẠT */}
+                {matchPercentage !== undefined && !timedOut && !skipped && (
+                  <div className="mt-2.5 flex items-center justify-center gap-2">
+                    <span
+                      className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-black border shadow-md ${
+                        passed
+                          ? 'border-emerald-400/40 bg-emerald-500/20 text-emerald-300 shadow-emerald-500/10'
+                          : 'border-rose-400/40 bg-rose-500/20 text-rose-300 shadow-rose-500/10'
+                      }`}
+                    >
+                      {passed ? (
+                        <>
+                          <CheckCircle2 size={13} className="text-emerald-400" />
+                          <span>ĐẠT: {matchPercentage}% (Vượt ngưỡng ≥ 50%)</span>
+                        </>
+                      ) : (
+                        <>
+                          <ShieldAlert size={13} className="text-rose-400" />
+                          <span>KHÔNG ĐẠT: {matchPercentage}% (Yêu cầu ≥ 50%)</span>
+                        </>
+                      )}
+                    </span>
+                  </div>
+                )}
+
+                <p className="mt-2 text-sm text-slate-300">
                   {timedOut || skipped
                     ? 'Lượt này không được cộng điểm hoàn thành.'
                     : passed
                       ? (aiFeedback ? 'Thử thách được AI Judge công nhận xuất sắc!' : 'Kết quả được ghi nhận và tính điểm thành công!')
                       : (aiFeedback ? 'Thử thách chưa đạt yêu cầu từ AI Judge.' : 'Thử thách chưa thể hoàn thành ở vòng này.')}
                 </p>
+
+                {/* Thumbnail ảnh bằng chứng đã chọn/chụp với nút phóng to */}
+                {evidence && (
+                  <div className="mx-auto mt-4 max-w-xs overflow-hidden rounded-2xl border border-cyan-500/30 bg-slate-950/80 p-2 shadow-xl">
+                    <button
+                      type="button"
+                      onClick={() => setIsImageModalOpen(true)}
+                      className="group relative block h-40 w-full cursor-zoom-in overflow-hidden rounded-xl focus:outline-none"
+                      title="Nhấn để phóng to xem lại ảnh đã chọn"
+                    >
+                      <img
+                        src={evidence}
+                        alt="Bằng chứng thử thách"
+                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 flex items-end justify-between bg-gradient-to-t from-black/80 via-transparent to-transparent p-2.5 opacity-90 transition-opacity duration-200 group-hover:opacity-100">
+                        <span className="flex items-center gap-1.5 rounded-full bg-slate-900/90 px-2.5 py-1 text-[11px] font-bold text-cyan-300 backdrop-blur-md border border-cyan-500/30">
+                          <ZoomIn size={12} /> Xem lại ảnh
+                        </span>
+                        <span className="rounded-full bg-cyan-500/20 p-1.5 text-cyan-300 backdrop-blur-md">
+                          <Maximize2 size={12} />
+                        </span>
+                      </div>
+                    </button>
+                  </div>
+                )}
+
                 {aiFeedback && (
                   <div className="mt-3 rounded-2xl border border-cyan-500/30 bg-cyan-950/50 p-4 text-left shadow-lg">
                     <div className="flex items-center gap-2 text-xs font-bold text-cyan-300">
@@ -464,6 +550,68 @@ const ResultPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Lightbox Modal: Phóng to xem lại ảnh đã chọn */}
+      <AnimatePresence>
+        {isImageModalOpen && evidence && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4 backdrop-blur-md"
+            onClick={() => setIsImageModalOpen(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.92, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.92, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative flex max-h-[92vh] w-full max-w-4xl flex-col rounded-3xl border border-cyan-500/40 bg-slate-950 p-4 shadow-2xl shadow-cyan-500/20 sm:p-5"
+            >
+              <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                <div>
+                  <span className="text-[10px] font-black uppercase tracking-wider text-cyan-400">
+                    Ảnh Bằng Chứng Vòng {round} · {currentPlayer.name}
+                  </span>
+                  <h4 className="text-base font-black text-white sm:text-lg">
+                    {passed ? `Thử thách ĐẠT (${matchPercentage !== undefined ? `${matchPercentage}%` : `+${score} XP`})` : `Thử thách KHÔNG ĐẠT (${matchPercentage !== undefined ? `${matchPercentage}%` : '0 XP'})`}
+                  </h4>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsImageModalOpen(false)}
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white transition hover:bg-white/25 active:scale-95"
+                  title="Đóng xem ảnh"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="mt-3 flex flex-1 items-center justify-center overflow-hidden rounded-2xl bg-black/75 p-2">
+                <img
+                  src={evidence}
+                  alt="Ảnh bằng chứng phóng to"
+                  className="max-h-[72vh] w-auto max-w-full rounded-xl object-contain shadow-2xl"
+                />
+              </div>
+
+              <div className="mt-3 flex items-center justify-between text-xs text-slate-400">
+                <span className="flex items-center gap-1.5">
+                  <span className="inline-block h-2 w-2 rounded-full bg-cyan-400 animate-pulse" />
+                  Người chơi: <strong className="text-slate-200">{currentPlayer.name}</strong>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setIsImageModalOpen(false)}
+                  className="rounded-xl border border-white/15 bg-white/10 px-4 py-1.5 text-xs font-bold text-white transition hover:bg-white/20 active:scale-95"
+                >
+                  Đóng (ESC)
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

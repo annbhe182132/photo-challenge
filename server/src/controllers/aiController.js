@@ -29,10 +29,10 @@ function parseBase64Image(dataUrlOrBase64) {
 }
 
 /**
- * Gọi Gemini REST API với mô hình gemini-2.5-flash hoặc fallback gemini-1.5-flash
+ * Gọi Gemini REST API với mô hình gemini-3.8-flash hoặc fallback gemini-3.7-flash / gemini-flash-latest
  */
 async function callGeminiVision({ apiKey, promptText, imageBase64, mimeType }) {
-  const models = ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-1.5-pro'];
+  const models = ['gemini-3.8-flash', 'gemini-3.7-flash', 'gemini-flash-latest'];
   let lastError = null;
 
   for (const model of models) {
@@ -134,6 +134,45 @@ async function callGeminiVision({ apiKey, promptText, imageBase64, mimeType }) {
 }
 
 /**
+ * Chuẩn hóa và áp dụng quy tắc kiểm định nghiêm ngặt cho kết quả AI:
+ * - matchPercentage: số nguyên 0 - 100 (tỷ lệ hoàn thành thực tế do AI chấm)
+ * - matchPercentage >= 50: passed = true (ĐẠT)
+ * - matchPercentage < 50: passed = false (KHÔNG ĐẠT)
+ */
+export function validateAndNormalizeAiResult(rawResult) {
+  let rawPercentage = rawResult?.matchPercentage ?? rawResult?.percentage;
+  if (typeof rawPercentage !== 'number' || Number.isNaN(rawPercentage)) {
+    if (typeof rawResult?.score === 'number' && !Number.isNaN(rawResult.score)) {
+      rawPercentage = rawResult.score;
+    } else if (typeof rawResult?.confidence === 'number') {
+      rawPercentage = rawResult.confidence * 100;
+    } else {
+      rawPercentage = rawResult?.passed ? 75 : 35;
+    }
+  }
+
+  // Giới hạn 0 - 100 và làm tròn số nguyên thực tế
+  const matchPercentage = Math.max(0, Math.min(100, Math.round(rawPercentage)));
+
+  // Ngưỡng phân định bắt buộc: >= 50% là ĐẠT, < 50% là KHÔNG ĐẠT
+  const passed = matchPercentage >= 50;
+
+  let verdict = rawResult?.verdict;
+  if (!verdict || typeof verdict !== 'string') {
+    verdict = passed ? 'HOÀN THÀNH XUẤT SẮC' : 'CHƯA ĐẠT YÊU CẦU';
+  } else if (!passed && verdict.toLowerCase().includes('hoàn thành')) {
+    verdict = 'CHƯA ĐẠT YÊU CẦU';
+  }
+
+  return {
+    ...rawResult,
+    matchPercentage,
+    passed,
+    verdict,
+  };
+}
+
+/**
  * Controller xử lý yêu cầu chấm điểm ảnh bằng chứng qua AI
  * POST /api/ai/verify
  */
@@ -187,14 +226,19 @@ export const verifyPhoto = async (req, res) => {
     });
 
     console.log(`[AI Controller] Đang gửi ảnh cho Gemini chấm thử thách: "${cardTitle}"...`);
-    const result = await callGeminiVision({
+    const rawResult = await callGeminiVision({
       apiKey,
       promptText,
       imageBase64: parsedImage.data,
       mimeType: parsedImage.mimeType,
     });
 
-    console.log(`[AI Controller] Hoàn tất chấm điểm: ${result.passed ? 'ĐẠT' : 'KHÔNG ĐẠT'} (${result.score} pts)`);
+    const result = validateAndNormalizeAiResult(rawResult);
+
+    console.log(
+      `[AI Controller] Hoàn tất chấm điểm: ${result.passed ? 'ĐẠT' : 'KHÔNG ĐẠT'} ` +
+      `(${result.matchPercentage}% hoàn thành - ${result.score} pts)`
+    );
 
     const { submissionId } = req.body;
     let syncedSubmission = null;
