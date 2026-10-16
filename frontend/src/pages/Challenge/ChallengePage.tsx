@@ -18,6 +18,7 @@ interface CurrentRoomResponse {
     activePlayerId: string | null;
     turnStartedAt: string | null;
     turnDeadline: string | null;
+    turnRemainingSeconds?: number | null;
     turnDurationSeconds: 0 | 15 | 30 | 60;
     turnHistory?: Array<{
       turnIndex: number;
@@ -57,13 +58,11 @@ const ChallengePage = () => {
     roomCode,
     getCurrentPlayer,
     turnDeadline,
-    turnStartedAt,
     currentTurnIndex,
     turnDurationSeconds,
     syncRoom,
     soundEnabled,
     toggleSound,
-    startLocalTurn,
   } = useGame();
 
   const round = location.state?.round ?? currentRound;
@@ -118,10 +117,6 @@ const ChallengePage = () => {
   };
 
   useEffect(() => {
-    if (deviceMode === 'single_device' && isMyTurn && !turnStartedAt) startLocalTurn();
-  }, [deviceMode, isMyTurn, startLocalTurn, turnStartedAt]);
-
-  useEffect(() => {
     if (deviceMode !== 'multi_device') return undefined;
     let cancelled = false;
     let timer: number | undefined;
@@ -161,6 +156,8 @@ const ChallengePage = () => {
 
   useEffect(() => {
     if (!isMyTurn || !turnDeadline) {
+      setTimeLeft(null);
+      warnedAtFiveRef.current = false;
       return undefined;
     }
 
@@ -217,7 +214,7 @@ const ChallengePage = () => {
                 <div className="flex items-center gap-3">
                   <img src={currentPlayer.avatar} alt={currentPlayer.name} className="h-12 w-12 rounded-full border-2 border-fuchsia-400 object-cover shadow-md" />
                   <div>
-                    <span className="text-[10px] font-black uppercase tracking-wider text-fuchsia-400 block">Lượt Thực Hiện Thử Thách Vòng {round}:</span>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-fuchsia-400 block">Vòng {round}:</span>
                     <h3 className="text-lg font-black text-white">{currentPlayer.name}</h3>
                   </div>
                 </div>
@@ -232,19 +229,22 @@ const ChallengePage = () => {
                   </span>
                 ))}
               </div>
-              {/* Preparation Timer Bar */}
+              {/* Turn Timer */}
               <div className="relative rounded-2xl border border-white/10 bg-slate-950/80 p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <Clock3 className={`h-6 w-6 ${timeLeft !== null && timeLeft <= 5 ? 'text-red-400' : 'text-cyan-300'}`} />
                   <div>
                     <p className="text-xs text-slate-400 font-bold uppercase">Thời gian lượt của {currentPlayer.name}</p>
                     <p className="text-xs text-slate-300">
-                      Thời gian chụp camera: <span className="font-bold text-cyan-300">{captureTime} giây</span>
+                      Đồng hồ lượt chỉ bắt đầu khi camera hiển thị hình ảnh trực tiếp.
+                    </p>
+                    <p className="text-xs text-slate-300">
+                      Giới hạn chụp sau khi mở camera: <span className="font-bold text-cyan-300">{captureTime} giây</span>
                     </p>
                   </div>
                 </div>
                 <div className={`text-4xl font-black ${timeLeft !== null && timeLeft <= 5 ? 'text-red-400' : 'text-cyan-300'}`}>
-                  {timeLeft === null ? '∞' : `${timeLeft}s`}
+                  {timeLeft === null ? (turnDurationSeconds === 0 ? '∞' : '--') : `${timeLeft}s`}
                 </div>
                 {timeLeft !== null && turnDurationSeconds > 0 && (
                   <div className="absolute bottom-0 left-0 h-1.5 w-full overflow-hidden rounded-b-2xl bg-white/10">
@@ -271,7 +271,6 @@ const ChallengePage = () => {
                 className="relative overflow-hidden rounded-[2rem] border-2 border-cyan-400/40 bg-gradient-to-br from-slate-950 via-slate-900 to-cyan-950/60 p-8 shadow-[0_0_40px_rgba(34,211,238,0.2)]"
               >
                 <div className="flex items-center justify-between border-b border-white/10 pb-4">
-                  <span className="font-mono text-sm font-bold text-cyan-400">{activeCard.code}</span>
                   <div className="flex items-center gap-2">
                     <span className={`rounded-full px-3 py-1 text-xs font-bold border ${diffLabel.color}`}>
                       Độ khó: {diffLabel.text}
@@ -286,14 +285,6 @@ const ChallengePage = () => {
                 </div>
 
                 <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-t border-white/10 pt-4">
-                  <div className="flex flex-wrap gap-2">
-                    {activeCard.tags.map((tag) => (
-                      <span key={tag} className="rounded-xl border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-slate-300">
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-
                   <div className="flex items-center gap-2 text-emerald-400 font-bold text-sm">
                     <Trophy size={18} /> +100 điểm nếu nhóm duyệt
                   </div>
@@ -332,7 +323,7 @@ const ChallengePage = () => {
                 className="w-full inline-flex items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-violet-600 via-fuchsia-500 to-cyan-500 py-4 text-lg font-black text-white shadow-2xl shadow-fuchsia-500/30 transition hover:shadow-cyan-500/40"
               >
                 <Camera className="h-6 w-6" />
-                {!isMyTurn ? `Đang chờ lượt của ${currentPlayer.name}` : `Sẵn Sàng → Mở Camera Chụp Ảnh (${captureTime}s)`}
+                {!isMyTurn ? `Đang chờ lượt của ${currentPlayer.name}` : `Sẵn Sàng`}
               </motion.button>
               {isMyTurn && (
                 <button

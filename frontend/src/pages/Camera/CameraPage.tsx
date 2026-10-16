@@ -4,12 +4,34 @@ import { AlertTriangle, ArrowLeft, Camera, Check, RotateCcw, SwitchCamera, Uploa
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useGame } from '../../context/useGame';
 import type { Player } from '../../data/gameData';
-import { playerApiRequest } from '../../services/api';
-import { apiRequest } from '../../services/api';
+import { apiRequest, playerApiRequest, sendPlayerBeacon } from '../../services/api';
 import { sound } from '../../utils/soundEngine';
 import { isInAppBrowser } from '../../utils/browser';
 
 type CameraStatus = 'idle' | 'requesting' | 'live' | 'error';
+
+interface CurrentRoomResponse {
+  success: boolean;
+  data?: {
+    players: Player[];
+    currentRound: number;
+    totalRounds: number;
+    status: 'waiting' | 'active' | 'completed';
+    currentTurnIndex: number;
+    activePlayerId: string | null;
+    turnStartedAt: string | null;
+    turnDeadline: string | null;
+    turnRemainingSeconds?: number | null;
+    turnDurationSeconds: 0 | 15 | 30 | 60;
+    turnHistory?: Array<{
+      turnIndex: number;
+      round: number;
+      playerId: string;
+      status: 'completed' | 'failed' | 'timed_out' | 'skipped';
+      score: number;
+    }>;
+  };
+}
 
 const getCaptureTimeByDifficulty = (diff: number) => {
   if (diff <= 2) return 10;
@@ -61,9 +83,12 @@ const CameraPage = () => {
     roomPlayerToken,
     addLocalSubmission,
     turnDeadline,
+    pausedTurnRemainingSeconds,
     turnDurationSeconds,
     currentTurnIndex,
     syncRoom,
+    startLocalTurn,
+    pauseTurnClock,
   } = useGame();
 
   const round = location.state?.round ?? currentRound;
@@ -79,13 +104,17 @@ const CameraPage = () => {
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [canSwitchCamera, setCanSwitchCamera] = useState(false);
   const [currentDeviceId, setCurrentDeviceId] = useState<string | null>(null);
-  const [timeLeft, setTimeLeft] = useState(captureTime);
+  const [timeLeft, setTimeLeft] = useState<number | null>(null);
+  const [captureTimerStarted, setCaptureTimerStarted] = useState(false);
   const [turnTimeLeft, setTurnTimeLeft] = useState<number | null>(null);
   const [captured, setCaptured] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [previewImageError, setPreviewImageError] = useState(false);
+  const [showPhotoPreview, setShowPhotoPreview] = useState(false);
   const [flash, setFlash] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
   const timeoutHandledRef = useRef(false);
+  const flashTimeoutRef = useRef<number | null>(null);
 
   const stopCamera = () => {
     const stream = streamRef.current;
@@ -94,15 +123,72 @@ const CameraPage = () => {
     if (videoRef.current) videoRef.current.srcObject = null;
   };
 
-  useEffect(() => () => {
+  const lifecycleSnapshotRef = useRef({
+    deviceMode, roomCode, currentPlayerId, roomPlayerToken, currentTurnIndex,
+    turnDeadline, pauseTurnClock,
+  });
+  lifecycleSnapshotRef.current = {
+    deviceMode, roomCode, currentPlayerId, roomPlayerToken, currentTurnIndex,
+    turnDeadline, pauseTurnClock,
+  };
+  const departureHandledRef = useRef(false);
+
+  const pauseTurnOnDeparture = () => {
+    const current = lifecycleSnapshotRef.current;
+    if (!current.turnDeadline || departureHandledRef.current) return;
+    departureHandledRef.current = true;
+    current.pauseTurnClock();
+    if (current.deviceMode === 'multi_device' && current.currentPlayerId && current.roomPlayerToken) {
+      sendPlayerBeacon(
+        current.roomPlayerToken,
+        `/api/rooms/${encodeURIComponent(current.roomCode)}/pause-turn`,
+        { playerId: current.currentPlayerId, turnIndex: current.currentTurnIndex },
+      );
+    }
+  };
+  const pauseTurnOnDepartureRef = useRef(pauseTurnOnDeparture);
+  pauseTurnOnDepartureRef.current = pauseTurnOnDeparture;
+
+  const stopCameraForDeparture = () => {
     requestIdRef.current += 1;
     stopCamera();
+    setCameraStatus('idle');
+    setCaptureTimerStarted(false);
+    setTimeLeft(null);
+    pauseTurnOnDepartureRef.current();
+  };
+  const stopCameraForDepartureRef = useRef(stopCameraForDeparture);
+  stopCameraForDepartureRef.current = stopCameraForDeparture;
+
+  useEffect(() => {
+    // If the app was restored from storage while a deadline was still active, freeze it
+    // until the player opens a live camera feed again.
+    if (lifecycleSnapshotRef.current.turnDeadline) {
+      stopCameraForDepartureRef.current();
+    }
+    const handlePageHide = () => stopCameraForDepartureRef.current();
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') stopCameraForDepartureRef.current();
+    };
+    window.addEventListener('pagehide', handlePageHide);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      window.removeEventListener('pagehide', handlePageHide);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      requestIdRef.current += 1;
+      stopCamera();
+      pauseTurnOnDepartureRef.current();
+      if (flashTimeoutRef.current !== null) window.clearTimeout(flashTimeoutRef.current);
+    };
   }, []);
 
   useEffect(() => {
-    if (!turnDeadline) {
+    if (!turnDeadline || cameraStatus !== 'live') {
+      setTurnTimeLeft(null);
+      timeoutHandledRef.current = false;
       return undefined;
     }
+    timeoutHandledRef.current = false;
     let cancelled = false;
     const updateTurnTimer = async () => {
       const remaining = Math.max(0, Math.ceil((new Date(turnDeadline).getTime() - Date.now()) / 1000));
@@ -116,27 +202,7 @@ const CameraPage = () => {
         return;
       }
       try {
-        const response = await apiRequest<{
-          success: boolean;
-          data?: {
-            players: Player[];
-            currentRound: number;
-            totalRounds: number;
-            status: 'waiting' | 'active' | 'completed';
-            currentTurnIndex: number;
-            activePlayerId: string | null;
-            turnStartedAt: string | null;
-            turnDeadline: string | null;
-            turnDurationSeconds: 0 | 15 | 30 | 60;
-            turnHistory?: Array<{
-              turnIndex: number;
-              round: number;
-              playerId: string;
-              status: 'completed' | 'failed' | 'timed_out' | 'skipped';
-              score: number;
-            }>;
-          };
-        }>(`/api/rooms/${encodeURIComponent(roomCode)}`);
+        const response = await apiRequest<CurrentRoomResponse>(`/api/rooms/${encodeURIComponent(roomCode)}`);
         if (cancelled || !response.data) return;
         syncRoom(response.data);
         const resolvedTurn = response.data.turnHistory?.find((turn) => turn.turnIndex === currentTurnIndex);
@@ -164,7 +230,7 @@ const CameraPage = () => {
       cancelled = true;
       window.clearInterval(interval);
     };
-  }, [currentPlayer.id, currentTurnIndex, deviceMode, navigate, roomCode, round, syncRoom, turnDeadline]);
+  }, [cameraStatus, currentPlayer.id, currentTurnIndex, deviceMode, navigate, roomCode, round, syncRoom, turnDeadline]);
 
   const startCamera = async (
     video: MediaTrackConstraints,
@@ -211,10 +277,43 @@ const CameraPage = () => {
       videoElement.srcObject = stream;
       try {
         await videoElement.play();
+        if (videoElement.readyState < HTMLMediaElement.HAVE_CURRENT_DATA || !videoElement.videoWidth) {
+          await new Promise<void>((resolve, reject) => {
+            const timeout = window.setTimeout(() => {
+              cleanup();
+              reject(new Error('Không nhận được hình ảnh từ camera.'));
+            }, 5000);
+            const handleLoadedData = () => {
+              cleanup();
+              resolve();
+            };
+            const handleError = () => {
+              cleanup();
+              reject(new Error('Không thể hiển thị hình ảnh từ camera.'));
+            };
+            const cleanup = () => {
+              window.clearTimeout(timeout);
+              videoElement.removeEventListener('loadeddata', handleLoadedData);
+              videoElement.removeEventListener('error', handleError);
+            };
+            videoElement.addEventListener('loadeddata', handleLoadedData, { once: true });
+            videoElement.addEventListener('error', handleError, { once: true });
+            if (videoElement.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA && videoElement.videoWidth) {
+              cleanup();
+              resolve();
+            }
+          });
+        }
       } catch (error) {
         videoElement.srcObject = previousStream;
         stopStream(stream);
         throw error;
+      }
+
+      if (!stream.getVideoTracks().some((track) => track.readyState === 'live') || !videoElement.videoWidth) {
+        videoElement.srcObject = previousStream;
+        stopStream(stream);
+        throw new Error('Camera chưa phát hình ảnh. Hãy thử mở lại camera.');
       }
 
       if (requestId !== requestIdRef.current) {
@@ -233,6 +332,7 @@ const CameraPage = () => {
             if (videoRef.current?.srcObject === stream) videoRef.current.srcObject = null;
             stopStream(stream);
             setCameraStatus('error');
+            setCaptureTimerStarted(false);
             setCameraError('Kết nối camera đã bị ngắt. Hãy bật camera lại để tiếp tục.');
           }
         };
@@ -253,18 +353,51 @@ const CameraPage = () => {
         setCameraError('Không thể kiểm tra các camera khác; bạn vẫn có thể dùng camera hiện tại.');
       }
       setCameraStatus('live');
+      return true;
     } catch (error) {
       if (requestId !== requestIdRef.current) return;
       setCameraStatus(fallbackStatus);
       setCameraError(error instanceof Error && !(error instanceof DOMException)
         ? error.message
         : getCameraErrorMessage(error));
+      return false;
     }
   };
 
-  const handleOpenCamera = () => {
-    setTimeLeft(captureTime);
-    void startCamera({ facingMode: { ideal: 'user' } }, 'error');
+  const handleOpenCamera = async () => {
+    departureHandledRef.current = false;
+    setCaptureTimerStarted(false);
+    const opened = await startCamera({ facingMode: { ideal: 'user' } }, 'error');
+    if (!opened) return;
+
+    try {
+      if (deviceMode === 'single_device') {
+        startLocalTurn();
+      } else {
+        if (!currentPlayerId) throw new Error('Không xác định được người chơi đang có lượt.');
+        const response = await playerApiRequest<CurrentRoomResponse>(
+          roomPlayerToken,
+          `/api/rooms/${encodeURIComponent(roomCode)}/start-turn`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ playerId: currentPlayerId, turnIndex: currentTurnIndex }),
+          },
+        );
+        if (!response.success || !response.data) {
+          throw new Error('Máy chủ không xác nhận được thời điểm bắt đầu lượt.');
+        }
+        syncRoom(response.data);
+      }
+
+      setTimeLeft(captureTime);
+      setCaptureTimerStarted(true);
+    } catch (error) {
+      stopCamera();
+      setCameraStatus('error');
+      setCaptureTimerStarted(false);
+      setCameraError(error instanceof Error ? error.message : 'Không thể bắt đầu tính giờ lượt. Hãy thử mở camera lại.');
+    }
   };
 
   const handleSwitchCamera = async () => {
@@ -289,9 +422,10 @@ const CameraPage = () => {
   };
 
   useEffect(() => {
-    if (cameraStatus !== 'live' || captured) return;
+    if (cameraStatus !== 'live' || !captureTimerStarted || captured || timeLeft === null) return;
     if (timeLeft <= 0) {
       const timeout = window.setTimeout(() => {
+        setCaptureTimerStarted(false);
         sound.playScanBeep();
         stopCamera();
         setCameraStatus('idle');
@@ -301,14 +435,14 @@ const CameraPage = () => {
     }
 
     const timer = window.setInterval(() => {
-      setTimeLeft((previous: number) => {
-        if (previous <= 5 && previous > 1) sound.playTick();
-        return previous - 1;
+      setTimeLeft((previous) => {
+        if (previous !== null && previous <= 5 && previous > 1) sound.playTick();
+        return previous === null ? null : Math.max(0, previous - 1);
       });
     }, 1000);
 
     return () => window.clearInterval(timer);
-  }, [cameraStatus, captured, timeLeft, navigate, round]);
+  }, [cameraStatus, captureTimerStarted, captured, timeLeft]);
 
   const handleCapture = () => {
     const video = videoRef.current;
@@ -332,12 +466,18 @@ const CameraPage = () => {
 
     try {
       setPreviewImage(canvas.toDataURL('image/jpeg', 0.68));
+      setPreviewImageError(false);
       setCaptured(true);
+      setCaptureTimerStarted(false);
       setCameraStatus('idle');
       setCameraError(null);
       stopCamera();
       setFlash(true);
-      window.setTimeout(() => setFlash(false), 180);
+      if (flashTimeoutRef.current !== null) window.clearTimeout(flashTimeoutRef.current);
+      flashTimeoutRef.current = window.setTimeout(() => {
+        flashTimeoutRef.current = null;
+        setFlash(false);
+      }, 180);
     } catch {
       setCameraError('Không thể tạo ảnh xem trước. Hãy thử chụp lại.');
     }
@@ -347,6 +487,8 @@ const CameraPage = () => {
     sound.playClick();
     setCaptured(false);
     setPreviewImage(null);
+    setPreviewImageError(false);
+    setShowPhotoPreview(false);
     setCanSwitchCamera(false);
     setCameraStatus('idle');
     setCameraError(null);
@@ -376,7 +518,9 @@ const CameraPage = () => {
         if (evidence.length > 1_400_000) throw new Error('Ảnh sau khi nén vẫn quá lớn. Hãy chọn ảnh khác.');
         sound.playClick();
         setPreviewImage(evidence);
+        setPreviewImageError(false);
         setCaptured(true);
+        setCaptureTimerStarted(false);
         setCameraStatus('idle');
         setCameraError(null);
         stopCamera();
@@ -452,6 +596,7 @@ const CameraPage = () => {
 
   const handleBack = () => {
     sound.playClick();
+    stopCameraForDepartureRef.current();
     requestIdRef.current += 1;
     stopCamera();
     navigate(-1);
@@ -485,12 +630,12 @@ const CameraPage = () => {
                     <span>Lượt của: {currentPlayer.name}</span>
                   </div>
                   <span className="rounded-full border border-cyan-400/30 bg-cyan-500/20 px-4 py-1.5 text-xs font-bold text-cyan-300">
-                    Vòng {round} {turnDurationSeconds === 0 ? '· ∞' : turnTimeLeft !== null ? `· Lượt còn ${turnTimeLeft}s` : ''}
+                    Vòng {round} {turnDurationSeconds === 0 ? '· ∞' : turnTimeLeft !== null ? `· Lượt còn ${turnTimeLeft}s` : pausedTurnRemainingSeconds !== null ? `· Tạm dừng, còn ${pausedTurnRemainingSeconds}s` : ''}
                   </span>
                   <div className="min-w-16 text-right">
                     <span className="block text-[10px] font-bold uppercase text-slate-400">Thời Gian Chụp</span>
-                    <span className={`text-2xl font-black ${timeLeft <= 5 ? 'text-red-400 animate-pulse' : 'text-cyan-300'}`}>
-                      {timeLeft}s
+                    <span className={`text-2xl font-black ${timeLeft !== null && timeLeft <= 5 ? 'text-red-400 animate-pulse' : 'text-cyan-300'}`}>
+                      {timeLeft === null ? '--' : `${timeLeft}s`}
                     </span>
                   </div>
                 </div>
@@ -505,7 +650,19 @@ const CameraPage = () => {
                   className={`h-full w-full object-cover ${cameraStatus === 'live' && !captured ? 'block' : 'hidden'}`}
                 />
                 {captured && previewImage && (
-                  <img src={previewImage} alt="Ảnh vừa chụp" className="h-full w-full object-contain" />
+                  <button type="button" onClick={() => setShowPhotoPreview(true)} className="h-full w-full cursor-zoom-in">
+                    <img
+                      src={previewImage}
+                      alt="Ảnh vừa chụp, chạm để xem lớn"
+                      onError={() => setPreviewImageError(true)}
+                      className="h-full w-full object-contain"
+                    />
+                  </button>
+                )}
+                {captured && previewImageError && (
+                  <div role="alert" className="absolute inset-x-3 bottom-3 rounded-xl bg-red-950/90 p-3 text-center text-sm text-red-100">
+                    Không thể hiển thị ảnh. Hãy tải ảnh khác hoặc chụp lại.
+                  </div>
                 )}
                 {flash && <div className="pointer-events-none absolute inset-0 z-30 bg-white" />}
 
@@ -518,7 +675,7 @@ const CameraPage = () => {
                         : 'Bấm “Mở camera” để cho phép truy cập và bắt đầu chụp.'}
                     </p>
                     {cameraStatus === 'idle' && (
-                      <p className="text-xs text-slate-400">Đồng hồ chỉ bắt đầu khi camera hoạt động.</p>
+                      <p className="text-xs text-slate-400">Giới hạn {captureTime} giây; đồng hồ bắt đầu khi camera phát hình.</p>
                     )}
                     {cameraStatus === 'error' && (
                       <div className="flex flex-wrap items-center justify-center gap-2">
@@ -669,6 +826,24 @@ const CameraPage = () => {
           </div>
         </div>
       </div>
+      {showPhotoPreview && previewImage && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-3 sm:p-8"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Xem ảnh vừa chụp"
+          onClick={() => setShowPhotoPreview(false)}
+        >
+          <button
+            type="button"
+            onClick={() => setShowPhotoPreview(false)}
+            className="absolute right-3 top-3 z-10 min-h-12 rounded-full bg-white/15 px-4 text-sm font-bold text-white"
+          >
+            Đóng
+          </button>
+          <img src={previewImage} alt="Ảnh vừa chụp kích thước lớn" className="max-h-full max-w-full object-contain" />
+        </div>
+      )}
     </div>
   );
 };

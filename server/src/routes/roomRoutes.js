@@ -4,6 +4,8 @@ import {
   createRoom,
   joinRoom,
   startRoom,
+  startRoomTurn,
+  pauseRoomTurn,
   createSubmission,
   voteOnSubmission,
   getRoomSubmissions,
@@ -18,6 +20,8 @@ router.post('/', createRoom);
 router.get('/:roomCode', getRoom);
 router.post('/:roomCode/join', joinRoom);
 router.post('/:roomCode/start', startRoom);
+router.post('/:roomCode/start-turn', startRoomTurn);
+router.post('/:roomCode/pause-turn', pauseRoomTurn);
 router.get('/:roomCode/submissions', getRoomSubmissions);
 router.post('/:roomCode/submissions', createSubmission);
 router.get('/:roomCode/gallery', getRoomGallery);

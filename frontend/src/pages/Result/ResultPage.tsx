@@ -63,6 +63,7 @@ const ResultPage = () => {
   const matchPercentage = rawMatchPercentage !== null && rawMatchPercentage !== undefined && !Number.isNaN(Number(rawMatchPercentage))
     ? Math.max(0, Math.min(100, Math.round(Number(rawMatchPercentage))))
     : undefined;
+  const groupScore = location.state?.groupScore as number | undefined;
   const scoreBreakdown = location.state?.scoreBreakdown as {
     basePoints: number;
     photoBonus: number;
@@ -320,6 +321,17 @@ const ResultPage = () => {
                   </div>
                 )}
               </div>
+
+              {typeof groupScore === 'number' && (
+                <div className="rounded-2xl border border-cyan-400/25 bg-cyan-950/30 p-4">
+                  <p className="text-xs font-bold uppercase tracking-wide text-cyan-200">Điểm đánh giá nhóm</p>
+                  <p className="mt-1 text-3xl font-black text-white">
+                    {Number.isInteger(groupScore) ? groupScore : groupScore.toFixed(1)}
+                    <span className="ml-1 text-base font-semibold text-slate-300">/ 100</span>
+                  </p>
+                  <p className="mt-1 text-xs text-slate-300">Điểm đánh giá tách biệt với XP nhận được.</p>
+                </div>
+              )}
 
               {/* Passed vs rejected layout */}
               {passed ? (

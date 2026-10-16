@@ -8,10 +8,13 @@ import {
   buildTurnTransition,
   buildApprovedScore,
   canSubmitForTurn,
+  calculateGroupScore,
   calculateApprovalThreshold,
   getTurnDeadline,
   getTurnPosition,
   getVotingDecision,
+  isGroupRatingApproval,
+  isValidGroupScore,
   shouldExpireTurn,
   isValidRoundLimit,
   isValidTurnDuration,
@@ -60,6 +63,7 @@ export const advanceTurn = async (room, status, score = 0, session, expectedSubm
       activeSubmissionId: null,
       turnStartedAt: transition.turnStartedAt,
       turnDeadline: transition.turnDeadline,
+      turnRemainingSeconds: null,
     },
     $push: {
       turnHistory: {
@@ -125,6 +129,7 @@ const resolveExpiredTurn = async (roomCode) => {
         activeSubmissionId: null,
         turnStartedAt: transition.turnStartedAt,
         turnDeadline: transition.turnDeadline,
+        turnRemainingSeconds: null,
       },
       $push: {
         turnHistory: {
@@ -160,6 +165,9 @@ const sanitizeSubmission = (submission, viewerId = null) => {
     requiredVotes: data.requiredVotes,
     voteCount: data.votes.length,
     hasVoted: viewerId ? data.votes.some((vote) => vote.playerId === viewerId) : false,
+    groupScore: data.status === 'pending'
+      ? undefined
+      : data.groupScore ?? calculateGroupScore(data.votes),
     yesVotes: data.status === 'pending' ? undefined : yesVotes,
     noVotes: data.status === 'pending' ? undefined : noVotes,
     status: data.status,
@@ -214,49 +222,9 @@ const sendError = (res, error, defaultStatus = 500) => {
   });
 };
 
-const initializeLegacyActiveRoom = async (roomCode) => {
-  const room = await Room.findOne({ roomCode, status: 'active', turnStartedAt: null });
-  if (!room || !room.players.length) return;
-  const legacyTurnIndex = Math.max(0, (room.currentRound ?? 1) - 1);
-  const { playerIndex, round } = getTurnPosition(legacyTurnIndex, room.players.length);
-  const activePlayerId = room.players[playerIndex]?.id ?? null;
-  const duration = isValidTurnDuration(room.turnDurationSeconds) ? room.turnDurationSeconds : 30;
-  const now = new Date();
-  const pending = activePlayerId
-    ? await Submission.findOne({
-        roomCode,
-        round: room.currentRound,
-        playerId: activePlayerId,
-        status: 'pending',
-      })
-    : null;
-  if (pending) {
-    await Submission.updateOne(
-      { _id: pending._id, status: 'pending' },
-      { $set: { round, turnIndex: legacyTurnIndex } },
-    );
-  }
-  await Room.updateOne(
-    { _id: room._id, status: 'active', turnStartedAt: null },
-    {
-      $set: {
-        totalRounds: room.totalRounds === 24 ? 5 : room.totalRounds ?? 5,
-        currentRound: round,
-        currentTurnIndex: legacyTurnIndex,
-        activePlayerId,
-        activeSubmissionId: pending?._id ?? null,
-        turnStartedAt: now,
-        turnDeadline: pending || !duration ? null : getTurnDeadline(now, duration),
-        turnHistory: room.turnHistory ?? [],
-      },
-    },
-  );
-};
-
 export const getRoom = async (req, res) => {
   try {
     const roomCode = normalizeRoomCode(req.params.roomCode);
-    await initializeLegacyActiveRoom(roomCode);
     await resolveExpiredTurn(roomCode);
     const room = await Room.findOne({ roomCode }).populate('activeCard');
     if (!room) return res.status(404).json({ success: false, message: 'Phòng chơi không tồn tại!' });
@@ -429,11 +397,175 @@ export const startRoom = async (req, res) => {
     room.currentTurnIndex = 0;
     room.activePlayerId = room.players[0]?.id ?? null;
     room.activeSubmissionId = null;
-    room.turnStartedAt = new Date();
-    room.turnDeadline = getTurnDeadline(room.turnStartedAt, room.turnDurationSeconds);
+    room.turnStartedAt = null;
+    room.turnDeadline = null;
+    room.turnRemainingSeconds = null;
     room.turnHistory = [];
     await room.save();
     res.json({ success: true, data: sanitizeRoom(room) });
+  } catch (error) {
+    sendError(res, error);
+  }
+};
+
+
+export const startRoomTurn = async (req, res) => {
+  try {
+    const roomCode = normalizeRoomCode(req.params.roomCode);
+    const { playerId, turnIndex: requestedTurnIndex } = req.body;
+    if (typeof playerId !== 'string' || !playerId.trim()) {
+      return res.status(400).json({ success: false, message: 'Người chơi không hợp lệ.' });
+    }
+    if (!Number.isInteger(requestedTurnIndex) || requestedTurnIndex < 0) {
+      return res.status(400).json({ success: false, message: 'Lượt cần bắt đầu không hợp lệ.' });
+    }
+
+    const room = await Room.findOne({ roomCode }).select('+players.authTokenHash');
+    if (!room) return res.status(404).json({ success: false, message: 'Phòng chơi không tồn tại.' });
+    if (!authenticatePlayer(room, playerId, req.get('x-player-token'))) {
+      return res.status(403).json({ success: false, message: 'Phiên người chơi không hợp lệ. Hãy tham gia lại phòng.' });
+    }
+    if (room.status !== 'active') {
+      return res.status(409).json({ success: false, message: 'Phòng chơi chưa bắt đầu hoặc đã kết thúc.' });
+    }
+
+    const current = turnState(room);
+    if (requestedTurnIndex !== current.turnIndex) {
+      return res.status(409).json({
+        success: false,
+        message: 'Lượt chơi đã thay đổi. Hãy đồng bộ phòng trước khi mở camera.',
+        data: sanitizeRoom(room),
+      });
+    }
+    if (current.activePlayerId !== playerId) {
+      return res.status(403).json({ success: false, message: 'Chỉ người đang có lượt mới được bắt đầu đồng hồ.' });
+    }
+
+    // Retries are safe: opening/reopening the camera must never reset an already-started turn.
+    if (room.turnStartedAt) return res.json({ success: true, data: sanitizeRoom(room) });
+
+    if (room.activeSubmissionId || await Submission.exists({
+      roomCode,
+      turnIndex: current.turnIndex,
+      playerId,
+      status: 'pending',
+    })) {
+      return res.status(409).json({ success: false, message: 'Lượt này đã có thử thách đang chờ xác thực.' });
+    }
+
+    const startedAt = new Date();
+    const configuredDuration = isValidTurnDuration(room.turnDurationSeconds) ? room.turnDurationSeconds : 30;
+    const duration = typeof room.turnRemainingSeconds === 'number'
+      ? room.turnRemainingSeconds
+      : configuredDuration;
+    if (configuredDuration > 0 && duration <= 0) {
+      await resolveExpiredTurn(roomCode);
+      const latest = await Room.findOne({ roomCode });
+      return res.status(409).json({
+        success: false,
+        message: 'Thời gian lượt đã hết. Lượt đã được chuyển tiếp.',
+        data: latest ? sanitizeRoom(latest) : undefined,
+      });
+    }
+    const turnDeadline = getTurnDeadline(startedAt, duration);
+    const updated = await Room.findOneAndUpdate(
+      {
+        _id: room._id,
+        status: 'active',
+        currentTurnIndex: requestedTurnIndex,
+        activePlayerId: playerId,
+        turnStartedAt: null,
+      },
+      { $set: { turnStartedAt: startedAt, turnDeadline, turnRemainingSeconds: null } },
+      { new: true },
+    );
+    if (updated) return res.json({ success: true, data: sanitizeRoom(updated) });
+
+    // Another retry may have armed the same turn between read and update; return it without resetting time.
+    const latest = await Room.findOne({ roomCode });
+    if (latest?.status === 'active'
+      && latest.currentTurnIndex === requestedTurnIndex
+      && latest.activePlayerId === playerId
+      && latest.turnStartedAt) {
+      return res.json({ success: true, data: sanitizeRoom(latest) });
+    }
+    return res.status(409).json({
+      success: false,
+      message: 'Lượt đã được cập nhật đồng thời. Hãy đồng bộ phòng và thử lại.',
+      data: latest ? sanitizeRoom(latest) : undefined,
+    });
+  } catch (error) {
+    sendError(res, error);
+  }
+};
+
+
+export const pauseRoomTurn = async (req, res) => {
+  try {
+    const roomCode = normalizeRoomCode(req.params.roomCode);
+    const { playerId, playerToken } = req.body;
+    const requestedTurnIndex = Number(req.body.turnIndex);
+    if (typeof playerId !== 'string' || !playerId.trim()) {
+      return res.status(400).json({ success: false, message: 'Người chơi không hợp lệ.' });
+    }
+    if (!Number.isInteger(requestedTurnIndex) || requestedTurnIndex < 0) {
+      return res.status(400).json({ success: false, message: 'Lượt cần tạm dừng không hợp lệ.' });
+    }
+
+    const room = await Room.findOne({ roomCode }).select('+players.authTokenHash');
+    if (!room) return res.status(404).json({ success: false, message: 'Phòng chơi không tồn tại.' });
+    const token = req.get('x-player-token') || playerToken;
+    if (!authenticatePlayer(room, playerId, token)) {
+      return res.status(403).json({ success: false, message: 'Phiên người chơi không hợp lệ. Hãy tham gia lại phòng.' });
+    }
+    const current = turnState(room);
+    if (room.status !== 'active' || requestedTurnIndex !== current.turnIndex || current.activePlayerId !== playerId) {
+      return res.status(409).json({ success: false, message: 'Lượt chơi đã thay đổi; đồng bộ phòng trước khi tạm dừng.' });
+    }
+
+    // With a disabled timer, there is no countdown to pause. Keep turnStartedAt so submissions remain valid.
+    if (!room.turnDeadline || !room.turnStartedAt) {
+      return res.json({ success: true, data: sanitizeRoom(room) });
+    }
+
+    const now = new Date();
+    const remainingSeconds = Math.max(0, Math.ceil((room.turnDeadline.getTime() - now.getTime()) / 1000));
+    if (remainingSeconds === 0) {
+      await resolveExpiredTurn(roomCode);
+      const latest = await Room.findOne({ roomCode });
+      return res.status(409).json({
+        success: false,
+        message: 'Thời gian lượt đã hết. Lượt đã được chuyển tiếp.',
+        data: latest ? sanitizeRoom(latest) : undefined,
+      });
+    }
+
+    const paused = await Room.findOneAndUpdate(
+      {
+        _id: room._id,
+        status: 'active',
+        currentTurnIndex: requestedTurnIndex,
+        activePlayerId: playerId,
+        turnStartedAt: room.turnStartedAt,
+        turnDeadline: room.turnDeadline,
+      },
+      { $set: { turnStartedAt: null, turnDeadline: null, turnRemainingSeconds: remainingSeconds } },
+      { new: true },
+    );
+    if (paused) return res.json({ success: true, data: sanitizeRoom(paused) });
+
+    const latest = await Room.findOne({ roomCode });
+    if (latest?.status === 'active'
+      && latest.currentTurnIndex === requestedTurnIndex
+      && latest.activePlayerId === playerId
+      && !latest.turnDeadline) {
+      return res.json({ success: true, data: sanitizeRoom(latest) });
+    }
+    return res.status(409).json({
+      success: false,
+      message: 'Lượt đã thay đổi đồng thời. Hãy đồng bộ phòng.',
+      data: latest ? sanitizeRoom(latest) : undefined,
+    });
   } catch (error) {
     sendError(res, error);
   }
@@ -443,7 +575,6 @@ export const createSubmission = async (req, res) => {
   let storedEvidenceId = null;
   try {
     const roomCode = normalizeRoomCode(req.params.roomCode);
-    await initializeLegacyActiveRoom(roomCode);
     const room = await Room.findOne({ roomCode }).select('+players.authTokenHash');
     if (!room) return res.status(404).json({ success: false, message: 'Phòng chơi không tồn tại.' });
     if (room.status !== 'active') {
@@ -462,6 +593,9 @@ export const createSubmission = async (req, res) => {
     }
     const { turnIndex, activePlayerId } = turnState(room);
     const expectedPlayer = room.players.find((player) => player.id === activePlayerId);
+    if (!room.turnStartedAt && !(typeof room.turnRemainingSeconds === 'number' && room.turnRemainingSeconds > 0)) {
+      return res.status(409).json({ success: false, message: 'Hãy mở camera đến khi có hình ảnh trực tiếp trước khi gửi thử thách.' });
+    }
     if (activePlayerId !== playerId) {
       return res.status(403).json({ success: false, message: `Lượt này thuộc về ${expectedPlayer?.name ?? 'người chơi khác'}.` });
     }
@@ -640,10 +774,15 @@ export const getRoomSubmissions = async (req, res) => {
 };
 
 export const voteOnSubmission = async (req, res) => {
-  const { playerId, approve } = req.body;
-  if (typeof playerId !== 'string' || typeof approve !== 'boolean') {
-    return res.status(400).json({ success: false, message: 'Cần có mã người chơi và lựa chọn chấp thuận/từ chối.' });
+  const { playerId, score, approve: legacyApproval } = req.body;
+  if (
+    typeof playerId !== 'string'
+    || !(isValidGroupScore(score) || (score === undefined && typeof legacyApproval === 'boolean'))
+  ) {
+    return res.status(400).json({ success: false, message: 'Cần có mã người chơi và điểm từ 0 đến 100.' });
   }
+  const groupScoreVote = isValidGroupScore(score) ? score : legacyApproval ? 100 : 0;
+  const approve = isGroupRatingApproval(groupScoreVote);
 
   const session = await mongoose.startSession();
   let responseData;
@@ -669,12 +808,40 @@ export const voteOnSubmission = async (req, res) => {
         error.status = 403;
         throw error;
       }
+      const activeEligibleVoterIds = submission.eligibleVoterIds.filter((eligibleId) => (
+        room.players.some((player) => player.id === eligibleId)
+      ));
+      if (!activeEligibleVoterIds.length) {
+        const activeTurn = turnState(room);
+        if (
+          room.status !== 'active'
+          || activeTurn.turnIndex !== submission.turnIndex
+          || room.activeSubmissionId?.toString() !== submission._id.toString()
+        ) {
+          const error = new Error('Lượt gửi không còn là lượt hiện tại của phòng.');
+          error.status = 409;
+          throw error;
+        }
+        const rejected = await Submission.findOneAndUpdate(
+          { _id: submission._id, status: 'pending' },
+          { $set: { status: 'rejected', decisionAt: new Date() } },
+          { new: true, session }
+        );
+        const moved = rejected && await advanceTurn(room, 'failed', 0, session, rejected._id);
+        if (!moved) {
+          const error = new Error('Không còn người đánh giá hợp lệ; không thể hoàn tất lượt này.');
+          error.status = 409;
+          throw error;
+        }
+        responseData = sanitizeSubmission(rejected, playerId);
+        return;
+      }
       if (playerId === submission.playerId) {
         const error = new Error('Người gửi thử thách không được tự bỏ phiếu.');
         error.status = 403;
         throw error;
       }
-      if (!submission.eligibleVoterIds.includes(playerId)) {
+      if (!activeEligibleVoterIds.includes(playerId)) {
         const error = new Error('Người chơi không đủ điều kiện đánh giá lượt gửi này.');
         error.status = 403;
         throw error;
@@ -700,7 +867,13 @@ export const voteOnSubmission = async (req, res) => {
           eligibleVoterIds: playerId,
           votes: { $not: { $elemMatch: { playerId } } },
         },
-        { $push: { votes: { playerId, approve } } },
+        {
+          $set: {
+            eligibleVoterIds: activeEligibleVoterIds,
+            requiredVotes: calculateApprovalThreshold(activeEligibleVoterIds.length),
+          },
+          $push: { votes: { playerId, score: groupScoreVote, approve } },
+        },
         { new: true, session }
       );
       if (!votedSubmission) {
@@ -719,9 +892,10 @@ export const voteOnSubmission = async (req, res) => {
       const decision = getVotingDecision({
         yesVotes,
         votesCast: votedSubmission.votes.length,
-        eligibleVoterCount: votedSubmission.eligibleVoterIds.length,
+        eligibleVoterCount: activeEligibleVoterIds.length,
       });
       const update = {};
+      update.groupScore = calculateGroupScore(votedSubmission.votes);
       if (decision === 'approved') {
         const scoreBreakdown = buildApprovedScore({
           photoBonusEnabled: room.photoBonusEnabled,
@@ -750,12 +924,12 @@ export const voteOnSubmission = async (req, res) => {
         update.status = 'rejected';
         update.decisionAt = new Date();
       }
-      if (Object.keys(update).length) {
-        await Submission.updateOne(
-          { _id: votedSubmission._id, status: 'pending' },
-          { $set: update },
-          { session }
-        );
+      await Submission.updateOne(
+        { _id: votedSubmission._id, status: 'pending' },
+        { $set: update },
+        { session }
+      );
+      if (decision !== 'pending') {
         const resolved = await Submission.findById(votedSubmission._id).session(session);
         const resolvedTurnIndex = Number.isInteger(resolved.turnIndex)
           ? resolved.turnIndex
@@ -837,7 +1011,6 @@ export const advanceRoom = async (req, res) => {
 export const skipRoomTurn = async (req, res) => {
   try {
     const roomCode = normalizeRoomCode(req.params.roomCode);
-    await initializeLegacyActiveRoom(roomCode);
     await resolveExpiredTurn(roomCode);
     const room = await Room.findOne({ roomCode }).select('+players.authTokenHash');
     if (!room) return res.status(404).json({ success: false, message: 'Phòng chơi không tồn tại.' });

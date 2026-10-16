@@ -19,7 +19,15 @@ import {
   type VerificationMethod,
 } from '../data/gameData';
 import { sound } from '../utils/soundEngine';
-import { buildApprovedScore, calculateApprovalThreshold, getVotingDecision, type ScoreBreakdown } from '../utils/gameRules';
+import {
+  buildApprovedScore,
+  calculateApprovalThreshold,
+  calculateGroupScore,
+  getVotingDecision,
+  isGroupRatingApproval,
+  isValidGroupScore,
+  type ScoreBreakdown,
+} from '../utils/gameRules';
 import { GameContext } from './gameContextStore';
 
 export interface GalleryPhoto {
@@ -43,7 +51,8 @@ export interface GalleryAlbum {
 
 export interface GameVote {
   playerId: string;
-  approve: boolean;
+  approve?: boolean;
+  score?: number;
 }
 
 export interface GameSubmission {
@@ -58,6 +67,7 @@ export interface GameSubmission {
   eligibleVoterIds: string[];
   requiredVotes: number;
   votes: GameVote[];
+  groupScore?: number | null;
   voteCount?: number;
   status: 'pending' | 'approved' | 'rejected';
   scoreBreakdown: ScoreBreakdown;
@@ -71,111 +81,6 @@ export interface GameTurnRecord {
   status: 'completed' | 'failed' | 'timed_out' | 'skipped';
   score: number;
 }
-
-const INITIAL_ALBUMS: GalleryAlbum[] = [
-  {
-    id: 'album-1',
-    roomCode: 'ROOM-8899',
-    themeName: 'Party Đêm Đỉnh Cao',
-    themeIcon: '🎉',
-    date: new Date().toLocaleDateString('vi-VN'),
-    coverImage: 'https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=800&auto=format&fit=crop&q=80',
-    photos: [
-      {
-        id: 'p-101',
-        round: 1,
-        image: 'https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=800&auto=format&fit=crop&q=80',
-        cardTitle: 'Cạn Ly Đồng Điệu',
-        score: 96,
-        mission: 'Cùng 3 người bạn nâng cốc và hô 23 Dzô!',
-      },
-      {
-        id: 'p-102',
-        round: 2,
-        image: 'https://images.unsplash.com/photo-1528605248644-14dd04022da1?w=800&auto=format&fit=crop&q=80',
-        cardTitle: 'Cú Bay Bất Tận',
-        score: 91,
-        mission: 'Tạo dáng cả nhóm đang bay chân không chạm đất!',
-      },
-      {
-        id: 'p-103',
-        round: 3,
-        image: 'https://images.unsplash.com/photo-1543807535-eceef0bc6599?w=800&auto=format&fit=crop&q=80',
-        cardTitle: 'Poster Phim Siêu Cấp',
-        score: 98,
-        mission: 'Tạo dáng Biệt Đội Siêu Anh Hùng như poster điện ảnh!',
-      },
-    ],
-  },
-  {
-    id: 'album-2',
-    roomCode: 'ROOM-7722',
-    themeName: 'Team Building Gắn Kết',
-    themeIcon: '🔥',
-    date: new Date().toLocaleDateString('vi-VN'),
-    coverImage: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=800&auto=format&fit=crop&q=80',
-    photos: [
-      {
-        id: 'p-201',
-        round: 1,
-        image: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=800&auto=format&fit=crop&q=80',
-        cardTitle: 'Tình Mẫu Tử Thiêng Liêng',
-        score: 94,
-        mission: 'Hai người chơi nhập vai Mẹ & Con ôm nhau ấm áp!',
-      },
-      {
-        id: 'p-202',
-        round: 2,
-        image: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800&auto=format&fit=crop&q=80',
-        cardTitle: 'Góc Nhìn Khổng Lồ',
-        score: 89,
-        mission: 'Tạo hiệu ứng góc nhìn như đang nuốt trọn đồng đội!',
-      },
-      {
-        id: 'p-203',
-        round: 3,
-        image: 'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?w=800&auto=format&fit=crop&q=80',
-        cardTitle: 'Tia Sét Biểu Cảm',
-        score: 95,
-        mission: '5 người chơi làm 5 biểu cảm khác nhau hoàn toàn!',
-      },
-    ],
-  },
-  {
-    id: 'album-3',
-    roomCode: 'ROOM-5511',
-    themeName: 'Du Lịch Khám Phá',
-    themeIcon: '✈️',
-    date: new Date().toLocaleDateString('vi-VN'),
-    coverImage: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&auto=format&fit=crop&q=80',
-    photos: [
-      {
-        id: 'p-301',
-        round: 1,
-        image: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&auto=format&fit=crop&q=80',
-        cardTitle: 'Check-in Hoàng Hôn',
-        score: 97,
-        mission: 'Tạo dáng khoảnh khắc khung hình ngược sáng nghệ thuật!',
-      },
-      {
-        id: 'p-302',
-        round: 2,
-        image: 'https://images.unsplash.com/photo-1539635273304-0e8723e07312?w=800&auto=format&fit=crop&q=80',
-        cardTitle: 'Cú Nhảy Đồng Bộ',
-        score: 92,
-        mission: 'Nhảy cao cùng lúc bắt trọn khoảnh khắc giữa không trung!',
-      },
-      {
-        id: 'p-303',
-        round: 3,
-        image: 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=800&auto=format&fit=crop&q=80',
-        cardTitle: 'Biểu Cảm Nhí Nhảnh',
-        score: 90,
-        mission: 'Tạo dáng hài hước trước cảnh thiên nhiên kỳ vĩ!',
-      },
-    ],
-  },
-];
 
 export interface GameContextType {
   roomCode: string;
@@ -210,6 +115,8 @@ export interface GameContextType {
   activePlayerId: string | null;
   turnStartedAt: string | null;
   turnDeadline: string | null;
+  pausedTurnRemainingSeconds: number | null;
+  pauseTurnClock: () => void;
   gameStatus: 'waiting' | 'active' | 'completed';
   turnHistory: GameTurnRecord[];
   startLocalTurn: () => void;
@@ -229,8 +136,8 @@ export interface GameContextType {
   updateGalleryPhotoScore: (photoId: string, score: number) => void;
   submissions: GameSubmission[];
   addLocalSubmission: (submission: Omit<GameSubmission, 'id' | 'turnIndex' | 'eligibleVoterIds' | 'requiredVotes' | 'votes' | 'status' | 'scoreBreakdown'>) => GameSubmission;
-  castLocalVote: (submissionId: string, voterId: string, approve: boolean) => GameSubmission | null;
-  resolveLocalAiSubmission: (submissionId: string, passed: boolean, scoreBreakdown: ScoreBreakdown, aiFeedback?: string) => GameSubmission | null;
+  castLocalVote: (submissionId: string, voterId: string, score: number) => GameSubmission | null;
+  resolveLocalAiSubmission: (submissionId: string, passed: boolean, scoreBreakdown: ScoreBreakdown) => GameSubmission | null;
   syncRoom: (room: {
     players: Player[];
     currentRound: number;
@@ -240,6 +147,7 @@ export interface GameContextType {
     activePlayerId?: string | null;
     turnStartedAt?: string | null;
     turnDeadline?: string | null;
+    turnRemainingSeconds?: number | null;
     turnHistory?: GameTurnRecord[];
     turnDurationSeconds?: TurnDurationSeconds;
   }) => void;
@@ -266,6 +174,7 @@ interface StoredGameState {
   activePlayerId?: string | null;
   turnStartedAt?: string | null;
   turnDeadline?: string | null;
+  pausedTurnRemainingSeconds?: number | null;
   turnHistory?: GameTurnRecord[];
   currentPlayerId?: string | null;
   roomPlayerToken?: string | null;
@@ -288,7 +197,9 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const persisted = useMemo(() => readStoredState(), []);
-  const [roomCode, setRoomCode] = useState<string>(persisted.roomCode ?? 'ROOM-8899');
+  const [roomCode, setRoomCode] = useState<string>(
+    persisted.roomCode === 'ROOM-8899' ? '' : persisted.roomCode ?? ''
+  );
   const [theme, setTheme] = useState<ThemeOption>(persisted.theme ?? THEMES[0]);
   const [mode, setMode] = useState<GameMode>(persisted.mode ?? 'spicy');
   const [deviceMode, setDeviceMode] = useState<DeviceMode>(persisted.deviceMode ?? DEFAULT_DEVICE_MODE);
@@ -315,6 +226,9 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [activePlayerId, setActivePlayerId] = useState<string | null>(persisted.activePlayerId ?? null);
   const [turnStartedAt, setTurnStartedAt] = useState<string | null>(persisted.turnStartedAt ?? null);
   const [turnDeadline, setTurnDeadline] = useState<string | null>(persisted.turnDeadline ?? null);
+  const [pausedTurnRemainingSeconds, setPausedTurnRemainingSeconds] = useState<number | null>(
+    typeof persisted.pausedTurnRemainingSeconds === 'number' ? persisted.pausedTurnRemainingSeconds : null
+  );
   const [gameStatus, setGameStatus] = useState<'waiting' | 'active' | 'completed'>(
     persisted.gameStatus === 'active' || persisted.gameStatus === 'completed' ? persisted.gameStatus : 'waiting'
   );
@@ -322,11 +236,14 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [currentPlayerId, setCurrentPlayerId] = useState<string | null>(persisted.currentPlayerId ?? null);
   const [roomPlayerToken, setRoomPlayerToken] = useState<string | null>(persisted.roomPlayerToken ?? null);
   const [activeCard, setActiveCard] = useState<PhysicalCard>(persisted.activeCard ?? DECK_CARDS[0]);
-  const [albums, setAlbums] = useState<GalleryAlbum[]>(persisted.albums ?? INITIAL_ALBUMS);
+  const [albums, setAlbums] = useState<GalleryAlbum[]>(
+    (persisted.albums ?? []).filter((album) => !['album-1', 'album-2', 'album-3'].includes(album.id))
+  );
   const [submissions, setSubmissions] = useState<GameSubmission[]>(
     (persisted.submissions ?? []).map((submission) => ({
       ...submission,
       turnIndex: Number.isInteger(submission.turnIndex) ? submission.turnIndex : Math.max(0, submission.round - 1),
+      groupScore: submission.groupScore ?? calculateGroupScore(submission.votes),
     }))
   );
   const [usedCardCodes, setUsedCardCodes] = useState<string[]>(persisted.usedCardCodes ?? []);
@@ -352,6 +269,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         activePlayerId,
         turnStartedAt,
         turnDeadline,
+        pausedTurnRemainingSeconds,
         turnHistory,
         currentPlayerId,
         roomPlayerToken,
@@ -364,7 +282,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error) {
       console.warn('[GameContext] Could not persist the complete local game state:', error);
     }
-  }, [roomCode, theme, mode, deviceMode, verificationMethod, photoEvidence, photoBonusEnabled, players, currentRound, totalRounds, gameStatus, soundEnabled, turnDurationSeconds, currentTurnIndex, activePlayerId, turnStartedAt, turnDeadline, turnHistory, currentPlayerId, roomPlayerToken, activeCard, albums, submissions, usedCardCodes]);
+  }, [roomCode, theme, mode, deviceMode, verificationMethod, photoEvidence, photoBonusEnabled, players, currentRound, totalRounds, gameStatus, soundEnabled, turnDurationSeconds, currentTurnIndex, activePlayerId, turnStartedAt, turnDeadline, pausedTurnRemainingSeconds, turnHistory, currentPlayerId, roomPlayerToken, activeCard, albums, submissions, usedCardCodes]);
 
   useEffect(() => {
     sound.enabled = soundEnabled;
@@ -484,7 +402,10 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return submission;
   };
 
-  const castLocalVote = (submissionId: string, voterId: string, approve: boolean) => {
+  const castLocalVote = (submissionId: string, voterId: string, score: number) => {
+    if (!isValidGroupScore(score)) {
+      throw new Error('Điểm đánh giá phải là số nguyên từ 0 đến 100.');
+    }
     const current = submissions.find((submission) => submission.id === submissionId);
     if (!current || current.status !== 'pending') return current ?? null;
     if (!current.eligibleVoterIds.includes(voterId) || current.playerId === voterId) {
@@ -494,7 +415,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
       throw new Error('Người chơi này đã bỏ phiếu cho thử thách.');
     }
 
-    const votes = [...current.votes, { playerId: voterId, approve }];
+    const votes = [...current.votes, { playerId: voterId, score, approve: isGroupRatingApproval(score) }];
     const yesVotes = votes.filter((vote) => vote.approve).length;
     const status = getVotingDecision({
       yesVotes,
@@ -504,7 +425,13 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const approvedScore = status === 'approved'
       ? buildApprovedScore(photoBonusEnabled, photoEvidence, Boolean(current.evidence))
       : { basePoints: 0, photoBonus: 0, creativityBonus: 0, total: 0 };
-    const updated: GameSubmission = { ...current, votes, status, scoreBreakdown: approvedScore };
+    const updated: GameSubmission = {
+      ...current,
+      votes,
+      groupScore: calculateGroupScore(votes),
+      status,
+      scoreBreakdown: approvedScore,
+    };
     setSubmissions((previous) => previous.map((submission) => submission.id === submissionId ? updated : submission));
 
     if (status === 'approved') {
@@ -525,8 +452,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const resolveLocalAiSubmission = (
     submissionId: string,
     passed: boolean,
-    scoreBreakdown: ScoreBreakdown,
-    _aiFeedback?: string
+    scoreBreakdown: ScoreBreakdown
   ) => {
     const current = submissions.find((submission) => submission.id === submissionId);
     if (!current || current.status !== 'pending') return current ?? null;
@@ -566,6 +492,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     activePlayerId?: string | null;
     turnStartedAt?: string | null;
     turnDeadline?: string | null;
+    turnRemainingSeconds?: number | null;
     turnHistory?: GameTurnRecord[];
     turnDurationSeconds?: TurnDurationSeconds;
   }) => {
@@ -579,22 +506,63 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (room.activePlayerId !== undefined) setActivePlayerId(room.activePlayerId);
     if (room.turnStartedAt !== undefined) setTurnStartedAt(room.turnStartedAt);
     if (room.turnDeadline !== undefined) setTurnDeadline(room.turnDeadline);
+    if (room.turnDeadline) setPausedTurnRemainingSeconds(null);
+    else if (room.turnRemainingSeconds !== undefined) setPausedTurnRemainingSeconds(room.turnRemainingSeconds);
     if (room.turnHistory !== undefined) setTurnHistory(room.turnHistory);
     setGameStatus(room.status);
   }, []);
 
+  const pauseTurnClock = () => {
+    if (!turnDeadline) return;
+    const remaining = Math.max(0, Math.ceil((new Date(turnDeadline).getTime() - Date.now()) / 1000));
+    setPausedTurnRemainingSeconds(remaining);
+    setTurnStartedAt(null);
+    setTurnDeadline(null);
+
+    // Persist synchronously as well: React effects might not run before the tab closes.
+    if (typeof window !== 'undefined') {
+      try {
+        const raw = window.localStorage.getItem(STORAGE_KEY);
+        const stored = raw ? JSON.parse(raw) as StoredGameState : {};
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          ...stored,
+          turnStartedAt: null,
+          turnDeadline: null,
+          pausedTurnRemainingSeconds: remaining,
+        }));
+      } catch (error) {
+        console.warn('[GameContext] Could not persist paused timer state:', error);
+      }
+    }
+  };
+
   const startLocalTurn = () => {
+    // Do not start the clock before CameraPage confirms a live video feed.
     if (deviceMode !== 'single_device' || gameStatus === 'completed') return;
+
+    // A stale persisted timestamp must not prevent a new/waiting game from becoming active.
+    // Once an active turn has started, opening the camera again must not reset its deadline.
+    if (gameStatus === 'active' && turnStartedAt) return;
+
     const player = players[currentTurnIndex % (players.length || 1)];
     const now = new Date();
+    const resumedSeconds = pausedTurnRemainingSeconds;
+    const durationSeconds = resumedSeconds ?? turnDurationSeconds;
     setActivePlayerId(player?.id ?? null);
     setTurnStartedAt(now.toISOString());
-    setTurnDeadline(turnDurationSeconds ? new Date(now.getTime() + turnDurationSeconds * 1000).toISOString() : null);
+    setTurnDeadline(durationSeconds > 0
+      ? new Date(now.getTime() + durationSeconds * 1000).toISOString()
+      : turnDurationSeconds > 0 ? now.toISOString() : null);
+    setPausedTurnRemainingSeconds(null);
     setGameStatus('active');
   };
 
   const advanceLocalTurn = (requestedStatus?: GameTurnRecord['status']) => {
-    if (deviceMode !== 'single_device' || gameStatus !== 'active') {
+    // A player may finish using the upload/no-photo fallback without ever opening a live
+    // camera feed. In that case gameStatus can still be 'waiting', even though a valid
+    // approved/rejected submission now exists. Validate the actual turn result below
+    // instead of blocking advancement solely on this UI lifecycle flag.
+    if (deviceMode !== 'single_device' || gameStatus === 'completed') {
       throw new Error('Không thể chuyển lượt trong trạng thái ván chơi hiện tại.');
     }
     const currentTurnSubmission = submissions.find((submission) => (
@@ -631,16 +599,15 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const completed = totalRounds > 0 && nextTurnIndex >= totalRounds * players.length;
     const roundChanged = !completed && nextRound > currentRound;
     const nextPlayer = completed ? null : players[nextTurnIndex % (players.length || 1)]?.id ?? null;
-    const now = new Date();
     setTurnHistory((previous) => [...previous, record]);
     setCurrentTurnIndex(nextTurnIndex);
     setCurrentRound(completed ? totalRounds : nextRound);
     setActivePlayerId(nextPlayer);
     setGameStatus(completed ? 'completed' : 'active');
-    setTurnStartedAt(completed ? null : now.toISOString());
-    setTurnDeadline(completed || !turnDurationSeconds
-      ? null
-      : new Date(now.getTime() + turnDurationSeconds * 1000).toISOString());
+    // The next player's clock is armed only when their camera feed becomes live.
+    setTurnStartedAt(null);
+    setTurnDeadline(null);
+    setPausedTurnRemainingSeconds(null);
     return { roundChanged, completed };
   };
 
@@ -651,6 +618,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setGameStatus('waiting');
     setTurnStartedAt(null);
     setTurnDeadline(null);
+    setPausedTurnRemainingSeconds(null);
     setTurnHistory([]);
     setActiveCard(DECK_CARDS[0]);
     setSubmissions([]);
@@ -665,6 +633,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setActivePlayerId(null);
     setTurnStartedAt(null);
     setTurnDeadline(null);
+    setPausedTurnRemainingSeconds(null);
     setGameStatus('waiting');
     setTurnHistory([]);
     setActiveCard(DECK_CARDS[0]);
@@ -715,6 +684,8 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         activePlayerId,
         turnStartedAt,
         turnDeadline,
+        pausedTurnRemainingSeconds,
+        pauseTurnClock,
         gameStatus,
         turnHistory,
         startLocalTurn,

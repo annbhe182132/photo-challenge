@@ -7,6 +7,7 @@ import {
   canSubmitForTurn,
   canAcceptTurnSubmission,
   calculateApprovalThreshold,
+  calculateGroupScore,
   canVote,
   getTurnDeadline,
   getTurnPosition,
@@ -14,6 +15,8 @@ import {
   isValidRoundLimit,
   isValidTurnDuration,
   getVotingDecision,
+  isGroupRatingApproval,
+  isValidGroupScore,
   shouldExpireTurn,
 } from '../src/utils/gameRules.js';
 import { createPlayerToken, hashPlayerToken, verifyPlayerToken } from '../src/utils/playerAuth.js';
@@ -37,6 +40,20 @@ test('voting rejects self-review and waits while approval remains possible', () 
   assert.equal(getVotingDecision({ yesVotes: 1, votesCast: 2, eligibleVoterCount: 3 }), 'pending');
   assert.equal(getVotingDecision({ yesVotes: 1, votesCast: 3, eligibleVoterCount: 3 }), 'rejected');
   assert.equal(getVotingDecision({ yesVotes: 2, votesCast: 2, eligibleVoterCount: 3 }), 'approved');
+});
+
+test('group ratings accept only whole-number scores from 0 through 100', () => {
+  for (const score of [0, 50, 80, 100]) assert.equal(isValidGroupScore(score), true);
+  for (const score of [-1, 101, 50.5, '50']) assert.equal(isValidGroupScore(score), false);
+  assert.equal(isGroupRatingApproval(49), false);
+  assert.equal(isGroupRatingApproval(50), true);
+});
+
+test('group score averages new ratings and reads legacy approve votes without migration', () => {
+  assert.equal(calculateGroupScore([]), null);
+  assert.equal(calculateGroupScore([{ score: 0 }, { score: 100 }]), 50);
+  assert.equal(calculateGroupScore([{ approve: true }, { approve: false }]), 50);
+  assert.equal(calculateGroupScore([{ approve: true }, { score: 80 }]), 90);
 });
 
 test('score breakdown caps creativity and does not add absent photo bonuses', () => {
@@ -136,7 +153,7 @@ test('turn submissions require the active player, matching turn index, available
   assert.equal(canSubmitForTurn({ ...valid, now: '2026-01-01T00:00:31Z' }), false);
 });
 
-test('turn transition records current player and starts the next round only after the final player', () => {
+test('turn transition records the resolved turn and leaves the next turn unstarted', () => {
   const beforeRoundEnd = buildTurnTransition({
     turnIndex: 2,
     playerCount: 4,
@@ -151,6 +168,8 @@ test('turn transition records current player and starts the next round only afte
   assert.equal(beforeRoundEnd.nextTurnIndex, 3);
   assert.equal(beforeRoundEnd.nextRound, 1);
   assert.equal(beforeRoundEnd.nextPlayerIndex, 3);
+  assert.equal(beforeRoundEnd.turnStartedAt, null);
+  assert.equal(beforeRoundEnd.turnDeadline, null);
 
   const afterRoundEnd = buildTurnTransition({
     turnIndex: 3,
@@ -162,6 +181,8 @@ test('turn transition records current player and starts the next round only afte
   assert.equal(afterRoundEnd.turnRecord.score, 0);
   assert.equal(afterRoundEnd.nextRound, 2);
   assert.equal(afterRoundEnd.nextPlayerIndex, 0);
+  assert.equal(afterRoundEnd.turnStartedAt, null);
+  assert.equal(afterRoundEnd.turnDeadline, null);
 });
 
 test('pending verification cannot be advanced as a terminal turn state', () => {
