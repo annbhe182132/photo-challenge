@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { AlertTriangle, ArrowLeft, Camera, Check, RotateCcw, SwitchCamera, Upload } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useGame } from '../../context/useGame';
+import { ThemeToggle } from '../../components/ThemeToggle';
 import type { Player } from '../../data/gameData';
 import { apiRequest, playerApiRequest, sendPlayerBeacon } from '../../services/api';
 import { sound } from '../../utils/soundEngine';
@@ -90,7 +91,9 @@ const CameraPage = () => {
     syncRoom,
     startLocalTurn,
     pauseTurnClock,
+    themeMode,
   } = useGame();
+  const isLight = themeMode === 'light';
 
   const round = location.state?.round ?? currentRound;
   const currentPlayer = getCurrentPlayer(round);
@@ -607,38 +610,57 @@ const CameraPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(7,89,133,0.3),_transparent_40%),linear-gradient(135deg,_#030712_0%,_#0f172a_45%,_#111827_100%)] text-slate-100">
+    <div className={`min-h-screen transition-colors duration-300 ${
+      isLight
+        ? 'text-slate-900'
+        : 'bg-[radial-gradient(circle_at_top_left,_rgba(7,89,133,0.3),_transparent_40%),linear-gradient(135deg,_#030712_0%,_#0f172a_45%,_#111827_100%)] text-slate-100'
+    }`}>
       <div className="relative isolate min-h-screen overflow-hidden">
         <div className="relative z-10 mx-auto flex min-h-screen max-w-5xl flex-col px-4 py-5 sm:px-6 sm:py-8">
-          <button
-            onClick={handleBack}
-            className="flex w-fit items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-semibold text-slate-200 backdrop-blur-xl transition hover:bg-white/20"
-          >
-            <ArrowLeft size={18} /> Quay lại
-          </button>
+          <div className="flex items-center justify-between">
+            <button
+              onClick={handleBack}
+              className={`flex w-fit items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition active:scale-95 ${
+                isLight
+                  ? 'border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50'
+                  : 'border-white/15 bg-white/10 text-slate-200 hover:bg-white/20'
+              }`}
+            >
+              <ArrowLeft size={18} /> Quay lại
+            </button>
+            <ThemeToggle />
+          </div>
 
           <div className="my-auto py-5 sm:py-6">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="space-y-5 rounded-[2rem] border border-cyan-500/30 bg-slate-900/60 p-4 shadow-2xl backdrop-blur-2xl sm:space-y-6 sm:rounded-[2.5rem] sm:p-8"
+              className={`space-y-5 rounded-[2rem] border p-4 shadow-2xl backdrop-blur-2xl sm:space-y-6 sm:rounded-[2.5rem] sm:p-8 ${
+                isLight
+                  ? 'border-slate-200/90 bg-white/95 text-slate-900 shadow-sky-950/10'
+                  : 'border-cyan-500/30 bg-slate-900/60 text-white'
+              }`}
             >
               <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
                 <div>
-                  <h1 className="text-2xl font-black text-white sm:text-4xl">Ống Kính Camera Chụp Thử Thách</h1>
-                  <p className="mt-1 text-sm font-semibold text-cyan-200">{activeCard.title}</p>
+                  <h1 className={`text-2xl font-black sm:text-4xl ${isLight ? 'text-slate-900' : 'text-white'}`}>Ống Kính Camera Chụp Thử Thách</h1>
+                  <p className={`mt-1 text-sm font-semibold ${isLight ? 'text-sky-700' : 'text-cyan-200'}`}>{activeCard.title}</p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                  <div className="flex items-center gap-2 rounded-full border border-fuchsia-400/30 bg-fuchsia-500/20 px-3 py-1.5 text-xs font-bold text-fuchsia-300">
+                  <div className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-bold ${
+                    isLight ? 'border-sky-300 bg-sky-50 text-sky-800' : 'border-fuchsia-400/30 bg-fuchsia-500/20 text-fuchsia-300'
+                  }`}>
                     <img src={currentPlayer.avatar} alt={currentPlayer.name} className="h-5 w-5 rounded-full object-cover" />
                     <span>Lượt của: {currentPlayer.name}</span>
                   </div>
-                  <span className="rounded-full border border-cyan-400/30 bg-cyan-500/20 px-4 py-1.5 text-xs font-bold text-cyan-300">
+                  <span className={`rounded-full border px-4 py-1.5 text-xs font-bold ${
+                    isLight ? 'border-slate-200 bg-slate-100 text-slate-700' : 'border-cyan-400/30 bg-cyan-500/20 text-cyan-300'
+                  }`}>
                     Vòng {round} {turnDurationSeconds === 0 ? '· ∞' : turnTimeLeft !== null ? `· Lượt còn ${turnTimeLeft}s` : pausedTurnRemainingSeconds !== null ? `· Tạm dừng, còn ${pausedTurnRemainingSeconds}s` : ''}
                   </span>
                   <div className="min-w-16 text-right">
-                    <span className="block text-[10px] font-bold uppercase text-slate-400">Thời Gian Chụp</span>
-                    <span className={`text-2xl font-black ${timeLeft !== null && timeLeft <= 5 ? 'text-red-400 animate-pulse' : 'text-cyan-300'}`}>
+                    <span className={`block text-[10px] font-bold uppercase ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>Thời Gian Chụp</span>
+                    <span className={`text-2xl font-black ${timeLeft !== null && timeLeft <= 5 ? 'text-rose-500 animate-pulse' : (isLight ? 'text-sky-600' : 'text-cyan-300')}`}>
                       {timeLeft === null ? '--' : `${timeLeft}s`}
                     </span>
                   </div>
@@ -738,12 +760,16 @@ const CameraPage = () => {
               )}
 
               {cameraError && (
-                <p role="alert" className="rounded-xl border border-red-400/40 bg-red-500/10 px-4 py-3 text-center text-sm font-semibold text-red-200">
+                <p role="alert" className={`rounded-xl border px-4 py-3 text-center text-sm font-semibold ${
+                  isLight ? 'border-rose-300 bg-rose-50 text-rose-800' : 'border-red-400/40 bg-red-500/10 text-red-200'
+                }`}>
                   {cameraError}
                 </p>
               )}
               {verificationMethod === 'ai' && !captured && (
-                <p className="rounded-xl border border-cyan-400/35 bg-cyan-500/10 px-4 py-3 text-center text-sm font-semibold text-cyan-100">
+                <p className={`rounded-xl border px-4 py-3 text-center text-sm font-semibold ${
+                  isLight ? 'border-sky-300 bg-sky-50 text-sky-800' : 'border-cyan-400/35 bg-cyan-500/10 text-cyan-100'
+                }`}>
                   Xác thực AI yêu cầu ảnh bằng chứng. Hãy chụp ảnh hoặc chọn ảnh từ thiết bị trước khi tiếp tục.
                 </p>
               )}
@@ -757,14 +783,22 @@ const CameraPage = () => {
                         whileTap={{ scale: 0.98 }}
                         onClick={handleOpenCamera}
                         disabled={cameraStatus === 'requesting'}
-                        className="flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 via-fuchsia-500 to-cyan-500 px-6 py-3 font-bold text-white shadow-xl shadow-fuchsia-500/20 disabled:cursor-wait disabled:opacity-70"
+                        className={`flex min-h-12 items-center justify-center gap-2 rounded-2xl px-6 py-3 font-bold text-white shadow-xl disabled:cursor-wait disabled:opacity-70 ${
+                          isLight
+                            ? 'btn-blue-gradient shadow-sky-500/20'
+                            : 'bg-gradient-to-r from-violet-600 via-fuchsia-500 to-cyan-500 shadow-fuchsia-500/20'
+                        }`}
                       >
                         <Camera size={19} />
                         {cameraStatus === 'requesting' ? 'Đang mở camera...' : 'Mở camera'}
                       </motion.button>
 
                       <label
-                        className="flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-2xl border border-cyan-400/40 bg-cyan-500/15 px-6 py-3 font-bold text-cyan-200 shadow-lg backdrop-blur-md transition hover:bg-cyan-500/25"
+                        className={`flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-2xl border px-6 py-3 font-bold shadow-lg backdrop-blur-md transition ${
+                          isLight
+                            ? 'border-sky-300 bg-sky-50 text-sky-800 hover:bg-sky-100 shadow-sky-950/5'
+                            : 'border-cyan-400/40 bg-cyan-500/15 text-cyan-200 hover:bg-cyan-500/25'
+                        }`}
                       >
                         <Upload size={18} />
                         <span>Chụp từ máy / Tải ảnh lên</span>
@@ -783,7 +817,11 @@ const CameraPage = () => {
                         <button
                           onClick={() => { void handleSwitchCamera(); }}
                           aria-label="Chuyển camera trước/sau"
-                          className="flex h-12 w-12 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white transition hover:bg-white/20 disabled:opacity-60"
+                          className={`flex h-12 w-12 items-center justify-center rounded-full border transition disabled:opacity-60 ${
+                            isLight
+                              ? 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                              : 'border-white/20 bg-white/10 text-white hover:bg-white/20'
+                          }`}
                         >
                           <SwitchCamera size={21} />
                         </button>
@@ -804,7 +842,11 @@ const CameraPage = () => {
                       type="button"
                       onClick={handleContinueWithoutPhoto}
                       disabled={isConfirming}
-                      className="min-h-12 rounded-2xl border border-amber-400/35 bg-amber-500/10 px-5 py-3 text-sm font-bold text-amber-200 transition hover:bg-amber-500/20 disabled:opacity-60"
+                      className={`min-h-12 rounded-2xl border px-5 py-3 text-sm font-bold transition disabled:opacity-60 ${
+                        isLight
+                          ? 'border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100'
+                          : 'border-amber-400/35 bg-amber-500/10 text-amber-200 hover:bg-amber-500/20'
+                      }`}
                     >
                       {isConfirming ? 'Đang gửi...' : 'Tiếp tục không ảnh'}
                     </button>
@@ -816,7 +858,11 @@ const CameraPage = () => {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={handleRetake}
-                    className="flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-white/15 bg-white/10 py-3 font-bold text-white transition hover:bg-white/20"
+                    className={`flex min-h-12 items-center justify-center gap-2 rounded-2xl border py-3 font-bold transition ${
+                      isLight
+                        ? 'border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200'
+                        : 'border-white/15 bg-white/10 text-white hover:bg-white/20'
+                    }`}
                   >
                     <RotateCcw size={18} /> Chụp lại ảnh khác
                   </motion.button>
@@ -825,7 +871,11 @@ const CameraPage = () => {
                     whileTap={{ scale: 0.98 }}
                     onClick={() => { void handleUsePhoto(); }}
                     disabled={isConfirming}
-                    className="flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 via-fuchsia-500 to-cyan-500 py-3 font-bold text-white shadow-xl shadow-fuchsia-500/20 disabled:opacity-70"
+                    className={`flex min-h-12 items-center justify-center gap-2 rounded-2xl py-3 font-bold text-white shadow-xl disabled:opacity-70 transition ${
+                      isLight
+                        ? 'btn-emerald-gradient shadow-emerald-500/20'
+                        : 'bg-gradient-to-r from-violet-600 via-fuchsia-500 to-cyan-500 shadow-fuchsia-500/20'
+                    }`}
                   >
                     <Check size={18} /> {isConfirming ? 'Đang xác nhận...' : 'Xác nhận ảnh & chấm điểm'}
                   </motion.button>

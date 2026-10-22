@@ -101,6 +101,9 @@ export interface GameContextType {
   addScoreToPlayer: (playerId: string, xp: number) => void;
   soundEnabled: boolean;
   toggleSound: () => void;
+  themeMode: 'light' | 'dark';
+  setThemeMode: (mode: 'light' | 'dark') => void;
+  toggleThemeMode: () => void;
   investorMode: boolean;
   toggleInvestorMode: () => void;
   currentRound: number;
@@ -208,6 +211,13 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [photoBonusEnabled, setPhotoBonusEnabled] = useState(persisted.photoBonusEnabled ?? true);
   const [players, setPlayers] = useState<Player[]>(persisted.players ?? INITIAL_PLAYERS);
   const [soundEnabled, setSoundEnabled] = useState(persisted.soundEnabled ?? true);
+  const [themeMode, setThemeModeState] = useState<'light' | 'dark'>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = window.localStorage.getItem('snapdeck_theme_mode');
+      if (saved === 'dark' || saved === 'light') return saved;
+    }
+    return 'light'; // Mặc định chế độ Sáng theo yêu cầu của user
+  });
   const [investorMode, setInvestorMode] = useState(true);
   const [currentRound, setCurrentRound] = useState<number>(persisted.currentRound ?? 1);
   const [totalRounds, setTotalRounds] = useState<RoundLimit>(
@@ -310,9 +320,49 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (nextState) sound.playClick();
   };
 
+  const setThemeMode = (mode: 'light' | 'dark') => {
+    setThemeModeState(mode);
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('snapdeck_theme_mode', mode);
+      document.documentElement.classList.toggle('light', mode === 'light');
+      document.documentElement.classList.toggle('dark', mode === 'dark');
+      document.body.classList.toggle('light', mode === 'light');
+      document.body.classList.toggle('dark', mode === 'dark');
+    }
+  };
+
+  const toggleThemeMode = () => {
+    const next = themeMode === 'light' ? 'dark' : 'light';
+    setThemeMode(next);
+  };
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      document.documentElement.classList.toggle('light', themeMode === 'light');
+      document.documentElement.classList.toggle('dark', themeMode === 'dark');
+      document.body.classList.toggle('light', themeMode === 'light');
+      document.body.classList.toggle('dark', themeMode === 'dark');
+    }
+  }, [themeMode]);
+
   const toggleInvestorMode = () => {
     setInvestorMode((prev) => !prev);
     sound.playClick();
+  };
+
+  const updateDeviceMode = (nextMode: DeviceMode) => {
+    setDeviceMode(nextMode);
+    if (nextMode === 'multi_device') {
+      setVerificationMethod('ai');
+    }
+  };
+
+  const updateVerificationMethod = (nextMethod: VerificationMethod) => {
+    if (deviceMode === 'multi_device') {
+      setVerificationMethod('ai');
+      return;
+    }
+    setVerificationMethod(nextMethod);
   };
 
   const addPhotoToCurrentAlbum = (photoData: Omit<GalleryPhoto, 'id'>) => {
@@ -664,9 +714,9 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         mode,
         setMode,
         deviceMode,
-        setDeviceMode,
+        setDeviceMode: updateDeviceMode,
         verificationMethod,
-        setVerificationMethod,
+        setVerificationMethod: updateVerificationMethod,
         photoBonusEnabled,
         setPhotoBonusEnabled,
         players,
@@ -675,6 +725,9 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         addScoreToPlayer,
         soundEnabled,
         toggleSound,
+        themeMode,
+        setThemeMode,
+        toggleThemeMode,
         investorMode,
         toggleInvestorMode,
         currentRound,

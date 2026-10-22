@@ -4,6 +4,7 @@ import { ArrowLeft, ChevronRight, Copy, Download, Image as ImageIcon, Layers, Sh
 import { useLocation, useNavigate } from 'react-router-dom';
 import type { GalleryAlbum, GalleryPhoto } from '../../context/GameContext';
 import { useGame } from '../../context/useGame';
+import { ThemeToggle } from '../../components/ThemeToggle';
 import { apiRequest, playerApiRequest } from '../../services/api';
 import { sound } from '../../utils/soundEngine';
 
@@ -63,7 +64,8 @@ const NativeShareIcon = () => (
 const GalleryPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { albums, deviceMode, roomCode, currentPlayerId, roomPlayerToken, theme } = useGame();
+  const { albums, deviceMode, roomCode, currentPlayerId, roomPlayerToken, theme, themeMode } = useGame();
+  const isLight = themeMode === 'light';
 
   const [selectedAlbum, setSelectedAlbum] = useState<GalleryAlbum | null>(null);
   const [selectedPhoto, setSelectedPhoto] = useState<GalleryPhoto | null>(null);
@@ -236,16 +238,24 @@ const GalleryPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(7,89,133,0.3),_transparent_40%),linear-gradient(135deg,_#030712_0%,_#0f172a_45%,_#111827_100%)] text-slate-100">
+    <div className={`min-h-screen transition-colors duration-300 ${
+      isLight
+        ? 'text-slate-900'
+        : 'bg-[radial-gradient(circle_at_top_left,_rgba(7,89,133,0.3),_transparent_40%),linear-gradient(135deg,_#030712_0%,_#0f172a_45%,_#111827_100%)] text-slate-100'
+    }`}>
       {/* Toast Notification */}
       {toastMessage && (
         <motion.div
           initial={{ y: -50, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: -50, opacity: 0 }}
-          className="fixed top-6 left-1/2 -translate-x-1/2 z-50 rounded-2xl border border-cyan-400/40 bg-slate-900/95 px-6 py-3 text-sm font-bold text-cyan-300 shadow-2xl backdrop-blur-xl flex items-center gap-2 max-w-md text-center"
+          className={`fixed top-6 left-1/2 -translate-x-1/2 z-50 rounded-2xl border px-6 py-3 text-sm font-bold shadow-2xl backdrop-blur-xl flex items-center gap-2 max-w-md text-center ${
+            isLight
+              ? 'border-sky-300 bg-white/95 text-sky-800 shadow-sky-950/10'
+              : 'border-cyan-400/40 bg-slate-900/95 text-cyan-300'
+          }`}
         >
-          <Sparkles size={16} className="text-cyan-400 animate-spin shrink-0" />
+          <Sparkles size={16} className={`${isLight ? 'text-sky-600' : 'text-cyan-400'} animate-spin shrink-0`} />
           <span>{toastMessage}</span>
         </motion.div>
       )}
@@ -253,7 +263,9 @@ const GalleryPage = () => {
       <div className="relative isolate min-h-screen overflow-hidden">
         <div className="relative z-10 mx-auto flex min-h-screen max-w-6xl flex-col px-6 py-8">
           {galleryError && (
-            <p role="alert" className="mb-4 rounded-xl border border-amber-400/40 bg-amber-500/10 p-3 text-sm text-amber-200">
+            <p role="alert" className={`mb-4 rounded-xl border p-3 text-sm ${
+              isLight ? 'border-amber-300 bg-amber-50 text-amber-800' : 'border-amber-400/40 bg-amber-500/10 text-amber-200'
+            }`}>
               {galleryError}
             </p>
           )}
@@ -264,20 +276,29 @@ const GalleryPage = () => {
                 sound.playClick();
                 navigate('/');
               }}
-              className="flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-semibold text-slate-200 backdrop-blur-xl transition hover:bg-white/20"
+              className={`flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition active:scale-95 ${
+                isLight
+                  ? 'border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50'
+                  : 'border-white/15 bg-white/10 text-slate-200 hover:bg-white/20'
+              }`}
             >
               <ArrowLeft size={18} /> Trang chủ
             </button>
 
-            <div className="flex items-center gap-2 rounded-full border border-fuchsia-500/30 bg-fuchsia-500/10 px-4 py-1.5 text-xs font-bold text-fuchsia-300">
-              <ImageIcon size={14} className="text-fuchsia-400" /> BỘ SƯU TẬP & ALBUM VÁN CHƠI
+            <div className="flex items-center gap-3">
+              <div className={`flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-bold ${
+                isLight ? 'border-sky-300 bg-sky-50 text-sky-800' : 'border-fuchsia-500/30 bg-fuchsia-500/10 text-fuchsia-300'
+              }`}>
+                <ImageIcon size={14} className={isLight ? 'text-sky-600' : 'text-fuchsia-400'} /> BỘ SƯU TẬP & ALBUM VÁN CHƠI
+              </div>
+              <ThemeToggle />
             </div>
           </div>
 
           <div className="my-auto py-8 space-y-8">
             <div>
-              <h1 className="text-3xl font-black text-white sm:text-4xl">Bộ Sưu Tập Album Ván Chơi</h1>
-              <p className="mt-1 text-sm text-slate-300">
+              <h1 className={`text-3xl font-black sm:text-4xl ${isLight ? 'text-slate-900' : 'text-white'}`}>Bộ Sưu Tập Album Ván Chơi</h1>
+              <p className={`mt-1 text-sm ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>
                 Chọn album ván chơi để xem lại ảnh kỷ niệm, tải ảnh hoặc chia sẻ.
               </p>
             </div>
@@ -289,7 +310,11 @@ const GalleryPage = () => {
                   key={album.id}
                   whileHover={{ y: -6, scale: 1.02 }}
                   onClick={() => handleOpenAlbum(album)}
-                  className="cursor-pointer rounded-[2rem] border border-cyan-500/30 bg-slate-900/60 p-5 shadow-2xl backdrop-blur-xl space-y-4 hover:border-cyan-400 transition"
+                  className={`cursor-pointer rounded-[2rem] border p-5 shadow-2xl backdrop-blur-xl space-y-4 transition ${
+                    isLight
+                      ? 'border-slate-200/90 bg-white/95 text-slate-900 shadow-sky-950/5 hover:border-sky-400'
+                      : 'border-cyan-500/30 bg-slate-900/60 text-white hover:border-cyan-400'
+                  }`}
                 >
                   <div className="relative h-60 w-full overflow-hidden rounded-2xl border border-white/10">
                     <img src={album.coverImage} alt={album.themeName} className="h-full w-full object-cover" />
@@ -306,11 +331,13 @@ const GalleryPage = () => {
 
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="font-black text-white text-lg">{album.themeName}</h3>
-                      <p className="text-xs text-slate-400 mt-0.5">{album.date} • Mã phòng: {album.roomCode}</p>
+                      <h3 className={`font-black text-lg ${isLight ? 'text-slate-900' : 'text-white'}`}>{album.themeName}</h3>
+                      <p className={`text-xs mt-0.5 ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>{album.date} • Mã phòng: {album.roomCode}</p>
                     </div>
 
-                    <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-cyan-400/30 bg-cyan-500/20 text-cyan-300">
+                    <div className={`flex h-10 w-10 items-center justify-center rounded-2xl border ${
+                      isLight ? 'border-sky-200 bg-sky-50 text-sky-700' : 'border-cyan-400/30 bg-cyan-500/20 text-cyan-300'
+                    }`}>
                       <ChevronRight size={20} />
                     </div>
                   </div>

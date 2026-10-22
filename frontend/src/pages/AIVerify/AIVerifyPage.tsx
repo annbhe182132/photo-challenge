@@ -19,6 +19,7 @@ import {
 import { useLocation, useNavigate } from 'react-router-dom';
 import type { GameSubmission } from '../../context/GameContext';
 import { useGame } from '../../context/useGame';
+import { ThemeToggle } from '../../components/ThemeToggle';
 import type { Player } from '../../data/gameData';
 import { apiRequest, playerApiRequest } from '../../services/api';
 import { sound } from '../../utils/soundEngine';
@@ -171,7 +172,10 @@ const AIVerifyPage = () => {
     setVerificationMethod,
     activeCard,
     theme,
+    themeMode,
   } = useGame();
+
+  const isLight = themeMode === 'light';
 
   const searchParams = new URLSearchParams(location.search);
   const round = (location.state?.round as number | undefined) ?? (Number(searchParams.get('round')) || undefined);
@@ -448,60 +452,83 @@ const AIVerifyPage = () => {
   const eligibleCount = submission?.eligibleVoterIds.length ?? 0;
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(7,89,133,0.35),_transparent_45%),linear-gradient(135deg,_#030712_0%,_#0f172a_45%,_#111827_100%)] px-4 py-6 text-slate-100 sm:px-6 sm:py-8">
+    <main className={`min-h-screen px-4 py-6 transition-colors duration-300 sm:px-6 sm:py-8 ${
+      isLight
+        ? 'text-slate-900'
+        : 'bg-[radial-gradient(circle_at_top_left,_rgba(7,89,133,0.35),_transparent_45%),linear-gradient(135deg,_#030712_0%,_#0f172a_45%,_#111827_100%)] text-slate-100'
+    }`}>
       <section className="mx-auto flex min-h-[calc(100vh-3rem)] max-w-3xl flex-col justify-center">
         {/* Navigation Bar */}
         <div className="mb-4 flex items-center justify-between">
           <button
             onClick={() => navigate(-1)}
-            className="flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:bg-white/20 active:scale-95"
+            className={`flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition active:scale-95 ${
+              isLight
+                ? 'border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50'
+                : 'border-white/15 bg-white/10 text-slate-200 hover:bg-white/20'
+            }`}
           >
             <ArrowLeft size={18} /> Quay lại
           </button>
           
-          <div className="flex items-center gap-2 rounded-full border border-cyan-500/30 bg-cyan-950/60 px-3.5 py-1.5 text-xs font-bold text-cyan-300">
-            {verificationMethod === 'ai' ? (
-              <>
-                <Bot size={14} className="text-cyan-400 animate-pulse" />
-                <span>CHẾ ĐỘ AI JUDGE</span>
-              </>
-            ) : (
-              <>
-                <Users size={14} className="text-amber-400" />
-                <span>BÌNH CHỌN NHÓM</span>
-              </>
-            )}
+          <div className="flex items-center gap-3">
+            <div className={`flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-xs font-bold ${
+              verificationMethod === 'ai'
+                ? isLight ? 'border-sky-300 bg-sky-50 text-sky-800' : 'border-cyan-500/30 bg-cyan-950/60 text-cyan-300'
+                : isLight ? 'border-amber-300 bg-amber-50 text-amber-800' : 'border-amber-500/30 bg-amber-950/60 text-amber-300'
+            }`}>
+              {verificationMethod === 'ai' ? (
+                <>
+                  <Bot size={14} className="text-cyan-500 animate-pulse" />
+                  <span>CHẾ ĐỘ AI JUDGE</span>
+                </>
+              ) : (
+                <>
+                  <Users size={14} className="text-amber-500" />
+                  <span>BÌNH CHỌN NHÓM</span>
+                </>
+              )}
+            </div>
+            <ThemeToggle />
           </div>
         </div>
 
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          className="space-y-5 rounded-[2rem] border border-cyan-500/30 bg-slate-900/80 p-5 shadow-2xl backdrop-blur-xl sm:p-8"
+          className={`space-y-5 rounded-[2rem] border p-5 shadow-2xl backdrop-blur-xl sm:p-8 ${
+            isLight
+              ? 'border-slate-200/90 bg-white/95 text-slate-900 shadow-sky-950/10'
+              : 'border-cyan-500/30 bg-slate-900/80 text-white'
+          }`}
         >
           {/* Header */}
           <header>
-            <p className="text-xs font-black uppercase tracking-[0.2em] text-cyan-300">
+            <p className={`text-xs font-black uppercase tracking-[0.2em] ${isLight ? 'text-sky-700' : 'text-cyan-300'}`}>
               {verificationMethod === 'ai' ? 'Trọng Tài AI Độc Lập · Multimodal Vision' : 'Xác thực nhóm · Đánh giá công tâm'}
             </p>
-            <h1 className="mt-1 text-2xl font-black text-white sm:text-3xl">
+            <h1 className={`mt-1 text-2xl font-black sm:text-3xl ${isLight ? 'text-slate-900' : 'text-white'}`}>
               {verificationMethod === 'ai' ? 'AI Chấm Điểm Thử Thách' : 'Cùng Đánh Giá Thử Thách'}
             </h1>
-            <p className="mt-1.5 text-xs text-slate-300 sm:text-sm">
+            <p className={`mt-1.5 text-xs sm:text-sm ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>
               {verificationMethod === 'ai'
-                ? 'Gemini đánh giá ảnh theo thử thách.'
+                ? 'AI Chếck đánh giá ảnh theo thử thách.'
                 : 'Chấm điểm từ 0 đến 100. Người gửi không tự chấm bài của mình.'}
             </p>
           </header>
 
           {loading && (
-            <div className="flex items-center gap-3 rounded-2xl bg-white/5 p-4 text-sm text-cyan-200">
+            <div className={`flex items-center gap-3 rounded-2xl p-4 text-sm ${
+              isLight ? 'bg-sky-50 text-sky-800 border border-sky-200' : 'bg-white/5 text-cyan-200'
+            }`}>
               <LoaderCircle className="animate-spin" /> Đang tải dữ liệu lượt gửi…
             </div>
           )}
 
           {error && (
-            <p role="alert" className="rounded-xl border border-red-400/40 bg-red-500/10 p-3 text-sm text-red-200">
+            <p role="alert" className={`rounded-xl border p-3 text-sm ${
+              isLight ? 'border-rose-300 bg-rose-50 text-rose-800' : 'border-red-400/40 bg-red-500/10 text-red-200'
+            }`}>
               {error}
             </p>
           )}
@@ -509,18 +536,22 @@ const AIVerifyPage = () => {
           {submission && (
             <>
               {/* Challenge Information */}
-              <article className="space-y-3 rounded-2xl border border-white/10 bg-slate-950/60 p-3 sm:p-4">
+              <article className={`space-y-3 rounded-2xl border p-3 sm:p-4 ${
+                isLight ? 'border-slate-200 bg-slate-50/80 text-slate-900' : 'border-white/10 bg-slate-950/60 text-white'
+              }`}>
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="rounded-md bg-fuchsia-500/20 px-2 py-0.5 text-[11px] font-bold text-fuchsia-300">
+                    <span className={`rounded-md px-2 py-0.5 text-[11px] font-bold ${
+                      isLight ? 'bg-sky-100 text-sky-800' : 'bg-fuchsia-500/20 text-fuchsia-300'
+                    }`}>
                       VÒNG {submission.round}
                     </span>
-                    <span className="text-xs text-slate-400">
-                      Người chơi: <strong className="text-slate-200">{submitter?.name ?? 'Bạn'}</strong>
+                    <span className={`text-xs ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
+                      Người chơi: <strong className={isLight ? 'text-slate-900' : 'text-slate-200'}>{submitter?.name ?? 'Bạn'}</strong>
                     </span>
                   </div>
-                  <h2 className="mt-2 text-xl font-black text-white">{submission.cardTitle}</h2>
-                  <p className="mt-2 text-xs leading-5 text-slate-300 sm:text-sm">{submission.mission}</p>
+                  <h2 className={`mt-2 text-xl font-black ${isLight ? 'text-slate-900' : 'text-white'}`}>{submission.cardTitle}</h2>
+                  <p className={`mt-2 text-xs leading-5 sm:text-sm ${isLight ? 'text-slate-700' : 'text-slate-300'}`}>{submission.mission}</p>
                 </div>
 
                 {/* Evidence Photo Viewport with Futuristic AI Scanner Line */}
@@ -574,23 +605,25 @@ const AIVerifyPage = () => {
                 <div className="space-y-4">
                   {/* Status 1: AI is Analyzing */}
                   {aiState === 'analyzing' && (
-                    <div className="rounded-2xl border border-cyan-500/30 bg-cyan-950/40 p-5 text-center">
+                    <div className={`rounded-2xl border p-5 text-center ${
+                      isLight ? 'border-sky-200 bg-sky-50/80 shadow-md text-slate-800' : 'border-cyan-500/30 bg-cyan-950/40 text-white'
+                    }`}>
                       <div className="relative mx-auto flex h-14 w-14 items-center justify-center">
                         <motion.div
                           className="absolute inset-0 rounded-full border-2 border-cyan-400/40"
                           animate={{ scale: [1, 1.3, 1], opacity: [0.8, 0, 0.8] }}
                           transition={{ duration: 1.5, repeat: Infinity }}
                         />
-                        <Bot size={32} className="text-cyan-300 animate-bounce" />
+                        <Bot size={32} className={`${isLight ? 'text-sky-600' : 'text-cyan-300'} animate-bounce`} />
                       </div>
-                      <h3 className="mt-3 text-base font-black text-white">AI Thần Gió Đang Soi Ảnh...</h3>
+                      <h3 className={`mt-3 text-base font-black ${isLight ? 'text-slate-900' : 'text-white'}`}>AI Thần Gió Đang Soi Ảnh...</h3>
                       <AnimatePresence mode="wait">
                         <motion.p
                           key={tipIndex}
                           initial={{ opacity: 0, y: 5 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -5 }}
-                          className="mt-2 text-xs font-semibold text-cyan-200 sm:text-sm"
+                          className={`mt-2 text-xs font-semibold sm:text-sm ${isLight ? 'text-sky-800' : 'text-cyan-200'}`}
                         >
                           {AI_SCANNING_TIPS[tipIndex]}
                         </motion.p>
@@ -617,8 +650,8 @@ const AIVerifyPage = () => {
                         animate={{ opacity: 1, scale: 1 }}
                         className={`space-y-4 rounded-2xl border p-5 ${
                           isPass
-                            ? 'border-emerald-500/40 bg-emerald-950/30'
-                            : 'border-rose-500/40 bg-rose-950/30'
+                            ? isLight ? 'border-emerald-200 bg-emerald-50/90 text-slate-900 shadow-lg' : 'border-emerald-500/40 bg-emerald-950/30'
+                            : isLight ? 'border-rose-200 bg-rose-50/90 text-slate-900 shadow-lg' : 'border-rose-500/40 bg-rose-950/30'
                         }`}
                       >
                         {/* Top Result Banner */}
@@ -626,29 +659,29 @@ const AIVerifyPage = () => {
                           <div className="flex items-center gap-3">
                             <div className={`flex h-12 w-12 items-center justify-center rounded-2xl border ${
                               isPass
-                                ? 'border-emerald-400/40 bg-emerald-500/20 text-emerald-300'
-                                : 'border-rose-400/40 bg-rose-500/20 text-rose-300'
+                                ? isLight ? 'border-emerald-300 bg-emerald-100 text-emerald-700' : 'border-emerald-400/40 bg-emerald-500/20 text-emerald-300'
+                                : isLight ? 'border-rose-300 bg-rose-100 text-rose-700' : 'border-rose-400/40 bg-rose-500/20 text-rose-300'
                             }`}>
                               {isPass ? <CheckCircle2 size={28} /> : <ShieldX size={28} />}
                             </div>
                             <div>
                               <div className="flex items-center gap-2">
-                                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                                <span className={`text-[10px] font-black uppercase tracking-wider ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
                                   KẾT QUẢ TỪ AI JUDGE
                                 </span>
                                 <span
                                   className={`rounded-full px-2.5 py-0.5 text-xs font-black border ${
                                     isPass
-                                      ? 'border-emerald-400/50 bg-emerald-500/25 text-emerald-300'
-                                      : 'border-rose-400/50 bg-rose-500/25 text-rose-300'
+                                      ? isLight ? 'border-emerald-300 bg-emerald-100 text-emerald-800' : 'border-emerald-400/50 bg-emerald-500/25 text-emerald-300'
+                                      : isLight ? 'border-rose-300 bg-rose-100 text-rose-800' : 'border-rose-400/50 bg-rose-500/25 text-rose-300'
                                   }`}
                                 >
                                   {isPass ? `ĐẠT (${percentage}%)` : `KHÔNG ĐẠT (${percentage}%)`}
                                 </span>
                               </div>
-                              <h3 className="mt-1 text-lg font-black text-white sm:text-xl">
+                              <h3 className={`mt-1 text-lg font-black sm:text-xl ${isLight ? 'text-slate-900' : 'text-white'}`}>
                                 {aiResult.verdict || (isPass ? 'HOÀN THÀNH XUẤT SẮC' : 'CHƯA ĐẠT YÊU CẦU')}
-                                <span className={`ml-2 text-base font-extrabold sm:text-lg ${isPass ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                <span className={`ml-2 text-base font-extrabold sm:text-lg ${isPass ? (isLight ? 'text-emerald-600' : 'text-emerald-400') : (isLight ? 'text-rose-600' : 'text-rose-400')}`}>
                                   · {percentage}%
                                 </span>
                               </h3>
@@ -656,32 +689,38 @@ const AIVerifyPage = () => {
                           </div>
 
                           {isPass ? (
-                            <div className="rounded-xl border border-emerald-400/30 bg-emerald-500/20 px-3.5 py-1.5 text-center">
-                              <span className="text-[10px] font-bold text-emerald-300">TỔNG ĐIỂM</span>
-                              <p className="text-xl font-black text-white">+{aiResult.scoreBreakdown.total} XP</p>
+                            <div className={`rounded-xl border px-3.5 py-1.5 text-center ${
+                              isLight ? 'border-emerald-200 bg-emerald-100/70' : 'border-emerald-400/30 bg-emerald-500/20'
+                            }`}>
+                              <span className={`text-[10px] font-bold ${isLight ? 'text-emerald-800' : 'text-emerald-300'}`}>TỔNG ĐIỂM</span>
+                              <p className={`text-xl font-black ${isLight ? 'text-emerald-900' : 'text-white'}`}>+{aiResult.scoreBreakdown.total} XP</p>
                             </div>
                           ) : (
-                            <div className="rounded-xl border border-rose-400/30 bg-rose-500/20 px-3.5 py-1.5 text-center">
-                              <span className="text-[10px] font-bold text-rose-300">TỔNG ĐIỂM</span>
-                              <p className="text-lg font-black text-rose-200">0 XP</p>
+                            <div className={`rounded-xl border px-3.5 py-1.5 text-center ${
+                              isLight ? 'border-rose-200 bg-rose-100/70' : 'border-rose-400/30 bg-rose-500/20'
+                            }`}>
+                              <span className={`text-[10px] font-bold ${isLight ? 'text-rose-800' : 'text-rose-300'}`}>TỔNG ĐIỂM</span>
+                              <p className={`text-lg font-black ${isLight ? 'text-rose-900' : 'text-rose-200'}`}>0 XP</p>
                             </div>
                           )}
                         </div>
 
                         {/* Thanh đo % hoàn thành (AI Match Meter với mốc chuẩn 50%) */}
-                        <div className="rounded-xl border border-white/10 bg-slate-950/70 p-3.5 space-y-2.5">
+                        <div className={`rounded-xl border p-3.5 space-y-2.5 ${
+                          isLight ? 'border-slate-200 bg-white shadow-sm text-slate-800' : 'border-white/10 bg-slate-950/70'
+                        }`}>
                           <div className="flex items-center justify-between text-xs">
-                            <span className="font-bold flex items-center gap-1.5 text-slate-200">
-                              <Sparkles size={14} className={isPass ? 'text-emerald-400' : 'text-rose-400'} />
+                            <span className={`font-bold flex items-center gap-1.5 ${isLight ? 'text-slate-800' : 'text-slate-200'}`}>
+                              <Sparkles size={14} className={isPass ? (isLight ? 'text-emerald-600' : 'text-emerald-400') : (isLight ? 'text-rose-600' : 'text-rose-400')} />
                               Mức độ hoàn thành thử thách:
                             </span>
-                            <span className={`font-black text-sm ${isPass ? 'text-emerald-300' : 'text-rose-300'}`}>
+                            <span className={`font-black text-sm ${isPass ? (isLight ? 'text-emerald-700' : 'text-emerald-300') : (isLight ? 'text-rose-700' : 'text-rose-300')}`}>
                               {percentage}% {isPass ? '(Vượt chuẩn)' : '(Dưới chuẩn)'}
                             </span>
                           </div>
 
                           {/* Progress Bar with 50% Threshold Marker */}
-                          <div className="relative h-3.5 w-full overflow-hidden rounded-full bg-slate-800">
+                          <div className={`relative h-3.5 w-full overflow-hidden rounded-full ${isLight ? 'bg-slate-100' : 'bg-slate-800'}`}>
                             <motion.div
                               initial={{ width: 0 }}
                               animate={{ width: `${percentage}%` }}
@@ -694,21 +733,23 @@ const AIVerifyPage = () => {
                             />
                             {/* 50% Threshold Marker Line */}
                             <div
-                              className="absolute top-0 bottom-0 w-0.5 bg-white/80 z-10"
+                              className="absolute top-0 bottom-0 w-0.5 bg-slate-400 z-10"
                               style={{ left: '50%' }}
                               title="Ngưỡng đạt: 50%"
                             />
                           </div>
 
-                          <div className="flex items-center justify-between text-[11px] text-slate-400">
+                          <div className={`flex items-center justify-between text-[11px] ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
                             <span>0%</span>
-                            <span className="text-amber-300 font-bold bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/30">
+                            <span className={`font-bold px-2 py-0.5 rounded-full border ${
+                              isLight ? 'border-amber-300 bg-amber-50 text-amber-800' : 'text-amber-300 bg-amber-500/10 border-amber-500/30'
+                            }`}>
                               Ngưỡng đạt: ≥ 50%
                             </span>
                             <span>100%</span>
                           </div>
 
-                          <p className="text-xs text-slate-300 leading-relaxed pt-0.5">
+                          <p className={`text-xs leading-relaxed pt-0.5 ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>
                             {isPass
                               ? `✓ AI chấm đạt ${percentage}%. Bức ảnh đáp ứng tốt tinh thần và chi tiết nhiệm vụ (vượt ngưỡng yêu cầu 50%).`
                               : `✗ AI chấm chỉ đạt ${percentage}%. Bức ảnh thiếu các yếu tố cốt lõi hoặc có nhiều biến số chưa đáp ứng (yêu cầu từ 50% trở lên).`}
@@ -717,28 +758,32 @@ const AIVerifyPage = () => {
 
                         {/* Score Breakdown Pills */}
                         {isPass && (
-                          <div className="grid grid-cols-3 gap-2 rounded-xl bg-slate-950/60 p-2.5 text-center text-xs">
+                          <div className={`grid grid-cols-3 gap-2 rounded-xl p-2.5 text-center text-xs ${
+                            isLight ? 'bg-slate-100 text-slate-700' : 'bg-slate-950/60'
+                          }`}>
                             <div>
-                              <span className="text-slate-400">Điểm gốc</span>
-                              <p className="font-bold text-slate-100">+{aiResult.scoreBreakdown.basePoints} XP</p>
+                              <span className={isLight ? 'text-slate-500' : 'text-slate-400'}>Điểm gốc</span>
+                              <p className={`font-bold ${isLight ? 'text-slate-900' : 'text-slate-100'}`}>+{aiResult.scoreBreakdown.basePoints} XP</p>
                             </div>
                             <div>
-                              <span className="text-slate-400">Ảnh chụp</span>
-                              <p className="font-bold text-cyan-300">+{aiResult.scoreBreakdown.photoBonus} XP</p>
+                              <span className={isLight ? 'text-slate-500' : 'text-slate-400'}>Ảnh chụp</span>
+                              <p className={`font-bold ${isLight ? 'text-sky-700' : 'text-cyan-300'}`}>+{aiResult.scoreBreakdown.photoBonus} XP</p>
                             </div>
                             <div>
-                              <span className="text-slate-400">Sáng tạo</span>
-                              <p className="font-bold text-fuchsia-300">+{aiResult.scoreBreakdown.creativityBonus} XP</p>
+                              <span className={isLight ? 'text-slate-500' : 'text-slate-400'}>Sáng tạo</span>
+                              <p className={`font-bold ${isLight ? 'text-emerald-700' : 'text-fuchsia-300'}`}>+{aiResult.scoreBreakdown.creativityBonus} XP</p>
                             </div>
                           </div>
                         )}
 
                         {/* AI Feedback Bubble */}
-                        <div className="rounded-xl border border-white/10 bg-slate-900/90 p-3.5">
-                          <div className="flex items-center gap-2 text-xs font-bold text-cyan-300">
+                        <div className={`rounded-xl border p-3.5 ${
+                          isLight ? 'border-sky-200 bg-sky-50/70 text-slate-800' : 'border-white/10 bg-slate-900/90'
+                        }`}>
+                          <div className={`flex items-center gap-2 text-xs font-bold ${isLight ? 'text-sky-800' : 'text-cyan-300'}`}>
                             <Bot size={15} /> Lời nhận xét của AI:
                           </div>
-                          <p className="mt-1 text-xs italic leading-relaxed text-slate-200 sm:text-sm">
+                          <p className={`mt-1 text-xs italic leading-relaxed sm:text-sm ${isLight ? 'text-slate-800' : 'text-slate-200'}`}>
                             "{aiResult.feedback}"
                           </p>
                         </div>
@@ -746,12 +791,14 @@ const AIVerifyPage = () => {
                         {/* Detected Elements Pills */}
                         {aiResult.detectedElements && aiResult.detectedElements.length > 0 && (
                           <div>
-                            <p className="text-[11px] font-semibold text-slate-400">Chi tiết nhận diện được trong ảnh:</p>
+                            <p className={`text-[11px] font-semibold ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>Chi tiết nhận diện được trong ảnh:</p>
                             <div className="mt-1.5 flex flex-wrap gap-1.5">
                               {aiResult.detectedElements.map((elem, i) => (
                                 <span
                                   key={i}
-                                  className="flex items-center gap-1 rounded-md border border-cyan-500/20 bg-cyan-950/40 px-2.5 py-0.5 text-[11px] font-medium text-cyan-200"
+                                  className={`flex items-center gap-1 rounded-md border px-2.5 py-0.5 text-[11px] font-medium ${
+                                    isLight ? 'border-sky-200 bg-sky-50 text-sky-800' : 'border-cyan-500/20 bg-cyan-950/40 text-cyan-200'
+                                  }`}
                                 >
                                   <Tag size={10} /> {elem}
                                 </span>
@@ -764,7 +811,11 @@ const AIVerifyPage = () => {
                         <div className="pt-2">
                           <button
                             onClick={finishResult}
-                            className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 px-5 py-3 font-black text-slate-950 shadow-lg shadow-cyan-500/25 transition hover:brightness-110 active:scale-98"
+                            className={`flex min-h-12 w-full items-center justify-center gap-2 rounded-xl px-5 py-3 font-black shadow-lg transition hover:brightness-110 active:scale-98 ${
+                              isLight
+                                ? 'btn-blue-gradient text-white shadow-sky-500/20'
+                                : 'bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-950 shadow-cyan-500/25'
+                            }`}
                           >
                             <Zap size={18} /> Xem Kết Quả Vòng Này
                           </button>
@@ -775,10 +826,12 @@ const AIVerifyPage = () => {
 
                   {/* Status 3: AI Error / Retry */}
                   {aiState === 'error' && (
-                    <div className="space-y-3.5 rounded-2xl border border-rose-500/40 bg-rose-950/40 p-4 text-center">
-                      <AlertTriangle className="mx-auto text-rose-400" size={30} />
-                      <h3 className="text-sm font-bold text-white">Chưa thể hoàn tất chấm điểm AI</h3>
-                      <div className="whitespace-pre-line text-xs leading-relaxed text-rose-200">
+                    <div className={`space-y-3.5 rounded-2xl border p-4 text-center ${
+                      isLight ? 'border-rose-200 bg-rose-50/90 text-slate-800' : 'border-rose-500/40 bg-rose-950/40'
+                    }`}>
+                      <AlertTriangle className="mx-auto text-rose-500" size={30} />
+                      <h3 className={`text-sm font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>Chưa thể hoàn tất chấm điểm AI</h3>
+                      <div className={`whitespace-pre-line text-xs leading-relaxed ${isLight ? 'text-rose-800' : 'text-rose-200'}`}>
                         {aiError}
                       </div>
 
@@ -792,7 +845,7 @@ const AIVerifyPage = () => {
                           >
                             <Sparkles size={14} /> Mở Google Cloud để Bật Gemini API (1 Click)
                           </a>
-                          <span className="text-[11px] text-slate-300">
+                          <span className={`text-[11px] ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>
                             Sau khi bấm Bật (Enable), đợi khoảng 30s rồi bấm nút "Thử lại phân tích AI" bên dưới.
                           </span>
                         </div>
@@ -801,13 +854,17 @@ const AIVerifyPage = () => {
                       <div className="grid gap-2 pt-2 sm:grid-cols-2">
                         <button
                           onClick={() => { void triggerAiEvaluation(submission); }}
-                          className="flex items-center justify-center gap-2 rounded-xl border border-white/20 bg-white/10 px-4 py-2.5 text-xs font-bold text-white transition hover:bg-white/20 active:scale-98"
+                          className={`flex items-center justify-center gap-2 rounded-xl border px-4 py-2.5 text-xs font-bold transition active:scale-98 ${
+                            isLight ? 'border-slate-200 bg-white text-slate-800 hover:bg-slate-50 shadow-sm' : 'border-white/20 bg-white/10 text-white hover:bg-white/20'
+                          }`}
                         >
                           <RefreshCw size={14} /> Thử lại phân tích AI
                         </button>
                         <button
                           onClick={() => { setVerificationMethod('group'); }}
-                          className="flex items-center justify-center gap-2 rounded-xl bg-amber-500/20 px-4 py-2.5 text-xs font-bold text-amber-200 transition hover:bg-amber-500/30 active:scale-98"
+                          className={`flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold transition active:scale-98 ${
+                            isLight ? 'bg-amber-100 text-amber-800 hover:bg-amber-200' : 'bg-amber-500/20 text-amber-200 hover:bg-amber-500/30'
+                          }`}
                         >
                           <Users size={14} /> Đổi sang Bỏ phiếu nhóm
                         </button>
@@ -820,26 +877,34 @@ const AIVerifyPage = () => {
               {verificationMethod === 'group' && (
                 <>
                   {submission.status === 'pending' && (
-                    <div className="rounded-2xl border border-cyan-500/25 bg-cyan-500/5 p-4">
+                    <div className={`rounded-2xl border p-4 ${
+                      isLight ? 'border-slate-200 bg-white/90 shadow-sm text-slate-800' : 'border-cyan-500/25 bg-cyan-500/5'
+                    }`}>
                       <div className="flex flex-wrap items-center justify-between gap-2">
-                        <h3 className="font-bold text-white">Đang chờ nhóm đánh giá</h3>
-                        <span className="text-xs text-slate-300">Đã bỏ phiếu: {votesCast} / {eligibleCount}</span>
+                        <h3 className={`font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>Đang chờ nhóm đánh giá</h3>
+                        <span className={`text-xs ${isLight ? 'text-slate-500' : 'text-slate-300'}`}>Đã bỏ phiếu: {votesCast} / {eligibleCount}</span>
                       </div>
-                      <p className="mt-2 text-sm text-slate-300">
+                      <p className={`mt-2 text-sm ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>
                         Điểm nhóm là trung bình các phiếu. Cần ít nhất {submission.requiredVotes} đánh giá đạt 50 điểm để duyệt.
                       </p>
                       {deviceMode === 'single_device' && voter && (
-                        <p className="mt-3 rounded-xl bg-slate-950/70 p-3 text-sm font-bold text-amber-200">
+                        <p className={`mt-3 rounded-xl p-3 text-sm font-bold ${
+                          isLight ? 'bg-amber-50 border border-amber-200 text-amber-900' : 'bg-slate-950/70 text-amber-200'
+                        }`}>
                           Chuyển thiết bị cho {voter.name}. Phiếu của người chơi trước được ẩn.
                         </p>
                       )}
                       {submission.playerId === currentPlayerId && deviceMode === 'multi_device' && (
-                        <p className="mt-3 rounded-xl bg-slate-950/70 p-3 text-sm text-slate-200">
+                        <p className={`mt-3 rounded-xl p-3 text-sm ${
+                          isLight ? 'bg-slate-100 text-slate-700' : 'bg-slate-950/70 text-slate-200'
+                        }`}>
                           Bạn đã gửi thử thách này. Đang chờ người chơi khác đánh giá trên thiết bị của họ.
                         </p>
                       )}
                       {deviceMode === 'multi_device' && submission.hasVoted && submission.playerId !== currentPlayerId && (
-                        <p className="mt-3 rounded-xl bg-slate-950/70 p-3 text-sm text-slate-200">
+                        <p className={`mt-3 rounded-xl p-3 text-sm ${
+                          isLight ? 'bg-slate-100 text-slate-700' : 'bg-slate-950/70 text-slate-200'
+                        }`}>
                           Bạn đã gửi điểm. Đang chờ những người đánh giá còn lại.
                         </p>
                       )}
@@ -854,8 +919,10 @@ const AIVerifyPage = () => {
                       ) && (
                         <div className="mt-4 space-y-4">
                           <div className="flex items-center justify-between gap-4">
-                            <label htmlFor="group-score" className="font-semibold text-white">Điểm đánh giá</label>
-                            <output htmlFor="group-score" className="min-w-16 rounded-xl bg-cyan-400 px-3 py-1 text-center text-xl font-black text-slate-950">
+                            <label htmlFor="group-score" className={`font-semibold ${isLight ? 'text-slate-900' : 'text-white'}`}>Điểm đánh giá</label>
+                            <output htmlFor="group-score" className={`min-w-16 rounded-xl px-3 py-1 text-center text-xl font-black ${
+                              isLight ? 'bg-sky-600 text-white' : 'bg-cyan-400 text-slate-950'
+                            }`}>
                               {selectedGroupScore}
                             </output>
                           </div>
@@ -877,7 +944,11 @@ const AIVerifyPage = () => {
                                 type="button"
                                 onClick={() => setSelectedGroupScore(score)}
                                 aria-pressed={selectedGroupScore === score}
-                                className={`min-h-11 rounded-xl border px-3 font-bold ${selectedGroupScore === score ? 'border-cyan-300 bg-cyan-400/20 text-cyan-100' : 'border-white/15 bg-white/5 text-slate-200'}`}
+                                className={`min-h-11 rounded-xl border px-3 font-bold transition ${
+                                  selectedGroupScore === score
+                                    ? isLight ? 'border-sky-500 bg-sky-100 text-sky-900 font-bold' : 'border-cyan-300 bg-cyan-400/20 text-cyan-100'
+                                    : isLight ? 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100' : 'border-white/15 bg-white/5 text-slate-200'
+                                }`}
                               >
                                 {score}
                               </button>
@@ -887,7 +958,9 @@ const AIVerifyPage = () => {
                             type="button"
                             onClick={() => { void submitVote(selectedGroupScore); }}
                             disabled={submittingVote}
-                            className="min-h-12 w-full rounded-xl bg-cyan-400 px-4 py-3 font-black text-slate-950 disabled:opacity-50"
+                            className={`min-h-12 w-full rounded-xl px-4 py-3 font-black disabled:opacity-50 transition ${
+                              isLight ? 'btn-emerald-gradient text-white shadow-emerald-500/20' : 'bg-cyan-400 text-slate-950'
+                            }`}
                           >
                             {submittingVote ? 'Đang gửi điểm…' : 'Xác nhận điểm'}
                           </button>
@@ -895,12 +968,14 @@ const AIVerifyPage = () => {
                       )}
                       {deviceMode === 'single_device' && !voter && (
                         <div className="mt-3 space-y-2">
-                          <p className="text-sm text-amber-200">
+                          <p className={`text-sm ${isLight ? 'text-amber-800' : 'text-amber-200'}`}>
                             Không còn người đánh giá hợp lệ trong nhóm (hoặc bạn đang chơi 1 mình).
                           </p>
                           <button
                             onClick={() => { setVerificationMethod('ai'); }}
-                            className="flex items-center gap-1.5 rounded-lg bg-cyan-500/20 px-3 py-1.5 text-xs font-bold text-cyan-200"
+                            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold ${
+                              isLight ? 'bg-sky-100 text-sky-800 hover:bg-sky-200' : 'bg-cyan-500/20 text-cyan-200'
+                            }`}
                           >
                             <Sparkles size={14} /> Chuyển sang AI Judge tự động chấm
                           </button>
@@ -910,22 +985,31 @@ const AIVerifyPage = () => {
                   )}
 
                   {submission.status !== 'pending' && (
-                    <div className={`rounded-2xl border p-4 ${submission.status === 'approved' ? 'border-emerald-400/30 bg-emerald-500/10' : 'border-rose-400/30 bg-rose-500/10'}`}>
-                      <div className="flex items-center gap-2 font-black text-white">
-                        {submission.status === 'approved' ? <CheckCircle2 className="text-emerald-300" /> : <ShieldX className="text-rose-300" />}
+                    <div className={`rounded-2xl border p-4 ${
+                      submission.status === 'approved'
+                        ? isLight ? 'border-emerald-200 bg-emerald-50/90 text-slate-800' : 'border-emerald-400/30 bg-emerald-500/10'
+                        : isLight ? 'border-rose-200 bg-rose-50/90 text-slate-800' : 'border-rose-400/30 bg-rose-500/10'
+                    }`}>
+                      <div className={`flex items-center gap-2 font-black ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                        {submission.status === 'approved' ? <CheckCircle2 className="text-emerald-500" /> : <ShieldX className="text-rose-500" />}
                         {submission.status === 'approved' ? 'Đã được nhóm duyệt' : 'Nhóm đã từ chối thử thách'}
                       </div>
-                      <p className="mt-2 text-sm text-slate-200">
+                      <p className={`mt-2 text-sm ${isLight ? 'text-slate-600' : 'text-slate-200'}`}>
                         {submission.status === 'approved'
                           ? `XP: ${submission.scoreBreakdown.basePoints} cơ bản + ${submission.scoreBreakdown.photoBonus} ảnh = ${submission.scoreBreakdown.total}.`
                           : 'Thử thách không đạt điều kiện duyệt nhóm.'}
                       </p>
                       {typeof submission.groupScore === 'number' && (
-                        <p className="mt-2 text-sm font-bold text-cyan-200">
+                        <p className={`mt-2 text-sm font-bold ${isLight ? 'text-sky-700' : 'text-cyan-200'}`}>
                           Điểm nhóm trung bình: {Number.isInteger(submission.groupScore) ? submission.groupScore : submission.groupScore.toFixed(1)} / 100
                         </p>
                       )}
-                      <button onClick={finishResult} className="mt-4 min-h-12 w-full rounded-xl bg-cyan-500 px-5 py-3 font-black text-slate-950">
+                      <button
+                        onClick={finishResult}
+                        className={`mt-4 min-h-12 w-full rounded-xl px-5 py-3 font-black shadow-lg transition ${
+                          isLight ? 'btn-blue-gradient text-white' : 'bg-cyan-500 text-slate-950'
+                        }`}
+                      >
                         Xem kết quả vòng này
                       </button>
                     </div>

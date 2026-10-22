@@ -20,6 +20,7 @@ import { PUNISHMENTS, type Punishment } from '../../data/gameData';
 import type { Player } from '../../data/gameData';
 import { playerApiRequest } from '../../services/api';
 import { sound } from '../../utils/soundEngine';
+import ThemeToggle from '../../components/ThemeToggle';
 
 interface RoomAdvanceResponse {
   success: boolean;
@@ -51,7 +52,10 @@ const ResultPage = () => {
     gameStatus,
     advanceLocalTurn,
     syncRoom,
+    themeMode,
   } = useGame();
+
+  const isLight = themeMode === 'light';
 
   const query = new URLSearchParams(location.search);
   const round = location.state?.round ?? (Number(query.get('round')) || currentRound);
@@ -193,59 +197,80 @@ const ResultPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(7,89,133,0.3),_transparent_40%),linear-gradient(135deg,_#030712_0%,_#0f172a_45%,_#111827_100%)] text-slate-100">
+    <div className={`min-h-screen transition-colors duration-300 ${
+      isLight
+        ? 'text-slate-900'
+        : 'bg-[radial-gradient(circle_at_top_left,_rgba(7,89,133,0.3),_transparent_40%),linear-gradient(135deg,_#030712_0%,_#0f172a_45%,_#111827_100%)] text-slate-100'
+    }`}>
       <div className="relative isolate min-h-screen overflow-hidden">
-        {/* Ambient Glow */}
-        <div className="pointer-events-none absolute inset-0 overflow-hidden">
-          <motion.div
-            className={`absolute left-1/4 top-10 h-72 w-72 rounded-full blur-3xl ${passed ? 'bg-cyan-500/20' : 'bg-red-500/25'}`}
-            animate={{ scale: [1, 1.2, 1] }}
-            transition={{ duration: 4, repeat: Infinity }}
-          />
-          <motion.div
-            className={`absolute right-1/4 bottom-10 h-72 w-72 rounded-full blur-3xl ${passed ? 'bg-fuchsia-500/20' : 'bg-orange-500/25'}`}
-            animate={{ scale: [1, 1.3, 1] }}
-            transition={{ duration: 5, repeat: Infinity }}
-          />
-        </div>
+        {/* Ambient Glow in Dark Mode */}
+        {!isLight && (
+          <div className="pointer-events-none absolute inset-0 overflow-hidden">
+            <motion.div
+              className={`absolute left-1/4 top-10 h-72 w-72 rounded-full blur-3xl ${passed ? 'bg-cyan-500/20' : 'bg-red-500/25'}`}
+              animate={{ scale: [1, 1.2, 1] }}
+              transition={{ duration: 4, repeat: Infinity }}
+            />
+            <motion.div
+              className={`absolute right-1/4 bottom-10 h-72 w-72 rounded-full blur-3xl ${passed ? 'bg-fuchsia-500/20' : 'bg-orange-500/25'}`}
+              animate={{ scale: [1, 1.3, 1] }}
+              transition={{ duration: 5, repeat: Infinity }}
+            />
+          </div>
+        )}
 
         <div className="relative z-10 mx-auto flex min-h-screen max-w-3xl flex-col px-6 py-8">
+          <div className="flex justify-end mb-4">
+            <ThemeToggle />
+          </div>
+
           <div className="my-auto py-6">
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="rounded-[2.5rem] border border-cyan-500/30 bg-slate-900/60 p-6 shadow-2xl backdrop-blur-2xl sm:p-8 space-y-6 text-center"
+              className={`rounded-[2.5rem] border p-6 shadow-2xl backdrop-blur-2xl sm:p-8 space-y-6 text-center ${
+                isLight
+                  ? 'border-slate-200/90 bg-white/95 text-slate-900 shadow-sky-950/10'
+                  : 'border-cyan-500/30 bg-slate-900/60 text-white'
+              }`}
             >
               {/* Active Player Card Badge */}
-              <div className="mx-auto flex w-fit items-center gap-2.5 rounded-full border border-fuchsia-400/40 bg-fuchsia-500/15 px-5 py-2 text-xs font-bold text-fuchsia-300 backdrop-blur-xl shadow-lg">
-                <img src={currentPlayer.avatar} alt={currentPlayer.name} className="h-6 w-6 rounded-full object-cover border border-fuchsia-300" />
-                <span>Lượt chơi của: <strong className="text-white">{currentPlayer.name}</strong></span>
+              <div className={`mx-auto flex w-fit items-center gap-2.5 rounded-full border px-5 py-2 text-xs font-bold backdrop-blur-xl shadow-lg ${
+                isLight
+                  ? 'border-sky-300 bg-sky-50 text-sky-800'
+                  : 'border-fuchsia-400/40 bg-fuchsia-500/15 text-fuchsia-300'
+              }`}>
+                <img src={currentPlayer.avatar} alt={currentPlayer.name} className="h-6 w-6 rounded-full object-cover border border-sky-400" />
+                <span>Lượt chơi của: <strong className={isLight ? 'text-slate-900' : 'text-white'}>{currentPlayer.name}</strong></span>
               </div>
 
               {/* Icon Header */}
               {passed ? (
-                <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-tr from-cyan-400 via-fuchsia-500 to-amber-300 p-1 shadow-[0_0_40px_rgba(217,70,239,0.4)]">
-                  <div className="flex h-full w-full items-center justify-center rounded-full bg-slate-950">
-                    <Trophy className="h-10 w-10 text-amber-400 animate-bounce" />
+                <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-tr from-cyan-400 via-emerald-500 to-amber-300 p-1 shadow-lg">
+                  <div className={`flex h-full w-full items-center justify-center rounded-full ${isLight ? 'bg-white' : 'bg-slate-950'}`}>
+                    <Trophy className="h-10 w-10 text-amber-500 animate-bounce" />
                   </div>
                 </div>
               ) : (
-                <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-tr from-red-500 via-orange-500 to-amber-500 p-1 shadow-[0_0_40px_rgba(239,68,68,0.4)]">
-                  <div className="flex h-full w-full items-center justify-center rounded-full bg-slate-950">
-                    <ShieldAlert className="h-10 w-10 text-red-400 animate-pulse" />
+                <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-tr from-red-500 via-orange-500 to-amber-500 p-1 shadow-lg">
+                  <div className={`flex h-full w-full items-center justify-center rounded-full ${isLight ? 'bg-white' : 'bg-slate-950'}`}>
+                    <ShieldAlert className="h-10 w-10 text-red-500 animate-pulse" />
                   </div>
                 </div>
               )}
 
               <div>
                 <span
-                  className={`inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-bold ${passed ? 'border-cyan-500/30 bg-cyan-500/10 text-cyan-300' : 'border-red-500/30 bg-red-500/10 text-red-300'
-                    }`}
+                  className={`inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-bold ${
+                    passed
+                      ? isLight ? 'border-sky-300 bg-sky-50 text-sky-700' : 'border-cyan-500/30 bg-cyan-500/10 text-cyan-300'
+                      : isLight ? 'border-red-300 bg-red-50 text-red-700' : 'border-red-500/30 bg-red-500/10 text-red-300'
+                  }`}
                 >
                   <Sparkles size={14} /> KẾT QUẢ VÒNG {round} / {totalRounds || '∞'}
                 </span>
 
-                <h1 className="mt-3 text-3xl font-black text-white sm:text-4xl">
+                <h1 className={`mt-3 text-3xl font-black sm:text-4xl ${isLight ? 'text-slate-900' : 'text-white'}`}>
                   {timedOut
                     ? `${currentPlayer.name} đã hết thời gian`
                     : skipped
@@ -280,7 +305,7 @@ const ResultPage = () => {
                   </div>
                 )}
 
-                <p className="mt-2 text-sm text-slate-300">
+                <p className={`mt-2 text-sm ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>
                   {timedOut || skipped
                     ? 'Lượt này không được cộng điểm hoàn thành.'
                     : passed
@@ -290,7 +315,9 @@ const ResultPage = () => {
 
                 {/* Thumbnail ảnh bằng chứng đã chọn/chụp với nút phóng to */}
                 {evidence && (
-                  <div className="mx-auto mt-4 max-w-xs overflow-hidden rounded-2xl border border-cyan-500/30 bg-slate-950/80 p-2 shadow-xl">
+                  <div className={`mx-auto mt-4 max-w-xs overflow-hidden rounded-2xl border p-2 shadow-xl ${
+                    isLight ? 'border-sky-200 bg-white shadow-sky-950/5' : 'border-cyan-500/30 bg-slate-950/80'
+                  }`}>
                     <button
                       type="button"
                       onClick={() => setIsImageModalOpen(true)}
@@ -315,11 +342,13 @@ const ResultPage = () => {
                 )}
 
                 {aiFeedback && (
-                  <div className="mt-3 rounded-2xl border border-cyan-500/30 bg-cyan-950/50 p-4 text-left shadow-lg">
-                    <div className="flex items-center gap-2 text-xs font-bold text-cyan-300">
+                  <div className={`mt-3 rounded-2xl border p-4 text-left shadow-lg ${
+                    isLight ? 'border-sky-200 bg-sky-50/80 text-slate-800' : 'border-cyan-500/30 bg-cyan-950/50'
+                  }`}>
+                    <div className={`flex items-center gap-2 text-xs font-bold ${isLight ? 'text-sky-700' : 'text-cyan-300'}`}>
                       <Bot size={16} /> Nhận xét từ SNAPDECK AI:
                     </div>
-                    <p className="mt-1.5 text-sm italic leading-relaxed text-slate-100">
+                    <p className={`mt-1.5 text-sm italic leading-relaxed ${isLight ? 'text-slate-800' : 'text-slate-100'}`}>
                       "{aiFeedback}"
                     </p>
                   </div>
@@ -327,13 +356,15 @@ const ResultPage = () => {
               </div>
 
               {typeof groupScore === 'number' && (
-                <div className="rounded-2xl border border-cyan-400/25 bg-cyan-950/30 p-4">
-                  <p className="text-xs font-bold uppercase tracking-wide text-cyan-200">Điểm đánh giá nhóm</p>
-                  <p className="mt-1 text-3xl font-black text-white">
+                <div className={`rounded-2xl border p-4 ${
+                  isLight ? 'border-sky-200 bg-sky-50/60' : 'border-cyan-400/25 bg-cyan-950/30'
+                }`}>
+                  <p className={`text-xs font-bold uppercase tracking-wide ${isLight ? 'text-sky-700' : 'text-cyan-200'}`}>Điểm đánh giá nhóm</p>
+                  <p className={`mt-1 text-3xl font-black ${isLight ? 'text-slate-900' : 'text-white'}`}>
                     {Number.isInteger(groupScore) ? groupScore : groupScore.toFixed(1)}
-                    <span className="ml-1 text-base font-semibold text-slate-300">/ 100</span>
+                    <span className={`ml-1 text-base font-semibold ${isLight ? 'text-slate-500' : 'text-slate-300'}`}>/ 100</span>
                   </p>
-                  <p className="mt-1 text-xs text-slate-300">Điểm đánh giá tách biệt với XP nhận được.</p>
+                  <p className={`mt-1 text-xs ${isLight ? 'text-slate-500' : 'text-slate-300'}`}>Điểm đánh giá tách biệt với XP nhận được.</p>
                 </div>
               )}
 
@@ -342,17 +373,23 @@ const ResultPage = () => {
                 /* Success Layout */
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
-                  <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                    <div className="text-xs text-slate-400 font-bold uppercase">ĐIỂM CƠ BẢN</div>
-                    <div className="text-3xl font-black text-cyan-300 mt-1">+{scoreBreakdown?.basePoints ?? score}</div>
+                  <div className={`rounded-2xl border p-4 ${
+                    isLight ? 'border-slate-200 bg-slate-50' : 'border-white/10 bg-white/5'
+                  }`}>
+                    <div className={`text-xs font-bold uppercase ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>ĐIỂM CƠ BẢN</div>
+                    <div className={`text-3xl font-black mt-1 ${isLight ? 'text-sky-600' : 'text-cyan-300'}`}>+{scoreBreakdown?.basePoints ?? score}</div>
                   </div>
 
-                  <div className="rounded-2xl border border-fuchsia-500/40 bg-fuchsia-500/15 p-4">
-                    <div className="text-xs text-fuchsia-300 font-bold uppercase">TỔNG ĐIỂM ĐƯỢC DUYỆT</div>
-                    <div className="text-3xl font-black text-amber-400 mt-1">+{score}</div>
+                  <div className={`rounded-2xl border p-4 ${
+                    isLight ? 'border-emerald-200 bg-emerald-50/70' : 'border-fuchsia-500/40 bg-fuchsia-500/15'
+                  }`}>
+                    <div className={`text-xs font-bold uppercase ${isLight ? 'text-emerald-700' : 'text-fuchsia-300'}`}>TỔNG ĐIỂM ĐƯỢC DUYỆT</div>
+                    <div className={`text-3xl font-black mt-1 ${isLight ? 'text-emerald-600' : 'text-amber-400'}`}>+{score}</div>
                   </div>
                   </div>
-                  <div className="rounded-xl border border-white/10 bg-slate-950/60 p-3 text-left text-sm text-slate-300">
+                  <div className={`rounded-xl border p-3 text-left text-sm ${
+                    isLight ? 'border-slate-200 bg-slate-50 text-slate-600' : 'border-white/10 bg-slate-950/60 text-slate-300'
+                  }`}>
                     Điểm cơ bản: {scoreBreakdown?.basePoints ?? score}
                     {' · '}Thưởng ảnh: {scoreBreakdown?.photoBonus ?? 0}
                     {' · '}Thưởng sáng tạo: {scoreBreakdown?.creativityBonus ?? 0}
@@ -360,25 +397,27 @@ const ResultPage = () => {
                 </div>
               ) : mode === 'spicy' ? (
                 /* Timeout / Penalty Screen Layout */
-                <div className="rounded-3xl border border-red-500/40 bg-red-950/30 p-6 space-y-6 text-left">
+                <div className={`rounded-3xl border p-6 space-y-6 text-left ${
+                  isLight ? 'border-rose-200 bg-rose-50/60 shadow-lg text-slate-800' : 'border-red-500/40 bg-red-950/30'
+                }`}>
                   {/* Mode Selector Header */}
-                  <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4">
+                  <div className={`flex flex-wrap items-center justify-between gap-4 border-b pb-4 ${isLight ? 'border-slate-200' : 'border-white/10'}`}>
                     <div>
-                      <h3 className="text-xl font-black text-white flex items-center gap-2">
-                        <Flame className="text-fuchsia-400 animate-bounce" /> Hoạt động vui tùy chọn 🌶️
+                      <h3 className={`text-xl font-black flex items-center gap-2 ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                        <Flame className="text-fuchsia-500 animate-bounce" /> Hoạt động vui tùy chọn 🌶️
                       </h3>
-                      <p className="text-xs text-slate-300 mt-0.5">
+                      <p className={`text-xs mt-0.5 ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>
                         Không có điểm bị trừ. Nhóm có thể bỏ qua hoặc tự chọn một hoạt động vui.
                       </p>
                     </div>
 
-                    <div className="flex rounded-2xl border border-white/15 bg-slate-950 p-1">
+                    <div className={`flex rounded-2xl border p-1 ${isLight ? 'border-slate-200 bg-white/90 shadow-sm' : 'border-white/15 bg-slate-950'}`}>
                       <button
                         onClick={() => {
                           sound.playClick();
                           setPenaltyMode('random');
                         }}
-                        className={`px-3.5 py-1.5 text-xs font-bold rounded-xl transition ${penaltyMode === 'random' ? 'bg-gradient-to-r from-fuchsia-600 to-pink-600 text-white shadow-md' : 'text-slate-400 hover:text-white'
+                        className={`px-3.5 py-1.5 text-xs font-bold rounded-xl transition ${penaltyMode === 'random' ? 'bg-gradient-to-r from-fuchsia-600 to-pink-600 text-white shadow-md' : isLight ? 'text-slate-600 hover:text-slate-900' : 'text-slate-400 hover:text-white'
                           }`}
                       >
                         🎲 Quay Ngẫu Nhiên
@@ -388,7 +427,7 @@ const ResultPage = () => {
                           sound.playClick();
                           setPenaltyMode('custom');
                         }}
-                        className={`px-3.5 py-1.5 text-xs font-bold rounded-xl transition ${penaltyMode === 'custom' ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-md' : 'text-slate-400 hover:text-white'
+                        className={`px-3.5 py-1.5 text-xs font-bold rounded-xl transition ${penaltyMode === 'custom' ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-md' : isLight ? 'text-slate-600 hover:text-slate-900' : 'text-slate-400 hover:text-white'
                           }`}
                       >
                         ✍️ Tự Chọn / Tự Nghĩ
@@ -400,7 +439,7 @@ const ResultPage = () => {
                   {penaltyMode === 'random' && (
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold uppercase text-slate-400">Vòng Quay Vòng Phạt Ngẫu Nhiên</span>
+                        <span className={`text-xs font-bold uppercase ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>Vòng Quay Vòng Phạt Ngẫu Nhiên</span>
                         <button
                           onClick={handleSpinWheel}
                           disabled={spinning}
@@ -414,13 +453,15 @@ const ResultPage = () => {
                         <motion.div
                           initial={{ scale: 0.9, opacity: 0 }}
                           animate={{ scale: 1, opacity: 1 }}
-                          className="rounded-2xl border border-fuchsia-500/40 bg-fuchsia-950/60 p-4 flex items-center gap-4 shadow-xl"
+                          className={`rounded-2xl border p-4 flex items-center gap-4 shadow-xl ${
+                            isLight ? 'border-pink-200 bg-white text-slate-800 shadow-pink-900/5' : 'border-fuchsia-500/40 bg-fuchsia-950/60'
+                          }`}
                         >
                           <div className="text-4xl">{selectedPunishment.icon}</div>
                           <div>
-                            <div className="text-xs font-bold uppercase text-fuchsia-400">Kết Quả Vòng Quay Ngẫu Nhiên:</div>
-                            <div className="text-lg font-black text-white">{selectedPunishment.title}</div>
-                            <div className="text-xs text-slate-300 mt-0.5">{selectedPunishment.description}</div>
+                            <div className="text-xs font-bold uppercase text-fuchsia-500">Kết Quả Vòng Quay Ngẫu Nhiên:</div>
+                            <div className={`text-lg font-black ${isLight ? 'text-slate-900' : 'text-white'}`}>{selectedPunishment.title}</div>
+                            <div className={`text-xs mt-0.5 ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>{selectedPunishment.description}</div>
                           </div>
                         </motion.div>
                       )}
@@ -432,22 +473,27 @@ const ResultPage = () => {
                     <div className="space-y-5">
                       {/* Predefined Quick Chips */}
                       <div>
-                        <label className="text-xs font-bold text-slate-300 block mb-2">Chọn nhanh từ danh sách hình phạt vui vẻ:</label>
+                        <label className={`text-xs font-bold block mb-2 ${isLight ? 'text-slate-700' : 'text-slate-300'}`}>Chọn nhanh từ danh sách hình phạt vui vẻ:</label>
                         <div className="grid gap-2 sm:grid-cols-2">
                           {PUNISHMENTS.map((p) => (
                             <button
                               key={p.id}
                               type="button"
                               onClick={() => handleSelectPredefined(p)}
-                              className={`flex items-center gap-3 rounded-xl border p-3 text-left transition ${selectedPunishment?.id === p.id && customApplied
-                                  ? 'border-cyan-400 bg-cyan-500/20 text-cyan-200 ring-1 ring-cyan-400'
-                                  : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'
-                                }`}
+                              className={`flex items-center gap-3 rounded-xl border p-3 text-left transition ${
+                                selectedPunishment?.id === p.id && customApplied
+                                  ? isLight
+                                    ? 'border-sky-500 bg-sky-50 text-sky-900 ring-2 ring-sky-500'
+                                    : 'border-cyan-400 bg-cyan-500/20 text-cyan-200 ring-1 ring-cyan-400'
+                                  : isLight
+                                    ? 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50 shadow-sm'
+                                    : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'
+                              }`}
                             >
                               <span className="text-2xl">{p.icon}</span>
                               <div>
-                                <div className="text-xs font-bold text-white">{p.title}</div>
-                                <div className="text-[11px] text-slate-400 line-clamp-1">{p.description}</div>
+                                <div className={`text-xs font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>{p.title}</div>
+                                <div className={`text-[11px] line-clamp-1 ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>{p.description}</div>
                               </div>
                             </button>
                           ))}
@@ -455,8 +501,10 @@ const ResultPage = () => {
                       </div>
 
                       {/* Custom Input Form */}
-                      <form onSubmit={handleApplyCustomInput} className="rounded-2xl border border-cyan-500/30 bg-slate-950/80 p-4 space-y-3">
-                        <label className="text-xs font-bold text-cyan-300 flex items-center gap-1.5">
+                      <form onSubmit={handleApplyCustomInput} className={`rounded-2xl border p-4 space-y-3 ${
+                        isLight ? 'border-sky-200 bg-white/90 shadow-sm' : 'border-cyan-500/30 bg-slate-950/80'
+                      }`}>
+                        <label className={`text-xs font-bold flex items-center gap-1.5 ${isLight ? 'text-sky-800' : 'text-cyan-300'}`}>
                           <PenTool size={14} /> Hoặc tự nhập hình phạt sáng tạo của nhóm bạn:
                         </label>
 
@@ -465,7 +513,11 @@ const ResultPage = () => {
                           placeholder="Ví dụ: Nhảy 5 cái theo điệu nhún, Nói bằng giọng miền Nam trong 1 phút..."
                           value={customPenaltyTitle}
                           onChange={(e) => setCustomPenaltyTitle(e.target.value)}
-                          className="w-full rounded-xl border border-white/15 bg-slate-900 px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:border-cyan-400 focus:outline-none"
+                          className={`w-full rounded-xl border px-3.5 py-2.5 text-xs focus:outline-none ${
+                            isLight
+                              ? 'border-slate-200 bg-slate-50 text-slate-900 placeholder-slate-400 focus:border-sky-500'
+                              : 'border-white/15 bg-slate-900 text-white placeholder-slate-500 focus:border-cyan-400'
+                          }`}
                         />
 
                         <input
@@ -473,12 +525,18 @@ const ResultPage = () => {
                           placeholder="Ghi chú chi tiết thêm (không bắt buộc)..."
                           value={customPenaltyDesc}
                           onChange={(e) => setCustomPenaltyDesc(e.target.value)}
-                          className="w-full rounded-xl border border-white/15 bg-slate-900 px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:border-cyan-400 focus:outline-none"
+                          className={`w-full rounded-xl border px-3.5 py-2 text-xs focus:outline-none ${
+                            isLight
+                              ? 'border-slate-200 bg-slate-50 text-slate-900 placeholder-slate-400 focus:border-sky-500'
+                              : 'border-white/15 bg-slate-900 text-white placeholder-slate-500 focus:border-cyan-400'
+                          }`}
                         />
 
                         <button
                           type="submit"
-                          className="w-full rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 py-2.5 text-xs font-bold text-white shadow-lg shadow-cyan-500/20 hover:scale-102 transition"
+                          className={`w-full rounded-xl py-2.5 text-xs font-bold shadow-lg transition ${
+                            isLight ? 'btn-blue-gradient text-white shadow-sky-500/20' : 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-cyan-500/20 hover:scale-102'
+                          }`}
                         >
                           ✓ Xác Nhận Áp Dụng Hình Phạt Tự Nhập Này
                         </button>
@@ -489,15 +547,17 @@ const ResultPage = () => {
                         <motion.div
                           initial={{ scale: 0.95, opacity: 0 }}
                           animate={{ scale: 1, opacity: 1 }}
-                          className="rounded-2xl border border-cyan-400/40 bg-cyan-950/40 p-4 flex items-center gap-4 shadow-xl"
+                          className={`rounded-2xl border p-4 flex items-center gap-4 shadow-xl ${
+                            isLight ? 'border-sky-300 bg-sky-50 text-slate-800' : 'border-cyan-400/40 bg-cyan-950/40'
+                          }`}
                         >
                           <div className="text-3xl">{selectedPunishment.icon}</div>
                           <div>
-                            <div className="text-xs font-bold uppercase text-cyan-400 flex items-center gap-1">
+                            <div className={`text-xs font-bold uppercase flex items-center gap-1 ${isLight ? 'text-sky-700' : 'text-cyan-400'}`}>
                               <CheckCircle2 size={14} /> Hình Phạt Được Chọn:
                             </div>
-                            <div className="text-base font-black text-white">{selectedPunishment.title}</div>
-                            <div className="text-xs text-slate-300 mt-0.5">{selectedPunishment.description}</div>
+                            <div className={`text-base font-black ${isLight ? 'text-slate-900' : 'text-white'}`}>{selectedPunishment.title}</div>
+                            <div className={`text-xs mt-0.5 ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>{selectedPunishment.description}</div>
                           </div>
                         </motion.div>
                       )}
@@ -505,11 +565,13 @@ const ResultPage = () => {
                   )}
 
                   {/* SAFETY & POSITIVE VIBES DISCLAIMER NOTE */}
-                  <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 space-y-1.5 text-xs text-amber-200">
-                    <div className="font-bold flex items-center gap-2 text-amber-400 text-sm">
+                  <div className={`rounded-2xl border p-4 space-y-1.5 text-xs ${
+                    isLight ? 'border-amber-200 bg-amber-50/90 text-amber-900' : 'border-amber-500/30 bg-amber-500/10 text-amber-200'
+                  }`}>
+                    <div className="font-bold flex items-center gap-2 text-amber-500 text-sm">
                       <HeartHandshake size={18} /> THÔNG ĐIỆP VĂN MINH & AN TOÀN KHI CHƠI
                     </div>
-                    <p className="leading-relaxed text-slate-300">
+                    <p className={`leading-relaxed ${isLight ? 'text-slate-700' : 'text-slate-300'}`}>
                       <strong>SNAPDECK</strong> được thiết kế nhằm mang lại những tiếng cười sảng khoái và gắn kết tinh thần đồng đội.
                       <strong>Tuyệt đối không khuyến khích</strong> các hình phạt tiêu cực, mang tính bạo lực, hạ thấp danh dự hoặc gây nguy hiểm đến tính mạng, sức khỏe người chơi.
                       Hãy luôn ưu tiên những hình phạt hài hước, dí dỏm, nhẹ nhàng và an toàn nhất cho tất cả các thành viên!
@@ -517,22 +579,28 @@ const ResultPage = () => {
                   </div>
                 </div>
               ) : timedOut || skipped ? (
-                <div className="rounded-2xl border border-red-400/25 bg-red-500/10 p-4 text-sm text-red-100">
+                <div className={`rounded-2xl border p-4 text-sm ${
+                  isLight ? 'border-rose-200 bg-rose-50 text-rose-800' : 'border-red-400/25 bg-red-500/10 text-red-100'
+                }`}>
                   Điểm thưởng lượt này: <strong>0 XP</strong>. Ván chơi tiếp tục theo đúng thứ tự người chơi.
                 </div>
               ) : null}
 
               {showRoundSummary && (
-                <section className="rounded-2xl border border-amber-400/30 bg-amber-500/10 p-4 text-left">
-                  <h2 className="text-lg font-black text-amber-200">
+                <section className={`rounded-2xl border p-4 text-left ${
+                  isLight ? 'border-amber-200 bg-amber-50/80 text-slate-800' : 'border-amber-400/30 bg-amber-500/10'
+                }`}>
+                  <h2 className={`text-lg font-black ${isLight ? 'text-amber-800' : 'text-amber-200'}`}>
                     {showFinalSummary ? 'Tổng kết cuối ván' : `Tổng kết vòng ${round}`}
                   </h2>
-                  <p className="mt-1 text-xs text-slate-300">Bảng điểm cộng dồn sau khi mọi người đã hoàn thành lượt trong vòng này.</p>
+                  <p className={`mt-1 text-xs ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>Bảng điểm cộng dồn sau khi mọi người đã hoàn thành lượt trong vòng này.</p>
                   <ol className="mt-3 space-y-2">
                     {[...players].sort((a, b) => b.score - a.score).map((player, index) => (
-                      <li key={player.id} className="flex items-center justify-between rounded-xl bg-slate-950/50 px-3 py-2 text-sm">
-                        <span className="font-semibold text-white">{index + 1}. {player.name}</span>
-                        <span className="font-black text-cyan-300">{player.score} XP</span>
+                      <li key={player.id} className={`flex items-center justify-between rounded-xl px-3 py-2 text-sm ${
+                        isLight ? 'bg-white border border-slate-100 text-slate-900 shadow-sm' : 'bg-slate-950/50 text-white'
+                      }`}>
+                        <span className={`font-semibold ${isLight ? 'text-slate-900' : 'text-white'}`}>{index + 1}. {player.name}</span>
+                        <span className={`font-black ${isLight ? 'text-sky-600' : 'text-cyan-300'}`}>{player.score} XP</span>
                       </li>
                     ))}
                   </ol>
@@ -547,7 +615,11 @@ const ResultPage = () => {
                     whileTap={{ scale: 0.98 }}
                     onClick={handleNextRound}
                     disabled={advancing}
-                    className="w-full flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 via-fuchsia-500 to-cyan-500 py-4 font-black text-white shadow-xl shadow-fuchsia-500/30 disabled:opacity-60"
+                    className={`w-full flex items-center justify-center gap-2 rounded-2xl py-4 font-black shadow-xl disabled:opacity-60 transition ${
+                      isLight
+                        ? 'btn-blue-gradient text-white shadow-sky-500/20'
+                        : 'bg-gradient-to-r from-violet-600 via-fuchsia-500 to-cyan-500 text-white shadow-fuchsia-500/30'
+                    }`}
                   >
                     {advancing
                       ? 'Đang đồng bộ…'

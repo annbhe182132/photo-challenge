@@ -2,12 +2,14 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, Crown, PlayCircle, Share2, Trophy } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useGame } from '../../context/useGame';
+import { ThemeToggle } from '../../components/ThemeToggle';
 import { sound } from '../../utils/soundEngine';
 import EndGameAlbumPrompt from '../../components/gallery/EndGameAlbumPrompt';
 
 const LeaderboardPage = () => {
   const navigate = useNavigate();
-  const { players, resetGame } = useGame();
+  const { players, resetGame, themeMode } = useGame();
+  const isLight = themeMode === 'light';
 
   const sorted = [...players].sort((a, b) => b.score - a.score);
   const top1 = sorted[0];
@@ -23,7 +25,11 @@ const LeaderboardPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(7,89,133,0.3),_transparent_40%),linear-gradient(135deg,_#030712_0%,_#0f172a_45%,_#111827_100%)] text-slate-100">
+    <div className={`min-h-screen transition-colors duration-300 ${
+      isLight
+        ? 'text-slate-900'
+        : 'bg-[radial-gradient(circle_at_top_left,_rgba(7,89,133,0.3),_transparent_40%),linear-gradient(135deg,_#030712_0%,_#0f172a_45%,_#111827_100%)] text-slate-100'
+    }`}>
       <div className="relative isolate min-h-screen overflow-hidden">
         <div className="relative z-10 mx-auto flex min-h-screen max-w-5xl flex-col px-6 py-8">
           <div className="flex items-center justify-between">
@@ -32,21 +38,38 @@ const LeaderboardPage = () => {
                 sound.playClick();
                 navigate('/');
               }}
-              className="flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-semibold text-slate-200 backdrop-blur-xl transition hover:bg-white/20"
+              className={`flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition active:scale-95 ${
+                isLight
+                  ? 'border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50'
+                  : 'border-white/15 bg-white/10 text-slate-200 hover:bg-white/20'
+              }`}
             >
               <ArrowLeft size={18} /> Trang chủ
             </button>
 
-            <div className="flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-4 py-1.5 text-xs font-bold text-amber-300">
-              <Trophy size={14} className="text-amber-400" /> {tiedForFirst ? 'KẾT QUẢ HÒA ĐIỂM' : 'BẢNG XẾP HẠNG CHAMPION'}
+            <div className="flex items-center gap-3">
+              <div className={`flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-bold ${
+                isLight ? 'border-amber-300 bg-amber-50 text-amber-800' : 'border-amber-500/30 bg-amber-500/10 text-amber-300'
+              }`}>
+                <Trophy size={14} className="text-amber-500" /> {tiedForFirst ? 'KẾT QUẢ HÒA ĐIỂM' : 'BẢNG XẾP HẠNG CHAMPION'}
+              </div>
+              <ThemeToggle />
             </div>
           </div>
 
           <div className="my-auto py-8 space-y-8">
             <div className="text-center space-y-2">
-              <h1 className="text-4xl font-black text-white sm:text-5xl">{tiedForFirst ? 'Đồng Hạng MVP' : 'Vinh Danh Người Chơi MVP'}</h1>
-              <p className="text-sm text-slate-300">Tổng kết điểm số & huy hiệu qua các vòng chơi Phygital SNAPDECK</p>
-              {tiedForFirst && <p className="text-sm font-semibold text-amber-200">Nhiều người chơi cùng đạt điểm cao nhất; ván chơi được công nhận hòa.</p>}
+              <h1 className={`text-4xl font-black sm:text-5xl ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                {tiedForFirst ? 'Đồng Hạng MVP' : 'Vinh Danh Người Chơi MVP'}
+              </h1>
+              <p className={`text-sm ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>
+                Tổng kết điểm số & huy hiệu qua các vòng chơi Phygital SNAPDECK
+              </p>
+              {tiedForFirst && (
+                <p className={`text-sm font-semibold ${isLight ? 'text-amber-800' : 'text-amber-200'}`}>
+                  Nhiều người chơi cùng đạt điểm cao nhất; ván chơi được công nhận hòa.
+                </p>
+              )}
             </div>
 
             {/* 3D Podium for Top 3 */}
@@ -60,9 +83,13 @@ const LeaderboardPage = () => {
                       {tiedForFirst ? '🤝 ĐỒNG HẠNG 1' : '🥈 2ND'}
                     </span>
                   </div>
-                  <div className="w-full rounded-t-2xl border border-slate-400/30 bg-slate-800/80 p-2 sm:p-4 text-center h-28 sm:h-36 flex flex-col justify-center">
-                    <div className="font-bold text-white text-xs sm:text-sm truncate">{top2.name}</div>
-                    <div className="text-base sm:text-xl font-black text-slate-300 mt-0.5 sm:mt-1">{top2.score} XP</div>
+                  <div className={`w-full rounded-t-2xl border p-2 sm:p-4 text-center h-28 sm:h-36 flex flex-col justify-center ${
+                    isLight
+                      ? 'border-slate-200 bg-gradient-to-b from-slate-100 to-white shadow-md'
+                      : 'border-slate-400/30 bg-slate-800/80'
+                  }`}>
+                    <div className={`font-bold text-xs sm:text-sm truncate ${isLight ? 'text-slate-900' : 'text-white'}`}>{top2.name}</div>
+                    <div className={`text-base sm:text-xl font-black mt-0.5 sm:mt-1 ${isLight ? 'text-slate-700' : 'text-slate-300'}`}>{top2.score} XP</div>
                   </div>
                 </motion.div>
               )}
@@ -77,9 +104,13 @@ const LeaderboardPage = () => {
                       {tiedForFirst ? '🤝 ĐỒNG HẠNG 1' : '👑 1ST MVP'}
                     </span>
                   </div>
-                  <div className="w-full rounded-t-2xl border border-amber-400/40 bg-gradient-to-b from-amber-950/60 to-slate-900 p-2 sm:p-4 text-center h-36 sm:h-48 flex flex-col justify-center">
-                    <div className="font-black text-white text-xs sm:text-base truncate">{top1.name}</div>
-                    <div className="text-lg sm:text-2xl font-black text-amber-400 mt-0.5 sm:mt-1">{top1.score} XP</div>
+                  <div className={`w-full rounded-t-2xl border p-2 sm:p-4 text-center h-36 sm:h-48 flex flex-col justify-center ${
+                    isLight
+                      ? 'border-amber-300 bg-gradient-to-b from-amber-100/80 to-white shadow-xl shadow-amber-950/5'
+                      : 'border-amber-400/40 bg-gradient-to-b from-amber-950/60 to-slate-900'
+                  }`}>
+                    <div className={`font-black text-xs sm:text-base truncate ${isLight ? 'text-slate-900' : 'text-white'}`}>{top1.name}</div>
+                    <div className={`text-lg sm:text-2xl font-black mt-0.5 sm:mt-1 ${isLight ? 'text-amber-700' : 'text-amber-400'}`}>{top1.score} XP</div>
                   </div>
                 </motion.div>
               )}
@@ -93,9 +124,13 @@ const LeaderboardPage = () => {
                       🥉 3RD
                     </span>
                   </div>
-                  <div className="w-full rounded-t-2xl border border-amber-700/30 bg-slate-900/80 p-2 sm:p-4 text-center h-24 sm:h-28 flex flex-col justify-center">
-                    <div className="font-bold text-white text-xs sm:text-sm truncate">{top3.name}</div>
-                    <div className="text-sm sm:text-lg font-black text-amber-500 mt-0.5 sm:mt-1">{top3.score} XP</div>
+                  <div className={`w-full rounded-t-2xl border p-2 sm:p-4 text-center h-24 sm:h-28 flex flex-col justify-center ${
+                    isLight
+                      ? 'border-orange-200 bg-gradient-to-b from-orange-50 to-white shadow-md'
+                      : 'border-amber-700/30 bg-slate-900/80'
+                  }`}>
+                    <div className={`font-bold text-xs sm:text-sm truncate ${isLight ? 'text-slate-900' : 'text-white'}`}>{top3.name}</div>
+                    <div className={`text-sm sm:text-lg font-black mt-0.5 sm:mt-1 ${isLight ? 'text-amber-800' : 'text-amber-500'}`}>{top3.score} XP</div>
                   </div>
                 </motion.div>
               )}
@@ -103,15 +138,19 @@ const LeaderboardPage = () => {
 
             {/* Remaining players list */}
             {others.length > 0 && (
-              <div className="rounded-3xl border border-white/15 bg-slate-900/60 p-6 backdrop-blur-xl space-y-3 max-w-2xl mx-auto">
+              <div className={`rounded-3xl border p-6 backdrop-blur-xl space-y-3 max-w-2xl mx-auto ${
+                isLight
+                  ? 'border-slate-200/90 bg-white/95 text-slate-900 shadow-xl shadow-sky-950/5'
+                  : 'border-white/15 bg-slate-900/60 text-white'
+              }`}>
                 {others.map((p, idx) => (
-                  <div key={p.id} className="flex items-center justify-between border-b border-white/5 pb-3">
+                  <div key={p.id} className={`flex items-center justify-between border-b pb-3 ${isLight ? 'border-slate-100' : 'border-white/5'}`}>
                     <div className="flex items-center gap-3">
-                      <span className="font-mono text-sm font-bold text-slate-400">#{idx + 4}</span>
-                      <img src={p.avatar} alt={p.name} className="h-10 w-10 rounded-full border border-white/10" />
-                      <span className="font-semibold text-white text-sm">{p.name}</span>
+                      <span className={`font-mono text-sm font-bold ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>#{idx + 4}</span>
+                      <img src={p.avatar} alt={p.name} className={`h-10 w-10 rounded-full border ${isLight ? 'border-slate-200' : 'border-white/10'}`} />
+                      <span className={`font-semibold text-sm ${isLight ? 'text-slate-900' : 'text-white'}`}>{p.name}</span>
                     </div>
-                    <span className="font-bold text-cyan-300 text-sm">{p.score} XP</span>
+                    <span className={`font-bold text-sm ${isLight ? 'text-sky-700' : 'text-cyan-300'}`}>{p.score} XP</span>
                   </div>
                 ))}
               </div>
@@ -124,7 +163,11 @@ const LeaderboardPage = () => {
                   sound.playClick();
                   navigate('/gallery');
                 }}
-                className="flex items-center justify-center gap-2 rounded-2xl border border-cyan-400/40 bg-cyan-500/20 py-4 font-bold text-cyan-200 transition hover:bg-cyan-500/30 backdrop-blur-xl shadow-xl"
+                className={`flex items-center justify-center gap-2 rounded-2xl border py-4 font-bold backdrop-blur-xl shadow-lg transition ${
+                  isLight
+                    ? 'border-sky-300 bg-sky-50 text-sky-800 hover:bg-sky-100 shadow-sky-950/5'
+                    : 'border-cyan-400/40 bg-cyan-500/20 text-cyan-200 hover:bg-cyan-500/30'
+                }`}
               >
                 <Share2 size={20} /> Xem Album Ảnh Kỉ Niệm Ván Chơi
               </button>
@@ -133,7 +176,11 @@ const LeaderboardPage = () => {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={handlePlayAgain}
-                className="flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 via-fuchsia-500 to-cyan-500 py-4 font-black text-white text-base shadow-2xl shadow-fuchsia-500/30"
+                className={`flex items-center justify-center gap-2 rounded-2xl py-4 font-black text-white text-base shadow-2xl transition ${
+                  isLight
+                    ? 'btn-emerald-gradient shadow-emerald-500/20'
+                    : 'bg-gradient-to-r from-violet-600 via-fuchsia-500 to-cyan-500 shadow-fuchsia-500/30'
+                }`}
               >
                 <PlayCircle size={20} /> Chơi Ván Mới Phygital
               </motion.button>

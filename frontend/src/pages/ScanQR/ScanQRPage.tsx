@@ -10,6 +10,7 @@ import { parseQRCodePayload, normalizeCardCode } from '../../utils/qrPayload';
 import { sound } from '../../utils/soundEngine';
 import { isInAppBrowser } from '../../utils/browser';
 import { scanVideoElementFrame } from '../../utils/qrScanner';
+import ThemeToggle from '../../components/ThemeToggle';
 
 interface MissionApiResponse {
   success: boolean;
@@ -118,7 +119,10 @@ const ScanQRPage = () => {
     turnDurationSeconds,
     players,
     syncRoom,
+    themeMode,
   } = useGame();
+
+  const isLight = themeMode === 'light';
 
   const isFromHomeScan = location.state?.fromHomeScan ?? false;
   const searchParams = new URLSearchParams(location.search);
@@ -755,35 +759,58 @@ const ScanQRPage = () => {
   const isScannerActive = ['starting', 'scanning', 'stopping'].includes(scanStatus);
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(7,89,133,0.3),_transparent_40%),linear-gradient(135deg,_#030712_0%,_#0f172a_45%,_#111827_100%)] text-slate-100">
+    <div className={`min-h-screen transition-colors duration-300 ${
+      isLight
+        ? 'text-slate-900'
+        : 'bg-[radial-gradient(circle_at_top_left,_rgba(7,89,133,0.3),_transparent_40%),linear-gradient(135deg,_#030712_0%,_#0f172a_45%,_#111827_100%)] text-slate-100'
+    }`}>
       <div className="mx-auto flex min-h-screen max-w-5xl flex-col px-4 py-6 sm:px-6 sm:py-8">
-        <button
-          onClick={() => {
-            sound.playClick();
-            void stopScanner();
-            navigate('/');
-          }}
-          className="flex w-fit items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-semibold text-slate-200 backdrop-blur-xl transition hover:bg-white/20"
-        >
-          <ArrowLeft size={18} /> Trang chủ
-        </button>
+        <div className="flex items-center justify-between">
+          <button
+            onClick={() => {
+              sound.playClick();
+              void stopScanner();
+              navigate('/');
+            }}
+            className={`flex w-fit items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold backdrop-blur-xl transition ${
+              isLight
+                ? 'border-slate-200 bg-white/90 text-slate-700 hover:bg-white shadow-sm'
+                : 'border-white/15 bg-white/10 text-slate-200 hover:bg-white/20'
+            }`}
+          >
+            <ArrowLeft size={18} /> Trang chủ
+          </button>
+          <ThemeToggle />
+        </div>
 
         <div className="my-auto py-6 sm:py-8">
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="w-full space-y-6 rounded-[2rem] border border-cyan-500/30 bg-slate-900/60 p-4 shadow-2xl backdrop-blur-2xl sm:rounded-[2.5rem] sm:p-8"
+            className={`w-full space-y-6 rounded-[2rem] border p-4 shadow-2xl backdrop-blur-2xl sm:rounded-[2.5rem] sm:p-8 ${
+              isLight
+                ? 'border-slate-200/90 bg-white/95 text-slate-900 shadow-sky-950/10'
+                : 'border-cyan-500/30 bg-slate-900/60 text-white'
+            }`}
           >
-            <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4">
+            <div className={`flex flex-wrap items-center justify-between gap-4 border-b pb-4 ${
+              isLight ? 'border-slate-200' : 'border-white/10'
+            }`}>
               <div>
-                <span className="inline-flex items-center gap-2 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3.5 py-1 text-xs font-bold text-cyan-300">
-                  <Sparkles size={14} className="animate-spin text-cyan-400" />
+                <span className={`inline-flex items-center gap-2 rounded-full border px-3.5 py-1 text-xs font-bold ${
+                  isLight
+                    ? 'border-sky-300 bg-sky-50 text-sky-700'
+                    : 'border-cyan-500/30 bg-cyan-500/10 text-cyan-300'
+                }`}>
+                  <Sparkles size={14} className={isLight ? 'text-sky-600' : 'text-cyan-400'} />
                   Mô Hình Phygital
                 </span>
-                <h1 className="mt-2 text-2xl font-black text-white sm:text-4xl">
+                <h1 className={`mt-2 text-2xl font-black sm:text-4xl ${
+                  isLight ? 'text-slate-900' : 'text-white'
+                }`}>
                   {isFromHomeScan ? 'Quét QR Tham Gia Phòng' : isDirectCardQr ? `Đang mở lá bài ${directCardCode}` : 'Quét Lá Bài Thử Thách'}
                 </h1>
-                <p className="mt-1 text-sm text-slate-300">
+                <p className={`mt-1 text-sm ${isLight ? 'text-slate-500' : 'text-slate-300'}`}>
                   {isFromHomeScan
                     ? 'Quét mã phòng đang hoạt động để tham gia qua máy chủ.'
                     : isDirectCardQr
@@ -793,48 +820,51 @@ const ScanQRPage = () => {
                 {!isFromHomeScan && deviceMode === 'multi_device' && (
                   <div className="mt-3 flex flex-wrap items-center gap-3 text-xs">
                     <span className={`rounded-full border px-3 py-1.5 font-bold ${activePlayerId === currentPlayerId
-                      ? 'border-emerald-400/30 bg-emerald-500/10 text-emerald-200'
-                      : 'border-amber-400/30 bg-amber-500/10 text-amber-200'
+                      ? isLight ? 'border-emerald-300 bg-emerald-50 text-emerald-800' : 'border-emerald-400/30 bg-emerald-500/10 text-emerald-200'
+                      : isLight ? 'border-amber-300 bg-amber-50 text-amber-800' : 'border-amber-400/30 bg-amber-500/10 text-amber-200'
                     }`}>
                       {activePlayerId === currentPlayerId
                         ? 'Lượt của bạn'
                         : `Đang chơi: ${players.find((player) => player.id === activePlayerId)?.name ?? 'người chơi khác'}`}
                     </span>
-                    <span className="text-slate-300">
+                    <span className={isLight ? 'text-slate-600' : 'text-slate-300'}>
                       Thời gian lượt: {turnDurationSeconds === 0 ? 'không giới hạn' : turnTimeLeft === null ? 'đang đồng bộ…' : `${turnTimeLeft} giây`}
                     </span>
                   </div>
                 )}
               </div>
-
             </div>
 
             {isDirectCardQr ? (
               <div className="space-y-4 py-10 text-center">
-                <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-cyan-400/30 bg-cyan-400/10">
-                  {scanStatus === 'success' ? <CheckCircle2 size={42} className="text-emerald-400" /> : <QrCode size={42} className="animate-pulse text-cyan-300" />}
+                <div className={`mx-auto flex h-20 w-20 items-center justify-center rounded-full border ${
+                  isLight ? 'border-sky-300 bg-sky-50' : 'border-cyan-400/30 bg-cyan-400/10'
+                }`}>
+                  {scanStatus === 'success' ? <CheckCircle2 size={42} className="text-emerald-500" /> : <QrCode size={42} className={`animate-pulse ${isLight ? 'text-sky-600' : 'text-cyan-300'}`} />}
                 </div>
-                <h2 className="text-xl font-bold text-white">{scanStatus === 'error' ? 'Không tải được nhiệm vụ' : scanStatus === 'success' ? 'Đã tải nhiệm vụ' : 'Đang tải nhiệm vụ...'}</h2>
-                <p className="text-sm text-slate-300">{scanStatus === 'error' ? (errorMessage ?? 'Vui lòng thử lại sau.') : `Mã lá bài: ${directCardCode}`}</p>
-                {scanStatus === 'error' && <button onClick={() => { if (directCardCode) { handledQrRef.current = true; void loadCardMission(directCardCode, undefined, ++sessionRef.current); } }} className="min-h-12 rounded-xl bg-cyan-600 px-5 py-3 font-bold text-white hover:bg-cyan-500">Thử tải lại</button>}
+                <h2 className={`text-xl font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>{scanStatus === 'error' ? 'Không tải được nhiệm vụ' : scanStatus === 'success' ? 'Đã tải nhiệm vụ' : 'Đang tải nhiệm vụ...'}</h2>
+                <p className={`text-sm ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>{scanStatus === 'error' ? (errorMessage ?? 'Vui lòng thử lại sau.') : `Mã lá bài: ${directCardCode}`}</p>
+                {scanStatus === 'error' && <button onClick={() => { if (directCardCode) { handledQrRef.current = true; void loadCardMission(directCardCode, undefined, ++sessionRef.current); } }} className="min-h-12 rounded-xl bg-sky-600 px-5 py-3 font-bold text-white hover:bg-sky-500">Thử tải lại</button>}
               </div>
             ) : (
               <div className="space-y-4 text-center">
                 {isInAppBrowser() && (
-                  <div className="mx-auto max-w-lg rounded-2xl border border-amber-500/40 bg-amber-500/10 p-4 text-left text-xs text-amber-200">
+                  <div className={`mx-auto max-w-lg rounded-2xl border p-4 text-left text-xs ${
+                    isLight ? 'border-amber-300 bg-amber-50 text-amber-900' : 'border-amber-500/40 bg-amber-500/10 text-amber-200'
+                  }`}>
                     <div className="flex items-start gap-2.5">
-                      <AlertTriangle size={18} className="mt-0.5 shrink-0 text-amber-400" />
+                      <AlertTriangle size={18} className="mt-0.5 shrink-0 text-amber-500" />
                       <div>
-                        <p className="font-bold text-amber-100">Đang mở trong ứng dụng (Zalo / Facebook)</p>
-                        <p className="mt-1 leading-relaxed text-amber-200/90">
-                          Trình duyệt trong ứng dụng có thể chặn camera trực tiếp. Để quét mượt nhất, hãy nhấn nút <strong className="text-white underline">•••</strong> ở góc trên bên phải màn hình rồi chọn <strong>"Mở bằng trình duyệt"</strong> (Safari), hoặc dùng nút <strong>"Chụp / Tải ảnh QR"</strong> bên dưới.
+                        <p className={`font-bold ${isLight ? 'text-amber-900' : 'text-amber-100'}`}>Đang mở trong ứng dụng (Zalo / Facebook)</p>
+                        <p className={`mt-1 leading-relaxed ${isLight ? 'text-amber-800' : 'text-amber-200/90'}`}>
+                          Trình duyệt trong ứng dụng có thể chặn camera trực tiếp. Để quét mượt nhất, hãy nhấn nút <strong className="underline">•••</strong> ở góc trên bên phải màn hình rồi chọn <strong>"Mở bằng trình duyệt"</strong> (Safari), hoặc dùng nút <strong>"Chụp / Tải ảnh QR"</strong> bên dưới.
                         </p>
                       </div>
                     </div>
                   </div>
                 )}
 
-                <div className="relative mx-auto min-h-[280px] w-full max-w-lg overflow-hidden rounded-3xl border-2 border-cyan-400/40 bg-slate-950 shadow-2xl sm:min-h-[360px]">
+                <div className="relative mx-auto min-h-[280px] w-full max-w-lg overflow-hidden rounded-3xl border-2 border-slate-900 bg-slate-950 shadow-2xl sm:min-h-[360px]">
                   <div id={qrReaderId} className="min-h-[280px] w-full overflow-hidden sm:min-h-[360px]" />
                   {!isScannerActive && (
                     <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-3 bg-slate-950/95 px-6">
@@ -853,8 +883,10 @@ const ScanQRPage = () => {
                 </div>
 
                 {availableCameras.length > 1 && scanStatus === 'scanning' && (
-                  <label className="mx-auto flex max-w-lg items-center gap-2 text-left text-sm text-slate-300">
-                    <SwitchCamera size={18} className="shrink-0 text-cyan-300" />
+                  <label className={`mx-auto flex max-w-lg items-center gap-2 text-left text-sm ${
+                    isLight ? 'text-slate-700' : 'text-slate-300'
+                  }`}>
+                    <SwitchCamera size={18} className={`shrink-0 ${isLight ? 'text-sky-600' : 'text-cyan-300'}`} />
                     <span className="shrink-0">Camera:</span>
                     <select
                       value={selectedCameraId ?? ''}
@@ -863,7 +895,9 @@ const ScanQRPage = () => {
                         setSelectedCameraId(cameraId);
                         void startScanner(cameraId);
                       }}
-                      className="min-w-0 flex-1 rounded-xl border border-white/15 bg-slate-950 px-3 py-2 text-white"
+                      className={`min-w-0 flex-1 rounded-xl border px-3 py-2 ${
+                        isLight ? 'border-slate-300 bg-white text-slate-900' : 'border-white/15 bg-slate-950 text-white'
+                      }`}
                     >
                       {availableCameras.map((camera, index) => (
                         <option key={`${camera.id}-${index}`} value={camera.id}>{camera.label}</option>
@@ -877,7 +911,7 @@ const ScanQRPage = () => {
                     <button
                       onClick={() => { void stopScanner(); }}
                       disabled={scanStatus === 'stopping'}
-                      className="flex min-h-12 flex-1 items-center justify-center gap-2 rounded-2xl border border-red-400/40 bg-red-500/15 px-6 py-3 font-bold text-red-200 transition hover:bg-red-500/25"
+                      className="flex min-h-12 flex-1 items-center justify-center gap-2 rounded-2xl border border-red-400/40 bg-red-500/15 px-6 py-3 font-bold text-red-400 transition hover:bg-red-500/25"
                     >
                       <StopCircle size={19} /> Dừng quét
                     </button>
@@ -885,7 +919,11 @@ const ScanQRPage = () => {
                     <button
                       onClick={() => { void startScanner(); }}
                       disabled={scanStatus === 'processing' || scanStatus === 'success'}
-                      className="flex min-h-12 flex-1 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 via-fuchsia-500 to-cyan-500 px-6 py-3 font-bold text-white shadow-xl shadow-fuchsia-500/20 disabled:cursor-wait disabled:opacity-70"
+                      className={`flex min-h-12 flex-1 items-center justify-center gap-2 rounded-2xl px-6 py-3 font-bold text-white transition disabled:cursor-wait disabled:opacity-70 ${
+                        isLight
+                          ? 'btn-blue-gradient shadow-xl shadow-sky-500/25'
+                          : 'bg-gradient-to-r from-violet-600 via-fuchsia-500 to-cyan-500 shadow-xl shadow-fuchsia-500/20'
+                      }`}
                     >
                       <Camera size={19} /> {scanButtonLabel()}
                     </button>
@@ -893,12 +931,14 @@ const ScanQRPage = () => {
                 </div>
 
                 {scanStatus === 'scanning' && (
-                  <p className="flex items-center justify-center gap-2 text-sm font-bold text-cyan-200">
-                    <Zap size={16} className="animate-pulse text-amber-400" /> Đưa mã QR vào khung hình để quét
+                  <p className={`flex items-center justify-center gap-2 text-sm font-bold ${
+                    isLight ? 'text-sky-700' : 'text-cyan-200'
+                  }`}>
+                    <Zap size={16} className="animate-pulse text-amber-500" /> Đưa mã QR vào khung hình để quét
                   </p>
                 )}
                 {errorMessage && (
-                  <p role="alert" className="mx-auto max-w-lg rounded-xl border border-red-400/40 bg-red-500/10 px-4 py-3 text-sm font-semibold text-red-200">
+                  <p role="alert" className="mx-auto max-w-lg rounded-xl border border-red-400/40 bg-red-500/10 px-4 py-3 text-sm font-semibold text-red-400">
                     {errorMessage}
                   </p>
                 )}

@@ -10,6 +10,9 @@ import {
   Volume2,
   VolumeX,
   Zap,
+  ArrowRight,
+  BookOpen,
+  CheckCircle2,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useGame } from '../../context/useGame';
@@ -19,6 +22,8 @@ import { sound } from '../../utils/soundEngine';
 import unoCompareImg from '../../assets/uno-compare.png';
 import werewolfCompareImg from '../../assets/werewolf-compare.png';
 import truthOrDareCompareImg from '../../assets/truth-or-dare-compare.png';
+import ThemeToggle from '../../components/ThemeToggle';
+import ThemeCardsShowcase from '../../components/ThemeCardsShowcase';
 
 interface CreatedRoomResponse {
   success: boolean;
@@ -39,7 +44,7 @@ const featureCards = [
   {
     icon: Brain,
     title: 'Trọng tài AI & Đánh giá nhóm',
-    description: 'Tùy chọn AI Gemini Vision tự động chấm điểm độ sáng tạo hoặc để cả bàn cùng bỏ phiếu.',
+    description: 'Tùy chọn AI Chếck tự động chấm điểm độ sáng tạo hoặc để cả bàn cùng bỏ phiếu.',
   },
   {
     icon: Crown,
@@ -66,7 +71,7 @@ const steps = [
   },
   {
     title: 'Chấm Điểm & Đánh Giá',
-    desc: 'Chọn AI Gemini tự động soi ảnh chấm điểm thần thái, hoặc để bạn bè cùng bàn bỏ phiếu biểu quyết.',
+    desc: 'Chọn AI Chếck tự động soi ảnh chấm điểm thần thái, hoặc để bạn bè cùng bàn bỏ phiếu biểu quyết.',
     tag: 'AI & Nhóm',
   },
 ];
@@ -84,6 +89,7 @@ const HomePage = () => {
   const {
     soundEnabled,
     toggleSound,
+    themeMode,
     investorMode,
     toggleInvestorMode,
     theme,
@@ -103,6 +109,7 @@ const HomePage = () => {
     turnDurationSeconds,
     beginLocalGame,
   } = useGame();
+  const isLight = themeMode === 'light';
   const [isCreatingRoom, setIsCreatingRoom] = useState(false);
   const [roomError, setRoomError] = useState<string | null>(null);
 
@@ -140,7 +147,7 @@ const HomePage = () => {
           theme: theme.id,
           mode,
           deviceMode,
-          verificationMethod,
+          verificationMethod: deviceMode === 'multi_device' ? 'ai' : verificationMethod,
           photoBonusEnabled,
           turnDurationSeconds,
           totalRounds,
@@ -182,54 +189,55 @@ const HomePage = () => {
   };
 
   return (
-    <div className="min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(7,89,133,0.3),_transparent_40%),linear-gradient(135deg,_#030712_0%,_#0f172a_45%,_#111827_100%)] text-slate-100">
+    <div className={`min-h-screen overflow-hidden transition-colors duration-300 ${isLight ? 'bg-gradient-to-br from-slate-50 via-sky-50/50 to-emerald-50/40 text-slate-900' : 'bg-[radial-gradient(circle_at_top_left,_rgba(7,89,133,0.3),_transparent_40%),linear-gradient(135deg,_#030712_0%,_#0f172a_45%,_#111827_100%)] text-slate-100'}`}>
       <div className="relative isolate min-h-screen">
-        {/* Ambient Particles */}
-        <div className="pointer-events-none absolute inset-0 overflow-hidden">
-          <motion.div
-            className="absolute -left-20 top-0 h-80 w-80 rounded-full bg-fuchsia-500/30 blur-3xl"
-            animate={{ y: [0, 24, 0], x: [0, 18, 0], scale: [1, 1.05, 1] }}
-            transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
-          />
-          <motion.div
-            className="absolute right-0 top-20 h-96 w-96 rounded-full bg-cyan-500/25 blur-3xl"
-            animate={{ y: [0, -28, 0], x: [0, -20, 0], scale: [1, 1.08, 1] }}
-            transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
-          />
-          <motion.div
-            className="absolute bottom-0 left-1/3 h-80 w-80 rounded-full bg-orange-500/20 blur-3xl"
-            animate={{ y: [0, 20, 0], x: [0, 16, 0], scale: [1, 1.06, 1] }}
-            transition={{ duration: 11, repeat: Infinity, ease: 'easeInOut' }}
-          />
-          {particles.map((particle) => (
-            <motion.span
-              key={particle.id}
-              className="absolute rounded-full bg-white/35"
-              style={{ top: particle.top, left: particle.left, width: particle.size, height: particle.size }}
-              animate={{ y: [0, -10, 0], opacity: [0.4, 0.9, 0.4] }}
-              transition={{ duration: 4 + (particle.id % 4), repeat: Infinity, delay: particle.delay }}
+        {/* Ambient Particles in Dark Mode */}
+        {!isLight && (
+          <div className="pointer-events-none absolute inset-0 overflow-hidden">
+            <motion.div
+              className="absolute -left-20 top-0 h-80 w-80 rounded-full bg-fuchsia-500/30 blur-3xl"
+              animate={{ y: [0, 24, 0], x: [0, 18, 0], scale: [1, 1.05, 1] }}
+              transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
             />
-          ))}
-        </div>
+            <motion.div
+              className="absolute right-0 top-20 h-96 w-96 rounded-full bg-cyan-500/25 blur-3xl"
+              animate={{ y: [0, -28, 0], x: [0, -20, 0], scale: [1, 1.08, 1] }}
+              transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
+            />
+            <motion.div
+              className="absolute bottom-0 left-1/3 h-80 w-80 rounded-full bg-orange-500/20 blur-3xl"
+              animate={{ y: [0, 20, 0], x: [0, 16, 0], scale: [1, 1.06, 1] }}
+              transition={{ duration: 11, repeat: Infinity, ease: 'easeInOut' }}
+            />
+            {particles.map((particle) => (
+              <motion.span
+                key={particle.id}
+                className="absolute rounded-full bg-white/35"
+                style={{ top: particle.top, left: particle.left, width: particle.size, height: particle.size }}
+                animate={{ y: [0, -10, 0], opacity: [0.4, 0.9, 0.4] }}
+                transition={{ duration: 4 + (particle.id % 4), repeat: Infinity, delay: particle.delay }}
+              />
+            ))}
+          </div>
+        )}
 
         {/* Investor Banner */}
-        <div className="relative z-20 border-b border-cyan-500/30 bg-cyan-950/40 px-4 py-2 backdrop-blur-xl">
+        <div className={`relative z-20 border-b px-4 py-2.5 backdrop-blur-xl transition-colors ${isLight ? 'border-sky-200/80 bg-white/75 text-sky-800' : 'border-cyan-500/30 bg-cyan-950/40 text-cyan-300'}`}>
           <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 text-xs">
-            <div className="flex items-center gap-2 text-cyan-300 font-semibold">
-              <Sparkles className="h-4 w-4 animate-spin text-cyan-400" />
-              <span>NỀN TẢNG PHYGITAL: Trò chơi thẻ bài với Trọng tài AI Gemini & Bình chọn nhóm</span>
+            <div className={`flex items-center gap-2 font-semibold ${isLight ? 'text-sky-800' : 'text-cyan-300'}`}>
+              <Sparkles className={`h-4 w-4 animate-spin ${isLight ? 'text-sky-600' : 'text-cyan-400'}`} />
+              <span>NỀN TẢNG PHYGITAL: Trò chơi thẻ bài với Trọng tài AI Chếck & Bình chọn nhóm</span>
             </div>
             <div className="flex items-center gap-3">
               <button
                 onClick={toggleInvestorMode}
-                className={`rounded-full px-3 py-1 font-bold transition ${investorMode ? 'bg-cyan-400 text-slate-950' : 'bg-slate-800 text-slate-300'
-                  }`}
+                className={`rounded-full px-3.5 py-1 font-bold transition shadow-sm ${isLight ? (investorMode ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200') : (investorMode ? 'bg-cyan-400 text-slate-950' : 'bg-slate-800 text-slate-300')}`}
               >
                 {investorMode ? '● Pitch Mode: ON' : '○ Pitch Mode: OFF'}
               </button>
               <button
                 onClick={handleAdmin}
-                className="rounded-full border border-cyan-400/40 bg-cyan-500/10 px-3 py-1 text-cyan-300 font-bold hover:bg-cyan-500/20"
+                className={`rounded-full border px-3.5 py-1 font-bold shadow-sm transition ${isLight ? 'border-sky-300 bg-sky-50 text-sky-700 hover:bg-sky-100' : 'border-cyan-400/40 bg-cyan-500/10 text-cyan-300 hover:bg-cyan-500/20'}`}
               >
                 🔑 Investor Portal & Admin
               </button>
@@ -239,28 +247,33 @@ const HomePage = () => {
 
         {/* Header */}
         <header className="relative z-10 mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-4 sm:px-8 sm:py-6 lg:px-10">
-          <a href="#home" className="flex items-center gap-2.5 sm:gap-3 text-base sm:text-lg font-black tracking-[0.2em] sm:tracking-[0.25em] text-white">
-            <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-2xl border border-cyan-400/30 bg-cyan-500/20 backdrop-blur-xl shadow-[0_0_15px_rgba(34,211,238,0.3)]">
-              <Camera className="h-4 w-4 sm:h-5 sm:w-5 text-cyan-300" />
+          <a href="#home" className={`flex items-center gap-2.5 sm:gap-3 text-base sm:text-lg font-black tracking-[0.2em] sm:tracking-[0.25em] ${isLight ? 'text-slate-900' : 'text-white'}`}>
+            <div className={`flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-2xl border backdrop-blur-xl shadow-sm ${isLight ? 'border-sky-200 bg-sky-100/70 text-sky-600' : 'border-cyan-400/30 bg-cyan-500/20 text-cyan-300 shadow-[0_0_15px_rgba(34,211,238,0.3)]'}`}>
+              <Camera className={`h-4 w-4 sm:h-5 sm:w-5 ${isLight ? 'text-sky-600' : 'text-cyan-300'}`} />
             </div>
             SNAPDECK
           </a>
 
-          <nav className="hidden items-center gap-8 text-sm font-semibold text-slate-300 md:flex">
-            <a href="#home" className="transition hover:text-cyan-300">Trang chủ</a>
-            <a href="#comparison" className="transition hover:text-cyan-300">Vì sao chọn SNAPDECK?</a>
-            <a href="#how-it-works" className="transition hover:text-cyan-300">Luồng Phygital</a>
-            <button onClick={() => navigate('/gallery')} className="transition hover:text-cyan-300">Bộ Sưu Tập</button>
-            <button onClick={() => navigate('/leaderboard')} className="transition hover:text-cyan-300">Xếp Hạng</button>
+          <nav className={`hidden items-center gap-8 text-sm font-semibold md:flex ${isLight ? 'text-slate-700' : 'text-slate-300'}`}>
+            <a href="#home" className={`transition ${isLight ? 'hover:text-sky-600 font-bold' : 'hover:text-cyan-300'}`}>Trang chủ</a>
+            <a href="#comparison" className={`transition ${isLight ? 'hover:text-sky-600' : 'hover:text-cyan-300'}`}>Vì sao chọn SNAPDECK?</a>
+            <a href="#card-themes" className={`transition ${isLight ? 'hover:text-sky-600' : 'hover:text-cyan-300'}`}>6 Chủ Đề Bài</a>
+            <button onClick={() => navigate('/how-to-play')} className={`flex items-center gap-1.5 transition ${isLight ? 'hover:text-sky-600' : 'hover:text-cyan-300'}`}>
+              <BookOpen className={`h-4 w-4 ${isLight ? 'text-sky-600' : 'text-cyan-400'}`} />
+              Cách chơi
+            </button>
+            <button onClick={() => navigate('/gallery')} className={`transition ${isLight ? 'hover:text-sky-600' : 'hover:text-cyan-300'}`}>Bộ Sưu Tập</button>
+            <button onClick={() => navigate('/leaderboard')} className={`transition ${isLight ? 'hover:text-sky-600' : 'hover:text-cyan-300'}`}>Xếp Hạng</button>
           </nav>
 
           <div className="flex items-center gap-3">
+            <ThemeToggle />
             <button
               onClick={toggleSound}
-              className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-2xl border border-white/15 bg-white/10 text-slate-300 backdrop-blur-xl transition hover:bg-white/20"
-              title="Tắt/Mở âm thanh Sci-Fi"
+              className={`flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-2xl border backdrop-blur-xl transition ${isLight ? 'border-slate-200 bg-white/90 text-slate-700 hover:bg-slate-100 shadow-sm' : 'border-white/15 bg-white/10 text-slate-300 hover:bg-white/20'}`}
+              title="Tắt/Mở âm thanh"
             >
-              {soundEnabled ? <Volume2 size={18} className="text-cyan-300" /> : <VolumeX size={18} className="text-slate-500" />}
+              {soundEnabled ? <Volume2 size={18} className={isLight ? 'text-sky-600' : 'text-cyan-300'} /> : <VolumeX size={18} className="text-slate-400" />}
             </button>
           </div>
         </header>
@@ -274,25 +287,25 @@ const HomePage = () => {
               transition={{ duration: 0.5 }}
               className="space-y-6 sm:space-y-8"
             >
-              <div className="inline-flex items-center gap-2 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3.5 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm text-cyan-200 backdrop-blur-xl">
-                <Zap className="h-4 w-4 text-amber-400 animate-bounce" />
-                Board Game Phygital · Xác thực bằng bình chọn nhóm
+              <div className={`inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm backdrop-blur-xl shadow-sm ${isLight ? 'border-sky-200 bg-sky-50 text-sky-800' : 'border-cyan-500/30 bg-cyan-500/10 text-cyan-200'}`}>
+                <Zap className="h-4 w-4 text-amber-500 animate-bounce" />
+                Board Game Phygital · Xác thực bằng AI hoặc bình chọn nhóm
               </div>
 
               <div className="space-y-3 sm:space-y-4">
-                <h1 className="text-4xl font-black leading-[1] tracking-tight text-white sm:text-6xl lg:text-7xl">
-                  SNAP
-                  <span className="block bg-gradient-to-r from-cyan-400 via-fuchsia-400 to-amber-300 bg-clip-text text-transparent drop-shadow-[0_0_25px_rgba(217,70,239,0.3)]">
+                <h1 className={`text-4xl font-black leading-[1] tracking-tight sm:text-6xl lg:text-7xl flex flex-wrap items-center gap-x-1 ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                  <span>SNAP</span>
+                  <span className={`bg-gradient-to-r ${isLight ? 'from-sky-500 via-teal-500 to-emerald-500' : 'from-cyan-400 via-fuchsia-400 to-amber-300'} bg-clip-text text-transparent`}>
                     DECK
                   </span>
                 </h1>
-                <p className="max-w-xl text-base sm:text-lg text-slate-300 leading-relaxed">
+                <p className={`max-w-xl text-base sm:text-lg leading-relaxed ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>
                   Quét lá bài, hoàn thành thử thách chụp ảnh và cùng nhóm đánh giá.
                 </p>
               </div>
 
-              <div className="rounded-2xl border border-cyan-500/30 bg-slate-900/60 p-4 shadow-xl shadow-cyan-500/10">
-                <p className="mb-3 text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">Chọn cách chơi</p>
+              <div className={`rounded-3xl border p-5 backdrop-blur-xl transition-all ${isLight ? 'border-slate-200/90 bg-white/95 text-slate-900 shadow-xl shadow-sky-950/5' : 'border-cyan-500/30 bg-slate-900/60 text-slate-100 shadow-xl shadow-cyan-500/10'}`}>
+                <p className={`mb-3 text-xs font-bold uppercase tracking-[0.2em] ${isLight ? 'text-sky-700' : 'text-cyan-300'}`}>Chọn cách chơi</p>
                 <div className="grid gap-3 sm:grid-cols-2">
                   {[
                     { value: 'single_device', label: 'Single-device', description: 'Mọi người cùng chơi chung trên một màn hình' },
@@ -301,43 +314,95 @@ const HomePage = () => {
                     <button
                       key={option.value}
                       onClick={() => setDeviceMode(option.value as 'single_device' | 'multi_device')}
-                      className={`rounded-2xl border p-3 text-left transition ${deviceMode === option.value ? 'border-cyan-400 bg-cyan-500/15' : 'border-white/10 bg-white/5 hover:bg-white/10'}`}
+                      className={`rounded-2xl border p-3.5 text-left transition ${deviceMode === option.value ? (isLight ? 'border-sky-400 bg-sky-50 shadow-sm' : 'border-cyan-400 bg-cyan-500/15') : (isLight ? 'border-slate-200 bg-white hover:bg-slate-50' : 'border-white/10 bg-white/5 hover:bg-white/10')}`}
                     >
-                      <div className="text-sm font-black text-white">{option.label}</div>
-                      <div className="mt-1 text-[11px] text-slate-300">{option.description}</div>
+                      <div className={`text-sm font-black ${isLight ? 'text-slate-900' : 'text-white'}`}>{option.label}</div>
+                      <div className={`mt-1 text-[11px] ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>{option.description}</div>
                     </button>
                   ))}
                 </div>
 
-                <label className="mt-3 flex cursor-pointer items-center gap-2 rounded-xl border border-white/10 bg-slate-950/60 p-3 text-xs text-slate-200">
-                  <input
-                    type="checkbox"
-                    checked={photoBonusEnabled}
-                    onChange={(event) => setPhotoBonusEnabled(event.target.checked)}
-                    className="h-4 w-4 accent-fuchsia-500"
-                  />
-                  Thưởng ảnh +20 điểm
-                </label>
+                {/* Multi-device AI requirement alert */}
+                {deviceMode === 'multi_device' && (
+                  <div className={`mt-3 flex items-center gap-2.5 rounded-xl border px-3.5 py-2.5 text-xs ${isLight ? 'border-sky-200 bg-sky-50 text-sky-900' : 'border-cyan-500/30 bg-cyan-950/40 text-cyan-200'}`}>
+                    <Sparkles className={`h-4 w-4 shrink-0 animate-pulse ${isLight ? 'text-sky-600' : 'text-cyan-400'}`} />
+                    <span>
+                      <strong className={isLight ? 'text-sky-950' : 'text-white'}>Chế độ Multi-device:</strong> Bắt buộc trọng tài AI chấm điểm độc lập để đảm bảo 100% công tâm cho mọi người chơi.
+                    </span>
+                  </div>
+                )}
+
+                {/* Thưởng ảnh +20 XP Card */}
+                <div
+                  onClick={() => setPhotoBonusEnabled(!photoBonusEnabled)}
+                  className={`mt-3 cursor-pointer rounded-2xl border p-3.5 transition-all ${
+                    photoBonusEnabled
+                      ? (isLight
+                          ? 'border-sky-300 bg-gradient-to-r from-sky-50 via-teal-50 to-emerald-50 shadow-sm text-slate-900'
+                          : 'border-fuchsia-500/50 bg-gradient-to-r from-fuchsia-950/40 via-purple-950/30 to-slate-900/80 shadow-lg shadow-fuchsia-500/10 text-white')
+                      : (isLight
+                          ? 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                          : 'border-white/10 bg-slate-950/60 opacity-70 hover:opacity-100')
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    <input
+                      type="checkbox"
+                      checked={photoBonusEnabled}
+                      onChange={(e) => setPhotoBonusEnabled(e.target.checked)}
+                      onClick={(e) => e.stopPropagation()}
+                      className={`mt-1 h-4 w-4 rounded cursor-pointer ${isLight ? 'accent-sky-600' : 'accent-fuchsia-500'}`}
+                    />
+                    <div className="flex-1 space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className={`text-xs font-bold flex items-center gap-1.5 ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                          <Camera className={`h-3.5 w-3.5 ${isLight ? 'text-sky-600' : 'text-fuchsia-400'}`} />
+                          Thưởng ảnh minh chứng
+                        </span>
+                        <span className={`rounded-full px-2 py-0.5 text-[10px] font-black text-white shadow-sm ${isLight ? 'bg-gradient-to-r from-sky-500 to-teal-500' : 'bg-gradient-to-r from-fuchsia-500 to-amber-500'}`}>
+                          +20 XP
+                        </span>
+                        {photoBonusEnabled && (
+                          <span className={`text-[10px] font-semibold ml-auto flex items-center gap-1 ${isLight ? 'text-teal-700' : 'text-emerald-400'}`}>
+                            <CheckCircle2 size={12} />
+                            Đang bật
+                          </span>
+                        )}
+                      </div>
+                      <p className={`text-[11px] leading-relaxed ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>
+                        Khi chụp ảnh hoàn thành thử thách hợp lệ và được duyệt (bởi AI hoặc nhóm), bạn sẽ nhận ngay <strong className={isLight ? 'text-amber-600' : 'text-amber-300'}>+20 XP thưởng</strong> và bức ảnh này sẽ tự động được lưu vào <strong className={isLight ? 'text-sky-700' : 'text-cyan-300'}>Bộ Sưu Tập kỷ niệm</strong> của nhóm sau trận đấu.
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <div className="flex flex-col gap-4 sm:flex-row">
                 <motion.button
-                  whileHover={{ scale: 1.04, y: -2 }}
-                  whileTap={{ scale: 0.96 }}
+                  whileHover={{ scale: 1.03, y: -2 }}
+                  whileTap={{ scale: 0.97 }}
                   onClick={() => { void handleStartGame(); }}
                   disabled={isCreatingRoom}
-                  className="group inline-flex items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-violet-600 via-fuchsia-500 to-cyan-500 px-7 py-4 font-bold text-white shadow-2xl shadow-fuchsia-500/30 transition hover:shadow-cyan-500/40 disabled:cursor-wait disabled:opacity-70"
+                  className={`group inline-flex items-center justify-center gap-3 rounded-2xl px-7 py-4 font-bold text-white transition disabled:cursor-wait disabled:opacity-70 ${
+                    isLight
+                      ? 'btn-blue-gradient text-lg shadow-xl shadow-sky-500/25'
+                      : 'bg-gradient-to-r from-violet-600 via-fuchsia-500 to-cyan-500 shadow-2xl shadow-fuchsia-500/30 hover:shadow-cyan-500/40'
+                  }`}
                 >
                   <PlayCircle className="h-6 w-6 transition group-hover:rotate-12" />
                   {isCreatingRoom ? 'Đang tạo phòng...' : deviceMode === 'single_device' ? 'Bắt đầu chơi' : 'Tạo phòng & Bắt đầu chơi'}
                 </motion.button>
                 <motion.button
-                  whileHover={{ scale: 1.04, y: -2 }}
-                  whileTap={{ scale: 0.96 }}
+                  whileHover={{ scale: 1.03, y: -2 }}
+                  whileTap={{ scale: 0.97 }}
                   onClick={handleScanQR}
-                  className="inline-flex items-center justify-center gap-3 rounded-2xl border border-cyan-400/30 bg-cyan-500/10 px-7 py-4 font-bold text-cyan-200 backdrop-blur-xl transition hover:bg-cyan-500/20"
+                  className={`inline-flex items-center justify-center gap-3 rounded-2xl border px-7 py-4 font-bold backdrop-blur-xl transition ${
+                    isLight
+                      ? 'border-sky-300 bg-white text-sky-800 hover:bg-sky-50 shadow-sm'
+                      : 'border-cyan-400/30 bg-cyan-500/10 text-cyan-200 hover:bg-cyan-500/20'
+                  }`}
                 >
-                  <QrCode className="h-6 w-6 text-cyan-400" />
+                  <QrCode className={`h-6 w-6 ${isLight ? 'text-sky-600' : 'text-cyan-400'}`} />
                   Quét QR Tham Gia Phòng
                 </motion.button>
               </div>
@@ -354,134 +419,181 @@ const HomePage = () => {
           <section id="comparison" className="py-20 sm:py-28">
             <div className="mb-14 text-center space-y-4">
               <div className="flex justify-center mb-3">
-                <span className="inline-flex items-center justify-center rounded-full border border-fuchsia-500/30 bg-fuchsia-500/10 px-5 py-2 text-xs sm:text-sm font-bold text-fuchsia-300 uppercase tracking-widest backdrop-blur-xl shadow-[0_0_20px_rgba(217,70,239,0.2)]">
-                  Đột Phá Thị Trường Boardgame
+                <span className={`inline-flex items-center justify-center rounded-full px-5 py-2 text-xs sm:text-sm font-bold uppercase tracking-widest backdrop-blur-xl ${
+                  isLight
+                    ? 'border border-sky-300 bg-sky-50 text-sky-700 shadow-sm'
+                    : 'border border-fuchsia-500/30 bg-fuchsia-500/10 text-fuchsia-300 shadow-[0_0_20px_rgba(217,70,239,0.2)]'
+                }`}>
+                  Đột Phá Board Game Năng Động
                 </span>
               </div>
-              <h2 className="text-3xl font-black text-white sm:text-4xl lg:text-5xl tracking-tight">
+              <h2 className={`text-3xl font-black sm:text-4xl lg:text-5xl tracking-tight ${
+                isLight ? 'text-slate-900' : 'text-white'
+              }`}>
                 Vì Sao SNAPDECK Vượt Xa UNO, Ma Sói & Truth or Dare?
               </h2>
-              <p className="text-slate-400 text-sm sm:text-base max-w-2xl mx-auto leading-relaxed pt-1">
+              <p className={`text-sm sm:text-base max-w-2xl mx-auto leading-relaxed pt-1 ${
+                isLight ? 'text-slate-600' : 'text-slate-400'
+              }`}>
                 Kết hợp yếu tố vật lý của lá bài và sức mạnh số của WebApp AI, giải quyết triệt để sự chán nản & nghiện điện thoại cá nhân.
               </p>
             </div>
 
             <div className="grid gap-6 md:grid-cols-3">
               {/* UNO Comparison */}
-              <div className="group rounded-3xl border border-white/15 bg-slate-900/60 p-6 backdrop-blur-xl flex flex-col justify-between transition-all duration-300 hover:border-cyan-500/40 hover:shadow-2xl hover:shadow-cyan-500/10 hover:-translate-y-1">
+              <div className={`group rounded-3xl border p-6 backdrop-blur-xl flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 ${
+                isLight
+                  ? 'border-slate-200/90 bg-white/95 shadow-xl shadow-sky-950/5 hover:border-sky-300 hover:shadow-sky-500/10'
+                  : 'border-white/15 bg-slate-900/60 hover:border-cyan-500/40 hover:shadow-2xl hover:shadow-cyan-500/10'
+              }`}>
                 <div className="space-y-4">
-                  <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-slate-950/80 h-48 w-full flex items-center justify-center">
+                  <div className={`relative overflow-hidden rounded-2xl border h-48 w-full flex items-center justify-center ${
+                    isLight ? 'border-slate-200 bg-slate-100' : 'border-white/10 bg-slate-950/80'
+                  }`}>
                     <img
                       src={unoCompareImg}
                       alt="Board game UNO"
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                       loading="lazy"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/20 to-transparent pointer-events-none" />
-                    <div className="absolute top-3 left-3 flex items-center gap-1.5 rounded-full border border-cyan-400/30 bg-slate-950/80 px-3 py-1 text-xs font-bold text-cyan-300 backdrop-blur-md">
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent pointer-events-none" />
+                    <div className="absolute top-3 left-3 flex items-center gap-1.5 rounded-full border border-red-500/30 bg-red-950/80 px-3 py-1 text-xs font-bold text-red-300 backdrop-blur-md">
                       <span>VS UNO</span>
                     </div>
                   </div>
 
                   <div>
-                    <span className="text-[11px] font-semibold tracking-wider text-cyan-400 uppercase">Board game thẻ số</span>
-                    <h3 className="text-xl font-bold text-white mt-1">So Với Board Game UNO</h3>
+                    <span className={`text-[11px] font-semibold tracking-wider uppercase ${
+                      isLight ? 'text-sky-600' : 'text-cyan-400'
+                    }`}>Board game thẻ số</span>
+                    <h3 className={`text-xl font-bold mt-1 ${isLight ? 'text-slate-900' : 'text-white'}`}>So Với Board Game UNO</h3>
                   </div>
 
-                  <p className="text-xs text-slate-300 leading-relaxed">
-                    UNO chỉ ngồi một chỗ đánh bài đơn điệu, dễ cắm cúi vào các con số. <strong className="text-white font-semibold">SNAPDECK</strong> buộc người chơi phải tương tác hành động thực tế, đứng dậy tạo dáng chụp ảnh kỉ niệm và tạo không khí bùng nổ!
+                  <p className={`text-xs leading-relaxed ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>
+                    UNO chỉ ngồi một chỗ đánh bài đơn điệu, dễ cắm cúi vào các con số. <strong className={isLight ? 'text-slate-900 font-semibold' : 'text-white font-semibold'}>SNAPDECK</strong> buộc người chơi phải tương tác hành động thực tế, đứng dậy tạo dáng chụp ảnh kỉ niệm và tạo không khí bùng nổ!
                   </p>
                 </div>
 
-                <div className="mt-5 pt-4 border-t border-white/10 space-y-2 text-[11px]">
-                  <div className="flex items-center justify-between text-slate-400">
+                <div className={`mt-5 pt-4 border-t space-y-2 text-[11px] ${
+                  isLight ? 'border-slate-100' : 'border-white/10'
+                }`}>
+                  <div className={`flex items-center justify-between ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
                     <span>UNO:</span>
-                    <span className="text-rose-400 font-medium">Ngồi yên một chỗ, đơn điệu</span>
+                    <span className="text-rose-500 font-medium">Ngồi yên một chỗ, đơn điệu</span>
                   </div>
-                  <div className="flex items-center justify-between text-cyan-300 font-semibold">
+                  <div className={`flex items-center justify-between font-semibold ${
+                    isLight ? 'text-sky-700' : 'text-cyan-300'
+                  }`}>
                     <span>SNAPDECK:</span>
-                    <span className="text-emerald-400">Vận động & bắt trọn cảm xúc thật</span>
+                    <span className="text-emerald-500">Vận động & bắt trọn cảm xúc thật</span>
                   </div>
                 </div>
               </div>
 
               {/* Ma Soi Comparison */}
-              <div className="group rounded-3xl border border-white/15 bg-slate-900/60 p-6 backdrop-blur-xl flex flex-col justify-between transition-all duration-300 hover:border-fuchsia-500/40 hover:shadow-2xl hover:shadow-fuchsia-500/10 hover:-translate-y-1">
+              <div className={`group rounded-3xl border p-6 backdrop-blur-xl flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 ${
+                isLight
+                  ? 'border-slate-200/90 bg-white/95 shadow-xl shadow-sky-950/5 hover:border-sky-300 hover:shadow-sky-500/10'
+                  : 'border-white/15 bg-slate-900/60 hover:border-fuchsia-500/40 hover:shadow-2xl hover:shadow-fuchsia-500/10'
+              }`}>
                 <div className="space-y-4">
-                  <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-slate-950/80 h-48 w-full flex items-center justify-center">
+                  <div className={`relative overflow-hidden rounded-2xl border h-48 w-full flex items-center justify-center ${
+                    isLight ? 'border-slate-200 bg-slate-100' : 'border-white/10 bg-slate-950/80'
+                  }`}>
                     <img
                       src={werewolfCompareImg}
                       alt="Board game Ma Sói Werewolf"
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                       loading="lazy"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/20 to-transparent pointer-events-none" />
-                    <div className="absolute top-3 left-3 flex items-center gap-1.5 rounded-full border border-fuchsia-400/30 bg-slate-950/80 px-3 py-1 text-xs font-bold text-fuchsia-300 backdrop-blur-md">
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent pointer-events-none" />
+                    <div className="absolute top-3 left-3 flex items-center gap-1.5 rounded-full border border-purple-500/30 bg-purple-950/80 px-3 py-1 text-xs font-bold text-purple-300 backdrop-blur-md">
                       <span>VS Ma Sói</span>
                     </div>
                   </div>
 
                   <div>
-                    <span className="text-[11px] font-semibold tracking-wider text-fuchsia-400 uppercase">Board game ẩn vai</span>
-                    <h3 className="text-xl font-bold text-white mt-1">So Với Ma Sói (Werewolf)</h3>
+                    <span className={`text-[11px] font-semibold tracking-wider uppercase ${
+                      isLight ? 'text-sky-600' : 'text-fuchsia-400'
+                    }`}>Board game ẩn vai</span>
+                    <h3 className={`text-xl font-bold mt-1 ${isLight ? 'text-slate-900' : 'text-white'}`}>So Với Ma Sói (Werewolf)</h3>
                   </div>
 
-                  <p className="text-xs text-slate-300 leading-relaxed">
-                    Ma Sói đòi hỏi luật phức tạp, cần quản trò và người bị loại sớm phải ngồi ngoài hàng giờ. <strong className="text-white font-semibold">SNAPDECK</strong> giữ 100% thành viên tham gia liên tục mọi vòng chơi mà không một ai bị bỏ rơi hay đứng ngoài cuộc!
+                  <p className={`text-xs leading-relaxed ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>
+                    Ma Sói đòi hỏi luật phức tạp, cần quản trò và người bị loại sớm phải ngồi ngoài hàng giờ. <strong className={isLight ? 'text-slate-900 font-semibold' : 'text-white font-semibold'}>SNAPDECK</strong> giữ 100% thành viên tham gia liên tục mọi vòng chơi mà không một ai bị bỏ rơi hay đứng ngoài cuộc!
                   </p>
                 </div>
 
-                <div className="mt-5 pt-4 border-t border-white/10 space-y-2 text-[11px]">
-                  <div className="flex items-center justify-between text-slate-400">
+                <div className={`mt-5 pt-4 border-t space-y-2 text-[11px] ${
+                  isLight ? 'border-slate-100' : 'border-white/10'
+                }`}>
+                  <div className={`flex items-center justify-between ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
                     <span>Ma Sói:</span>
-                    <span className="text-rose-400 font-medium">Cần quản trò, loại sớm ngồi chờ</span>
+                    <span className="text-rose-500 font-medium">Cần quản trò, loại sớm ngồi chờ</span>
                   </div>
-                  <div className="flex items-center justify-between text-fuchsia-300 font-semibold">
+                  <div className={`flex items-center justify-between font-semibold ${
+                    isLight ? 'text-sky-700' : 'text-fuchsia-300'
+                  }`}>
                     <span>SNAPDECK:</span>
-                    <span className="text-emerald-400">100% gắn kết không ai bị loại</span>
+                    <span className="text-emerald-500">100% gắn kết không ai bị loại</span>
                   </div>
                 </div>
               </div>
 
               {/* Truth or Dare Comparison */}
-              <div className="group rounded-3xl border border-white/15 bg-slate-900/60 p-6 backdrop-blur-xl flex flex-col justify-between transition-all duration-300 hover:border-amber-500/40 hover:shadow-2xl hover:shadow-amber-500/10 hover:-translate-y-1">
+              <div className={`group rounded-3xl border p-6 backdrop-blur-xl flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 ${
+                isLight
+                  ? 'border-slate-200/90 bg-white/95 shadow-xl shadow-sky-950/5 hover:border-sky-300 hover:shadow-sky-500/10'
+                  : 'border-white/15 bg-slate-900/60 hover:border-amber-500/40 hover:shadow-2xl hover:shadow-amber-500/10'
+              }`}>
                 <div className="space-y-4">
-                  <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-slate-950/80 h-48 w-full flex items-center justify-center">
+                  <div className={`relative overflow-hidden rounded-2xl border h-48 w-full flex items-center justify-center ${
+                    isLight ? 'border-slate-200 bg-slate-100' : 'border-white/10 bg-slate-950/80'
+                  }`}>
                     <img
                       src={truthOrDareCompareImg}
                       alt="Card game Truth or Dare Dám Nói Dám Làm"
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                       loading="lazy"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/20 to-transparent pointer-events-none" />
-                    <div className="absolute top-3 left-3 flex items-center gap-1.5 rounded-full border border-amber-400/30 bg-slate-950/80 px-3 py-1 text-xs font-bold text-amber-300 backdrop-blur-md">
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent pointer-events-none" />
+                    <div className="absolute top-3 left-3 flex items-center gap-1.5 rounded-full border border-pink-500/30 bg-pink-950/80 px-3 py-1 text-xs font-bold text-pink-300 backdrop-blur-md">
                       <span>VS Truth or Dare</span>
                     </div>
                   </div>
 
                   <div>
-                    <span className="text-[11px] font-semibold tracking-wider text-amber-400 uppercase">Thẻ bài Thật hay Thách</span>
-                    <h3 className="text-xl font-bold text-white mt-1">So Với Truth or Dare</h3>
+                    <span className={`text-[11px] font-semibold tracking-wider uppercase ${
+                      isLight ? 'text-sky-600' : 'text-amber-400'
+                    }`}>Thẻ bài Thật hay Thách</span>
+                    <h3 className={`text-xl font-bold mt-1 ${isLight ? 'text-slate-900' : 'text-white'}`}>So Với Truth or Dare</h3>
                   </div>
 
-                  <p className="text-xs text-slate-300 leading-relaxed">
-                    Truth or Dare dễ bị bí ý tưởng và gượng gạo. <strong className="text-white font-semibold">SNAPDECK</strong> kết hợp thẻ bài, thử thách ảnh, bình chọn nhóm và Vòng Quay Hình Phạt.
+                  <p className={`text-xs leading-relaxed ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>
+                    Truth or Dare dễ bị bí ý tưởng và gượng gạo. <strong className={isLight ? 'text-slate-900 font-semibold' : 'text-white font-semibold'}>SNAPDECK</strong> kết hợp thẻ bài, thử thách ảnh, bình chọn nhóm và Vòng Quay Hình Phạt sinh động.
                   </p>
                 </div>
 
-                <div className="mt-5 pt-4 border-t border-white/10 space-y-2 text-[11px]">
-                  <div className="flex items-center justify-between text-slate-400">
+                <div className={`mt-5 pt-4 border-t space-y-2 text-[11px] ${
+                  isLight ? 'border-slate-100' : 'border-white/10'
+                }`}>
+                  <div className={`flex items-center justify-between ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
                     <span>Truth or Dare:</span>
-                    <span className="text-rose-400 font-medium">Dễ gượng gạo, bí câu hỏi</span>
+                    <span className="text-rose-500 font-medium">Dễ gượng gạo, bí câu hỏi</span>
                   </div>
-                  <div className="flex items-center justify-between text-amber-300 font-semibold">
+                  <div className={`flex items-center justify-between font-semibold ${
+                    isLight ? 'text-sky-700' : 'text-amber-300'
+                  }`}>
                     <span>SNAPDECK:</span>
-                    <span className="text-emerald-400">Bình chọn nhóm & Vòng quay phạt số</span>
+                    <span className="text-emerald-500">Bình chọn nhóm & Vòng quay phạt số</span>
                   </div>
                 </div>
               </div>
             </div>
           </section>
+
+          {/* 6 Theme Cards Showcase - 2 Rows x 3 Cards */}
+          <ThemeCardsShowcase isLight={isLight} />
 
           {/* Features Grid */}
           <section className="py-10">
@@ -496,13 +608,21 @@ const HomePage = () => {
                     viewport={{ once: true, amount: 0.3 }}
                     transition={{ duration: 0.4, delay: index * 0.08 }}
                     whileHover={{ y: -6, scale: 1.02 }}
-                    className="rounded-[2rem] border border-white/15 bg-white/10 p-6 shadow-xl backdrop-blur-xl"
+                    className={`rounded-[2rem] border p-6 shadow-xl backdrop-blur-xl ${
+                      isLight
+                        ? 'border-slate-200/90 bg-white/95 text-slate-900 shadow-sky-950/5'
+                        : 'border-white/15 bg-white/10 text-white shadow-xl'
+                    }`}
                   >
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500/30 to-cyan-500/30 text-cyan-200">
+                    <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${
+                      isLight
+                        ? 'bg-gradient-to-br from-sky-100 to-emerald-100 text-emerald-600 border border-emerald-200/60'
+                        : 'bg-gradient-to-br from-violet-500/30 to-cyan-500/30 text-cyan-200'
+                    }`}>
                       <Icon className="h-6 w-6" />
                     </div>
-                    <h3 className="mt-5 text-xl font-bold text-white">{card.title}</h3>
-                    <p className="mt-3 text-sm leading-6 text-slate-300">{card.description}</p>
+                    <h3 className={`mt-5 text-xl font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>{card.title}</h3>
+                    <p className={`mt-3 text-sm leading-6 ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>{card.description}</p>
                   </motion.article>
                 );
               })}
@@ -512,9 +632,15 @@ const HomePage = () => {
           {/* Flow Steps */}
           <section id="how-it-works" className="py-16">
             <div className="mb-10 text-center">
-              <span className="text-xs font-bold uppercase tracking-widest text-cyan-400">Luồng Hoạt Động Phygital</span>
-              <h2 className="mt-2 text-3xl font-black text-white sm:text-4xl">Cẩm Nang Cách Chơi Trong 4 Bước</h2>
-              <p className="mt-2 text-slate-400 text-sm max-w-xl mx-auto">
+              <span className={`text-xs font-bold uppercase tracking-widest ${
+                isLight ? 'text-sky-600' : 'text-cyan-400'
+              }`}>Luồng Hoạt Động Phygital</span>
+              <h2 className={`mt-2 text-3xl font-black sm:text-4xl ${
+                isLight ? 'text-slate-900' : 'text-white'
+              }`}>Cẩm Nang Cách Chơi Trong 4 Bước</h2>
+              <p className={`mt-2 text-sm max-w-xl mx-auto ${
+                isLight ? 'text-slate-600' : 'text-slate-400'
+              }`}>
                 Hướng dẫn nhanh cho người chơi khi quét mã QR từ bao bì hộp bài vật lý
               </p>
             </div>
@@ -527,31 +653,64 @@ const HomePage = () => {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, amount: 0.25 }}
                   transition={{ duration: 0.35, delay: index * 0.08 }}
-                  className="relative flex flex-col justify-between rounded-[1.75rem] border border-white/15 bg-white/10 p-6 text-left backdrop-blur-xl transition hover:border-cyan-400/40"
+                  className={`relative flex flex-col justify-between rounded-[1.75rem] border p-6 text-left backdrop-blur-xl transition ${
+                    isLight
+                      ? 'border-slate-200/90 bg-white/95 text-slate-900 shadow-xl shadow-sky-950/5 hover:border-sky-300'
+                      : 'border-white/15 bg-white/10 text-white hover:border-cyan-400/40'
+                  }`}
                 >
                   <div>
                     <div className="flex items-center justify-between">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-cyan-500 font-black text-white text-base">
+                      <div className={`flex h-10 w-10 items-center justify-center rounded-xl font-black text-white text-base ${
+                        isLight
+                          ? 'btn-blue-gradient shadow-md'
+                          : 'bg-gradient-to-br from-violet-500 to-cyan-500'
+                      }`}>
                         {index + 1}
                       </div>
-                      <span className="rounded-full bg-cyan-500/10 border border-cyan-400/30 px-2.5 py-0.5 text-[10px] font-bold text-cyan-300">
+                      <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
+                        isLight
+                          ? 'bg-sky-50 border border-sky-200 text-sky-700'
+                          : 'bg-cyan-500/10 border border-cyan-400/30 text-cyan-300'
+                      }`}>
                         {step.tag}
                       </span>
                     </div>
-                    <h3 className="mt-4 text-base font-bold text-white">{step.title}</h3>
-                    <p className="mt-2 text-xs leading-relaxed text-slate-300">{step.desc}</p>
+                    <h3 className={`mt-4 text-base font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>{step.title}</h3>
+                    <p className={`mt-2 text-xs leading-relaxed ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>{step.desc}</p>
                   </div>
                 </motion.div>
               ))}
             </div>
+
+            <div className="mt-10 flex justify-center">
+              <button
+                onClick={() => navigate('/how-to-play')}
+                className={`group inline-flex items-center gap-3 rounded-2xl px-8 py-4 font-bold shadow-xl backdrop-blur-xl transition hover:scale-105 ${
+                  isLight
+                    ? 'btn-blue-gradient text-white shadow-sky-500/25 hover:shadow-sky-500/35'
+                    : 'border border-cyan-400/40 bg-gradient-to-r from-cyan-500/20 via-fuchsia-500/20 to-violet-500/20 text-white shadow-cyan-500/20 hover:border-cyan-300 hover:shadow-cyan-500/40'
+                }`}
+              >
+                <BookOpen className={`h-5 w-5 transition group-hover:rotate-6 ${isLight ? 'text-white' : 'text-cyan-300'}`} />
+                <span>Xem Cẩm Nang Hướng Dẫn Chi Tiết</span>
+                <ArrowRight className={`h-5 w-5 transition group-hover:translate-x-1 ${isLight ? 'text-white' : 'text-cyan-400'}`} />
+              </button>
+            </div>
           </section>
         </main>
 
-        <footer className="relative z-10 border-t border-white/10 bg-slate-950/60 px-6 py-8 backdrop-blur-xl">
-          <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 text-sm text-slate-400 md:flex-row">
-            <p className="font-semibold text-slate-300">SNAPDECK — Phygital Party Game Platform</p>
+        <footer className={`relative z-10 border-t px-6 py-8 backdrop-blur-xl ${
+          isLight
+            ? 'border-slate-200/80 bg-white/80 text-slate-600'
+            : 'border-white/10 bg-slate-950/60 text-slate-400'
+        }`}>
+          <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 text-sm md:flex-row">
+            <p className={`font-semibold ${isLight ? 'text-slate-800' : 'text-slate-300'}`}>SNAPDECK — Phygital Party Game Platform</p>
             <div className="flex items-center gap-4">
-              <button onClick={handleAdmin} className="text-cyan-400 font-bold hover:underline">
+              <button onClick={handleAdmin} className={`font-bold hover:underline ${
+                isLight ? 'text-sky-600' : 'text-cyan-400'
+              }`}>
                 Portal Nhà Đầu Tư & Quản Trị (/admin)
               </button>
             </div>

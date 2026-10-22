@@ -21,6 +21,7 @@ import {
 } from '../utils/gameRules.js';
 import { deleteEvidence, readEvidenceDataUrl, storeEvidence } from '../utils/evidenceStore.js';
 import { createPlayerToken, hashPlayerToken, verifyPlayerToken } from '../utils/playerAuth.js';
+import { isDBConnected, connectDB } from '../config/db.js';
 
 const validDeviceModes = ['single_device', 'multi_device'];
 const validVerificationMethods = ['ai', 'group'];
@@ -236,6 +237,15 @@ export const getRoom = async (req, res) => {
 
 export const createRoom = async (req, res) => {
   try {
+    if (!isDBConnected()) {
+      await connectDB();
+      if (!isDBConnected()) {
+        return res.status(503).json({
+          success: false,
+          message: 'Cơ sở dữ liệu MongoDB chưa kết nối. Vui lòng đảm bảo dịch vụ MongoDB (mongod) đang chạy!',
+        });
+      }
+    }
     const {
       roomCode, theme, mode, hostName, deviceMode, verificationMethod,
       photoBonusEnabled, turnDurationSeconds, totalRounds,
@@ -248,7 +258,10 @@ export const createRoom = async (req, res) => {
     }
     const code = normalizeRoomCode(roomCode);
     const chosenDeviceMode = validDeviceModes.includes(deviceMode) ? deviceMode : 'multi_device';
-    const chosenVerificationMethod = validVerificationMethods.includes(verificationMethod) ? verificationMethod : 'group';
+    // Chế độ Multi-device bắt buộc chấm bằng AI
+    const chosenVerificationMethod = chosenDeviceMode === 'multi_device'
+      ? 'ai'
+      : (validVerificationMethods.includes(verificationMethod) ? verificationMethod : 'group');
     const chosenMode = validGameModes.includes(mode) ? mode : 'spicy';
 
     const hostPlayerId = randomUUID();
@@ -349,7 +362,10 @@ export const startRoom = async (req, res) => {
       theme, mode, verificationMethod, photoBonusEnabled,
       turnDurationSeconds, totalRounds,
     } = req.body;
-    const selectedVerification = verificationMethod ?? room.verificationMethod;
+    // Chế độ Multi-device bắt buộc chấm bằng AI
+    const selectedVerification = room.deviceMode === 'multi_device'
+      ? 'ai'
+      : (verificationMethod ?? room.verificationMethod);
     if (!validVerificationMethods.includes(selectedVerification)) {
       return res.status(400).json({ success: false, message: 'Phương thức xác thực không hợp lệ.' });
     }

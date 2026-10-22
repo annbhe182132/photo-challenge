@@ -11,6 +11,9 @@ import AIVerifyPage from '../pages/AIVerify/AIVerifyPage';
 import GalleryPage from '../pages/Gallery/GalleryPage';
 import AdminPage from '../pages/Admin/AdminPage';
 import JoinRoomPage from '../pages/JoinRoom/JoinRoomPage';
+import HowToPlayPage from '../pages/HowToPlay/HowToPlayPage';
+import FloatingBackground from '../components/layout/FloatingBackground';
+import ThemeToggle from '../components/ThemeToggle';
 import { useGame } from '../context/useGame';
 import { apiRequest, playerApiRequest } from '../services/api';
 import { THEMES } from '../data/gameData';
@@ -233,7 +236,11 @@ const MultiplayerSync = () => {
 
 const AppRouter = () => (
   <HashRouter>
+    <FloatingBackground />
     <BackgroundMusic />
+    <div className="fixed bottom-5 right-20 z-[100]">
+      <ThemeToggle />
+    </div>
     <MultiplayerSync />
     <Routes>
       <Route path="/" element={<HomePage />} />
@@ -246,6 +253,7 @@ const AppRouter = () => (
       <Route path="/camera" element={<CameraPage />} />
       <Route path="/verify" element={<AIVerifyPage />} />
       <Route path="/gallery" element={<GalleryPage />} />
+      <Route path="/how-to-play" element={<HowToPlayPage />} />
       <Route path="/admin" element={<AdminPage />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
