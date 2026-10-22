@@ -67,3 +67,10 @@ cd server
 npm run seed
 ```
 > Lệnh này sẽ tự động đọc file `snapdeck_seed_data.json` ở thư mục gốc và nạp toàn bộ 24 thẻ bài SNAPDECK, 6 chủ đề, 96 nhiệm vụ AI, 6 hình phạt và các album mẫu vào MongoDB.
+
+
+### Tài khoản và album cá nhân
+
+- API đăng ký/đăng nhập: `POST /api/account/register`, `POST /api/account/login`.
+- Album cá nhân đã lưu: `GET /api/account/albums` (cần `Authorization: Bearer <token>`).
+- Ảnh album được lưu riêng trong GridFS, gắn với tài khoản; ảnh nguồn của ván multi-device vẫn thuộc dữ liệu bằng chứng của phòng.

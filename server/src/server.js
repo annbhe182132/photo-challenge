@@ -11,6 +11,7 @@ import roomRoutes from './routes/roomRoutes.js';
 import galleryRoutes from './routes/galleryRoutes.js';
 import aiRoutes from './routes/aiRoutes.js';
 import missionRoutes from './routes/missionRoutes.js';
+import accountRoutes from './routes/accountRoutes.js';
 
 dotenv.config();
 
@@ -56,6 +57,7 @@ app.use('/api/themes', themeRoutes);
 app.use('/api/punishments', punishmentRoutes);
 app.use('/api/rooms', roomRoutes);
 app.use('/api/gallery', galleryRoutes);
+app.use('/api/account', accountRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/missions', missionRoutes);
 

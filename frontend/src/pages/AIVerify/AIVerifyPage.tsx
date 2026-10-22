@@ -339,7 +339,17 @@ const AIVerifyPage = () => {
     }
   }, [activeCard, currentPlayerId, deviceMode, loadMultiplayerState, resolveLocalAiSubmission, roomPlayerToken, theme]);
 
-  // Auto trigger AI evaluation once submission is loaded
+  // Reset the one-shot guard when the route points to a different submission.
+  // React Router may reuse this page between turns, especially on single-device play.
+  useEffect(() => {
+    hasTriggeredAi.current = false;
+    aiRequestInProgress.current = false;
+    setAiResult(null);
+    setAiError(null);
+    setAiState('idle');
+  }, [submissionId]);
+
+  // Auto trigger AI evaluation once the current submission is loaded.
   useEffect(() => {
     if (verificationMethod !== 'ai' || !submission || hasTriggeredAi.current) return;
     let timer: number | undefined;

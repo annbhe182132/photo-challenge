@@ -10,8 +10,6 @@ import {
   Volume2,
   VolumeX,
   Zap,
-  Bot,
-  Users,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useGame } from '../../context/useGame';
@@ -93,9 +91,6 @@ const HomePage = () => {
     deviceMode,
     setDeviceMode,
     verificationMethod,
-    setVerificationMethod,
-    photoEvidence,
-    setPhotoEvidence,
     photoBonusEnabled,
     setPhotoBonusEnabled,
     setRoomCode,
@@ -146,7 +141,6 @@ const HomePage = () => {
           mode,
           deviceMode,
           verificationMethod,
-          photoEvidence,
           photoBonusEnabled,
           turnDurationSeconds,
           totalRounds,
@@ -315,68 +309,15 @@ const HomePage = () => {
                   ))}
                 </div>
 
-                <div className="mt-4 grid gap-3 md:grid-cols-2">
-                  <div className="rounded-xl border border-white/10 bg-slate-950/60 p-3">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">Phương thức Xác thực</p>
-                    <div className="mt-2 flex gap-2">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          sound.playClick();
-                          setVerificationMethod('group');
-                        }}
-                        className={`flex-1 rounded-xl px-2.5 py-2 text-xs font-bold transition flex items-center justify-center gap-1.5 ${
-                          verificationMethod === 'group'
-                            ? 'bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/25'
-                            : 'bg-white/5 text-slate-200 hover:bg-white/10'
-                        }`}
-                      >
-                        <Users size={14} />
-                        <span>Group</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          sound.playClick();
-                          setVerificationMethod('ai');
-                        }}
-                        className={`flex-1 rounded-xl px-2.5 py-2 text-xs font-bold transition flex items-center justify-center gap-1.5 ${
-                          verificationMethod === 'ai'
-                            ? 'bg-gradient-to-r from-cyan-400 to-fuchsia-500 text-slate-950 font-black shadow-md shadow-fuchsia-500/25'
-                            : 'bg-white/5 text-slate-200 hover:bg-white/10'
-                        }`}
-                      >
-                        <Bot size={14} className={verificationMethod === 'ai' ? 'text-slate-950' : 'text-cyan-400'} />
-                        <span>AI (Gemini)</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="rounded-xl border border-white/10 bg-slate-950/60 p-3">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">Photo evidence</p>
-                    <div className="mt-2 flex gap-2">
-                      {(['off', 'optional', 'required'] as const).map((value) => (
-                        <button
-                          key={value}
-                          onClick={() => setPhotoEvidence(value)}
-                          className={`flex-1 rounded-xl px-2 py-2 text-[10px] font-bold uppercase ${photoEvidence === value ? 'bg-fuchsia-500 text-white' : 'bg-white/5 text-slate-200'}`}
-                        >
-                          {value}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <label className="mt-3 flex cursor-pointer items-center gap-2 rounded-xl border border-white/10 bg-slate-950/60 p-3 text-xs text-slate-200">
-                    <input
-                      type="checkbox"
-                      checked={photoBonusEnabled}
-                      onChange={(event) => setPhotoBonusEnabled(event.target.checked)}
-                      className="h-4 w-4 accent-fuchsia-500"
-                    />
-                    Thưởng +20 điểm khi gửi ảnh hợp lệ và được duyệt (chỉ khi ảnh không tắt)
-                  </label>
-                </div>
+                <label className="mt-3 flex cursor-pointer items-center gap-2 rounded-xl border border-white/10 bg-slate-950/60 p-3 text-xs text-slate-200">
+                  <input
+                    type="checkbox"
+                    checked={photoBonusEnabled}
+                    onChange={(event) => setPhotoBonusEnabled(event.target.checked)}
+                    className="h-4 w-4 accent-fuchsia-500"
+                  />
+                  Thưởng ảnh +20 điểm
+                </label>
               </div>
 
               <div className="flex flex-col gap-4 sm:flex-row">

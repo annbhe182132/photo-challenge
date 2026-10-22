@@ -77,12 +77,13 @@ const CameraPage = () => {
     currentRound,
     getCurrentPlayer,
     deviceMode,
-    photoEvidence,
+    verificationMethod,
     roomCode,
     currentPlayerId,
     roomPlayerToken,
     addLocalSubmission,
     turnDeadline,
+    serverTimeOffsetMs,
     pausedTurnRemainingSeconds,
     turnDurationSeconds,
     currentTurnIndex,
@@ -191,7 +192,7 @@ const CameraPage = () => {
     timeoutHandledRef.current = false;
     let cancelled = false;
     const updateTurnTimer = async () => {
-      const remaining = Math.max(0, Math.ceil((new Date(turnDeadline).getTime() - Date.now()) / 1000));
+      const remaining = Math.max(0, Math.ceil((new Date(turnDeadline).getTime() - (Date.now() + serverTimeOffsetMs)) / 1000));
       setTurnTimeLeft(remaining);
       if (remaining !== 0 || timeoutHandledRef.current) return;
       timeoutHandledRef.current = true;
@@ -230,7 +231,7 @@ const CameraPage = () => {
       cancelled = true;
       window.clearInterval(interval);
     };
-  }, [cameraStatus, currentPlayer.id, currentTurnIndex, deviceMode, navigate, roomCode, round, syncRoom, turnDeadline]);
+  }, [cameraStatus, currentPlayer.id, currentTurnIndex, deviceMode, navigate, roomCode, round, serverTimeOffsetMs, syncRoom, turnDeadline]);
 
   const startCamera = async (
     video: MediaTrackConstraints,
@@ -538,8 +539,8 @@ const CameraPage = () => {
       setCameraError(`Lượt này thuộc về ${currentPlayer.name}. Bạn không thể gửi thử thách thay người chơi đó.`);
       return;
     }
-    if (photoEvidence === 'required' && !evidence) {
-      setCameraError('Cần chụp hoặc tải ảnh lên trước khi gửi thử thách.');
+    if (verificationMethod === 'ai' && !evidence) {
+      setCameraError('Chế độ xác thực AI bắt buộc có ảnh bằng chứng. Hãy chụp ảnh hoặc tải ảnh lên trước khi gửi.');
       return;
     }
     if (deviceMode === 'multi_device' && !currentPlayerId) {
@@ -559,7 +560,7 @@ const CameraPage = () => {
           cardCode: activeCard.code,
           cardTitle: activeCard.title,
           mission: activeCard.mission,
-          evidence: photoEvidence === 'off' ? null : evidence,
+          evidence: evidence ?? null,
         });
         submissionId = local.id;
       } else {
@@ -574,7 +575,7 @@ const CameraPage = () => {
             round,
             missionCode: activeCard.id,
             cardCode: activeCard.code,
-            evidence: photoEvidence === 'off' ? null : evidence,
+            evidence: evidence ?? null,
           }),
         });
         if (!response.success || !response.data?._id) throw new Error('Máy chủ không xác nhận được lượt gửi.');
@@ -590,7 +591,10 @@ const CameraPage = () => {
   };
 
   const handleContinueWithoutPhoto = () => {
-    if (photoEvidence !== 'optional' && photoEvidence !== 'off') return;
+    if (verificationMethod === 'ai') {
+      setCameraError('Không thể tiếp tục khi chưa có ảnh. Xác thực AI cần ảnh để phân tích và chấm điểm.');
+      return;
+    }
     void handleUsePhoto(null);
   };
 
@@ -738,6 +742,11 @@ const CameraPage = () => {
                   {cameraError}
                 </p>
               )}
+              {verificationMethod === 'ai' && !captured && (
+                <p className="rounded-xl border border-cyan-400/35 bg-cyan-500/10 px-4 py-3 text-center text-sm font-semibold text-cyan-100">
+                  Xác thực AI yêu cầu ảnh bằng chứng. Hãy chụp ảnh hoặc chọn ảnh từ thiết bị trước khi tiếp tục.
+                </p>
+              )}
 
               {!captured ? (
                 <div className="flex flex-wrap items-center justify-center gap-3">
@@ -790,14 +799,14 @@ const CameraPage = () => {
                       </motion.button>
                     </>
                   )}
-                  {(photoEvidence === 'optional' || photoEvidence === 'off') && (
+                  {verificationMethod === 'group' && (
                     <button
                       type="button"
                       onClick={handleContinueWithoutPhoto}
                       disabled={isConfirming}
                       className="min-h-12 rounded-2xl border border-amber-400/35 bg-amber-500/10 px-5 py-3 text-sm font-bold text-amber-200 transition hover:bg-amber-500/20 disabled:opacity-60"
                     >
-                      {isConfirming ? 'Đang gửi...' : photoEvidence === 'off' ? 'Tiếp tục (không lưu ảnh)' : 'Tiếp tục không ảnh'}
+                      {isConfirming ? 'Đang gửi...' : 'Tiếp tục không ảnh'}
                     </button>
                   )}
                 </div>

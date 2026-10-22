@@ -2,12 +2,10 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   DECK_CARDS,
   DEFAULT_DEVICE_MODE,
-  DEFAULT_PHOTO_EVIDENCE,
   DEFAULT_VERIFICATION_METHOD,
   INITIAL_PLAYERS,
   type DeviceMode,
   type GameMode,
-  type PhotoEvidenceSetting,
   type PhysicalCard,
   type Player,
   DEFAULT_ROUND_LIMIT,
@@ -37,6 +35,8 @@ export interface GalleryPhoto {
   cardTitle: string;
   score: number;
   mission: string;
+  passed?: boolean;
+  playerName?: string;
 }
 
 export interface GalleryAlbum {
@@ -93,8 +93,6 @@ export interface GameContextType {
   setDeviceMode: (deviceMode: DeviceMode) => void;
   verificationMethod: VerificationMethod;
   setVerificationMethod: (verificationMethod: VerificationMethod) => void;
-  photoEvidence: PhotoEvidenceSetting;
-  setPhotoEvidence: (photoEvidence: PhotoEvidenceSetting) => void;
   photoBonusEnabled: boolean;
   setPhotoBonusEnabled: (enabled: boolean) => void;
   players: Player[];
@@ -115,6 +113,7 @@ export interface GameContextType {
   activePlayerId: string | null;
   turnStartedAt: string | null;
   turnDeadline: string | null;
+  serverTimeOffsetMs: number;
   pausedTurnRemainingSeconds: number | null;
   pauseTurnClock: () => void;
   gameStatus: 'waiting' | 'active' | 'completed';
@@ -147,6 +146,7 @@ export interface GameContextType {
     activePlayerId?: string | null;
     turnStartedAt?: string | null;
     turnDeadline?: string | null;
+    serverNow?: string;
     turnRemainingSeconds?: number | null;
     turnHistory?: GameTurnRecord[];
     turnDurationSeconds?: TurnDurationSeconds;
@@ -162,7 +162,6 @@ interface StoredGameState {
   mode?: GameMode;
   deviceMode?: DeviceMode;
   verificationMethod?: VerificationMethod;
-  photoEvidence?: PhotoEvidenceSetting;
   photoBonusEnabled?: boolean;
   players?: Player[];
   currentRound?: number;
@@ -204,9 +203,8 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [mode, setMode] = useState<GameMode>(persisted.mode ?? 'spicy');
   const [deviceMode, setDeviceMode] = useState<DeviceMode>(persisted.deviceMode ?? DEFAULT_DEVICE_MODE);
   const [verificationMethod, setVerificationMethod] = useState<VerificationMethod>(
-    persisted.verificationMethod === 'ai' ? 'group' : persisted.verificationMethod ?? DEFAULT_VERIFICATION_METHOD
+    persisted.verificationMethod ?? DEFAULT_VERIFICATION_METHOD
   );
-  const [photoEvidence, setPhotoEvidence] = useState<PhotoEvidenceSetting>(persisted.photoEvidence ?? DEFAULT_PHOTO_EVIDENCE);
   const [photoBonusEnabled, setPhotoBonusEnabled] = useState(persisted.photoBonusEnabled ?? true);
   const [players, setPlayers] = useState<Player[]>(persisted.players ?? INITIAL_PLAYERS);
   const [soundEnabled, setSoundEnabled] = useState(persisted.soundEnabled ?? true);
@@ -226,6 +224,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [activePlayerId, setActivePlayerId] = useState<string | null>(persisted.activePlayerId ?? null);
   const [turnStartedAt, setTurnStartedAt] = useState<string | null>(persisted.turnStartedAt ?? null);
   const [turnDeadline, setTurnDeadline] = useState<string | null>(persisted.turnDeadline ?? null);
+  const [serverTimeOffsetMs, setServerTimeOffsetMs] = useState(0);
   const [pausedTurnRemainingSeconds, setPausedTurnRemainingSeconds] = useState<number | null>(
     typeof persisted.pausedTurnRemainingSeconds === 'number' ? persisted.pausedTurnRemainingSeconds : null
   );
@@ -257,7 +256,6 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         mode,
         deviceMode,
         verificationMethod,
-        photoEvidence,
         photoBonusEnabled,
         players,
         currentRound,
@@ -282,7 +280,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error) {
       console.warn('[GameContext] Could not persist the complete local game state:', error);
     }
-  }, [roomCode, theme, mode, deviceMode, verificationMethod, photoEvidence, photoBonusEnabled, players, currentRound, totalRounds, gameStatus, soundEnabled, turnDurationSeconds, currentTurnIndex, activePlayerId, turnStartedAt, turnDeadline, pausedTurnRemainingSeconds, turnHistory, currentPlayerId, roomPlayerToken, activeCard, albums, submissions, usedCardCodes]);
+  }, [roomCode, theme, mode, deviceMode, verificationMethod, photoBonusEnabled, players, currentRound, totalRounds, gameStatus, soundEnabled, turnDurationSeconds, currentTurnIndex, activePlayerId, turnStartedAt, turnDeadline, pausedTurnRemainingSeconds, turnHistory, currentPlayerId, roomPlayerToken, activeCard, albums, submissions, usedCardCodes]);
 
   useEffect(() => {
     sound.enabled = soundEnabled;
@@ -331,6 +329,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const updated = [...prev];
         updated[targetAlbumIndex] = {
           ...updated[targetAlbumIndex],
+          coverImage: newPhoto.image,
           photos: [newPhoto, ...updated[targetAlbumIndex].photos],
         };
         return updated;
@@ -376,6 +375,9 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
       && submission.playerId === data.playerId
     )) {
       throw new Error('Lượt này đã có thử thách được gửi.');
+    }
+    if (verificationMethod === 'ai' && !data.evidence) {
+      throw new Error('Xác thực AI bắt buộc có ảnh bằng chứng. Hãy chụp ảnh trước khi gửi.');
     }
     if (usedCardCodes.includes(data.cardCode)) {
       throw new Error('Thẻ này đã được chơi trong ván hiện tại. Hãy chọn một thẻ khác.');
@@ -423,7 +425,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
       eligibleVoterCount: current.eligibleVoterIds.length,
     });
     const approvedScore = status === 'approved'
-      ? buildApprovedScore(photoBonusEnabled, photoEvidence, Boolean(current.evidence))
+      ? buildApprovedScore(photoBonusEnabled, Boolean(current.evidence))
       : { basePoints: 0, photoBonus: 0, creativityBonus: 0, total: 0 };
     const updated: GameSubmission = {
       ...current,
@@ -434,8 +436,8 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
     setSubmissions((previous) => previous.map((submission) => submission.id === submissionId ? updated : submission));
 
-    if (status === 'approved') {
-      addScoreToPlayer(current.playerId, approvedScore.total);
+    if (status === 'approved') addScoreToPlayer(current.playerId, approvedScore.total);
+    if (status === 'approved' || status === 'rejected') {
       if (current.evidence) {
         addPhotoToCurrentAlbum({
           round: current.round,
@@ -443,6 +445,8 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
           cardTitle: current.cardTitle,
           score: approvedScore.total,
           mission: current.mission,
+          passed: status === 'approved',
+          playerName: players.find((player) => player.id === current.playerId)?.name ?? 'Người chơi',
         });
       }
     }
@@ -468,17 +472,17 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
     setSubmissions((previous) => previous.map((submission) => submission.id === submissionId ? updated : submission));
 
-    if (passed) {
-      addScoreToPlayer(current.playerId, approvedScore.total);
-      if (current.evidence) {
-        addPhotoToCurrentAlbum({
-          round: current.round,
-          image: current.evidence,
-          cardTitle: current.cardTitle,
-          score: approvedScore.total,
-          mission: current.mission,
-        });
-      }
+    if (passed) addScoreToPlayer(current.playerId, approvedScore.total);
+    if (current.evidence) {
+      addPhotoToCurrentAlbum({
+        round: current.round,
+        image: current.evidence,
+        cardTitle: current.cardTitle,
+        score: approvedScore.total,
+        mission: current.mission,
+        passed,
+        playerName: players.find((player) => player.id === current.playerId)?.name ?? 'Người chơi',
+      });
     }
     return updated;
   };
@@ -492,6 +496,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     activePlayerId?: string | null;
     turnStartedAt?: string | null;
     turnDeadline?: string | null;
+    serverNow?: string;
     turnRemainingSeconds?: number | null;
     turnHistory?: GameTurnRecord[];
     turnDurationSeconds?: TurnDurationSeconds;
@@ -506,6 +511,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (room.activePlayerId !== undefined) setActivePlayerId(room.activePlayerId);
     if (room.turnStartedAt !== undefined) setTurnStartedAt(room.turnStartedAt);
     if (room.turnDeadline !== undefined) setTurnDeadline(room.turnDeadline);
+    if (room.serverNow) setServerTimeOffsetMs(new Date(room.serverNow).getTime() - Date.now());
     if (room.turnDeadline) setPausedTurnRemainingSeconds(null);
     else if (room.turnRemainingSeconds !== undefined) setPausedTurnRemainingSeconds(room.turnRemainingSeconds);
     if (room.turnHistory !== undefined) setTurnHistory(room.turnHistory);
@@ -514,7 +520,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const pauseTurnClock = () => {
     if (!turnDeadline) return;
-    const remaining = Math.max(0, Math.ceil((new Date(turnDeadline).getTime() - Date.now()) / 1000));
+    const remaining = Math.max(0, Math.ceil((new Date(turnDeadline).getTime() - (Date.now() + serverTimeOffsetMs)) / 1000));
     setPausedTurnRemainingSeconds(remaining);
     setTurnStartedAt(null);
     setTurnDeadline(null);
@@ -645,7 +651,6 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setAlbums([]);
     setDeviceMode(DEFAULT_DEVICE_MODE);
     setVerificationMethod(DEFAULT_VERIFICATION_METHOD);
-    setPhotoEvidence(DEFAULT_PHOTO_EVIDENCE);
     setPhotoBonusEnabled(true);
   };
 
@@ -662,8 +667,6 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setDeviceMode,
         verificationMethod,
         setVerificationMethod,
-        photoEvidence,
-        setPhotoEvidence,
         photoBonusEnabled,
         setPhotoBonusEnabled,
         players,
@@ -684,6 +687,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         activePlayerId,
         turnStartedAt,
         turnDeadline,
+        serverTimeOffsetMs,
         pausedTurnRemainingSeconds,
         pauseTurnClock,
         gameStatus,

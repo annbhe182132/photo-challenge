@@ -50,7 +50,6 @@ const ChallengePage = () => {
     currentRound,
     totalRounds,
     players,
-    photoEvidence,
     verificationMethod,
     deviceMode,
     currentPlayerId,
@@ -58,6 +57,8 @@ const ChallengePage = () => {
     roomCode,
     getCurrentPlayer,
     turnDeadline,
+    pausedTurnRemainingSeconds,
+    serverTimeOffsetMs,
     currentTurnIndex,
     turnDurationSeconds,
     syncRoom,
@@ -125,21 +126,12 @@ const ChallengePage = () => {
         const response = await apiRequest<CurrentRoomResponse>(`/api/rooms/${encodeURIComponent(roomCode)}`);
         if (cancelled || !response.success || !response.data) return;
         syncRoom(response.data);
-        if (response.data.currentTurnIndex !== entryTurnIndexRef.current) {
-          const resolvedTurn = response.data.turnHistory?.find((turn) => turn.turnIndex === entryTurnIndexRef.current);
-          navigate('/result', {
-            replace: true,
-            state: {
-              round: resolvedTurn?.round ?? round,
-              playerId: resolvedTurn?.playerId ?? currentPlayer.id,
-              passed: resolvedTurn?.status === 'completed',
-              timedOut: resolvedTurn?.status === 'timed_out',
-              skipped: resolvedTurn?.status === 'skipped',
-              score: resolvedTurn?.score ?? 0,
-            },
-          });
-        } else if (response.data.status === 'completed') {
+        const turnChanged = response.data.currentTurnIndex !== entryTurnIndexRef.current;
+        if (Number.isInteger(response.data.currentTurnIndex)) entryTurnIndexRef.current = response.data.currentTurnIndex;
+        if (response.data.status === 'completed') {
           navigate('/leaderboard', { replace: true });
+        } else if (turnChanged && response.data.activePlayerId === currentPlayerId) {
+          navigate('/scan', { replace: true, state: { round: response.data.currentRound } });
         }
       } catch (error) {
         if (!cancelled) console.error('[ChallengePage] Failed to synchronize the active turn:', error);
@@ -155,21 +147,21 @@ const ChallengePage = () => {
   }, [currentPlayer.id, deviceMode, navigate, roomCode, round, syncRoom]);
 
   useEffect(() => {
-    if (!isMyTurn || !turnDeadline) {
+    if (!turnDeadline) {
       setTimeLeft(null);
       warnedAtFiveRef.current = false;
       return undefined;
     }
 
     const updateTimer = () => {
-      const remaining = Math.max(0, Math.ceil((new Date(turnDeadline).getTime() - Date.now()) / 1000));
+      const remaining = Math.max(0, Math.ceil((new Date(turnDeadline).getTime() - (Date.now() + serverTimeOffsetMs)) / 1000));
       setTimeLeft(remaining);
       if (remaining === 5 && !warnedAtFiveRef.current) {
         warnedAtFiveRef.current = true;
         if (soundEnabled) sound.playTick();
       }
       if (remaining > 5) warnedAtFiveRef.current = false;
-      if (remaining === 0 && deviceMode === 'single_device' && !timeoutRedirectedRef.current) {
+      if (remaining === 0 && deviceMode === 'single_device' && isMyTurn && !timeoutRedirectedRef.current) {
         timeoutRedirectedRef.current = true;
         navigate('/result', { replace: true, state: { round, passed: false, score: 0, timedOut: true } });
       }
@@ -177,7 +169,7 @@ const ChallengePage = () => {
     updateTimer();
     const interval = window.setInterval(updateTimer, 250);
     return () => window.clearInterval(interval);
-  }, [deviceMode, isMyTurn, navigate, round, soundEnabled, turnDeadline]);
+  }, [deviceMode, isMyTurn, navigate, round, serverTimeOffsetMs, soundEnabled, turnDeadline]);
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(7,89,133,0.3),_transparent_40%),linear-gradient(135deg,_#030712_0%,_#0f172a_45%,_#111827_100%)] text-slate-100">
@@ -244,7 +236,9 @@ const ChallengePage = () => {
                   </div>
                 </div>
                 <div className={`text-4xl font-black ${timeLeft !== null && timeLeft <= 5 ? 'text-red-400' : 'text-cyan-300'}`}>
-                  {timeLeft === null ? (turnDurationSeconds === 0 ? '∞' : '--') : `${timeLeft}s`}
+                  {timeLeft === null
+                    ? (pausedTurnRemainingSeconds !== null ? `${pausedTurnRemainingSeconds}s · Tạm dừng` : turnDurationSeconds === 0 ? '∞' : '--')
+                    : `${timeLeft}s`}
                 </div>
                 {timeLeft !== null && turnDurationSeconds > 0 && (
                   <div className="absolute bottom-0 left-0 h-1.5 w-full overflow-hidden rounded-b-2xl bg-white/10">
@@ -265,7 +259,9 @@ const ChallengePage = () => {
                 Âm thanh {soundEnabled ? 'bật' : 'tắt'}
               </button>
 
-              {/* Holographic Card View */}
+              {/* Only the active player sees the local mission card; peer devices show a clear waiting state. */}
+              {(deviceMode === 'single_device' || isMyTurn) ? (
+              <>
               <motion.div
                 whileHover={{ rotateY: 5, rotateX: -5 }}
                 className="relative overflow-hidden rounded-[2rem] border-2 border-cyan-400/40 bg-gradient-to-br from-slate-950 via-slate-900 to-cyan-950/60 p-8 shadow-[0_0_40px_rgba(34,211,238,0.2)]"
@@ -308,10 +304,22 @@ const ChallengePage = () => {
                 {showHint && (
                   <p className="mt-3 text-xs text-cyan-200 leading-relaxed border-t border-white/10 pt-3">
                     💡 Hãy làm theo hướng dẫn trên thẻ. {verificationMethod === 'ai' ? '🤖 SNAPDECK AI Judge sẽ quét ảnh và tự động chấm điểm độ sáng tạo & thần thái cho bạn!' : '👥 Các bạn cùng bàn sẽ bình chọn để duyệt thử thách.'}
-                    <span className="mt-2 block">Ảnh bằng chứng: {photoEvidence === 'required' ? 'bắt buộc' : photoEvidence === 'optional' ? 'không bắt buộc' : 'đang tắt'}.</span>
                   </p>
                 )}
               </div>
+              </>
+              ) : (
+                <div className="rounded-[2rem] border-2 border-fuchsia-400/30 bg-gradient-to-br from-slate-950 via-slate-900 to-fuchsia-950/30 p-8 text-center shadow-xl">
+                  <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-fuchsia-400/30 bg-fuchsia-500/10 text-fuchsia-200">
+                    <Clock3 size={30} />
+                  </div>
+                  <h2 className="text-2xl font-black text-white">Đang chờ {currentPlayer.name}</h2>
+                  <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-slate-300">
+                    Người chơi này đang thực hiện lượt của mình. Hãy chờ họ hoàn thành và gửi thử thách; thiết bị của bạn sẽ tự chuyển sang màn hình đánh giá khi cần.
+                  </p>
+                  <p className="mt-4 text-xs font-semibold text-cyan-200">Bạn chưa cần bấm gì lúc này.</p>
+                </div>
+              )}
 
               {/* Action Button */}
               <motion.button

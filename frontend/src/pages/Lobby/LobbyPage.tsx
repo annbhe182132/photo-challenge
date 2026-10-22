@@ -35,7 +35,6 @@ const LobbyPage = () => {
     deviceMode,
     verificationMethod,
     setVerificationMethod,
-    photoEvidence,
     photoBonusEnabled,
     currentPlayerId,
     roomPlayerToken,
@@ -139,8 +138,7 @@ const LobbyPage = () => {
             playerId: currentPlayerId,
             mode,
             verificationMethod,
-            photoEvidence,
-            photoBonusEnabled,
+                    photoBonusEnabled,
             turnDurationSeconds,
             totalRounds,
           }),
@@ -309,7 +307,7 @@ const LobbyPage = () => {
 
               {/* 2. Verification Method Selection */}
               <div>
-                <h3 className="text-base font-bold text-white mb-3">2. Trọng Tài & Chấm Điểm Thử Thách</h3>
+                <h3 className="text-base font-bold text-white mb-3">2. Chấm điểm</h3>
                 <div className="grid gap-3 sm:grid-cols-2">
                   <button
                     type="button"
@@ -325,11 +323,11 @@ const LobbyPage = () => {
                     }`}
                   >
                     <div className="font-bold text-white text-sm flex items-center justify-between">
-                      <span className="flex items-center gap-2">🤖 SNAPDECK AI Judge (Gemini)</span>
+                      <span className="flex items-center gap-2">🤖 AI Gemini</span>
                       {verificationMethod === 'ai' && <CheckCircle2 size={16} className="text-cyan-400" />}
                     </div>
                     <p className="text-xs text-slate-300 mt-1.5 leading-relaxed">
-                      AI tự động quét ảnh, chấm điểm sáng tạo & nhận xét hóm hỉnh. Rất hợp cho cả chơi 1 mình lẫn nhóm bạn!
+                      AI phân tích ảnh và tự động chấm điểm.
                     </p>
                   </button>
 
@@ -347,11 +345,11 @@ const LobbyPage = () => {
                     }`}
                   >
                     <div className="font-bold text-white text-sm flex items-center justify-between">
-                      <span className="flex items-center gap-2">👥 Bình Chọn Nhóm</span>
+                      <span className="flex items-center gap-2">👥 Bình chọn nhóm</span>
                       {verificationMethod === 'group' && <CheckCircle2 size={16} className="text-amber-400" />}
                     </div>
                     <p className="text-xs text-slate-300 mt-1.5 leading-relaxed">
-                      Những người chơi còn lại trên bàn sẽ chấm điểm để quyết định.
+                      Người chơi còn lại cùng bình chọn.
                     </p>
                   </button>
                 </div>

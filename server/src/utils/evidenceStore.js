@@ -17,10 +17,11 @@ export const storeEvidence = (buffer, contentType, metadata) => new Promise((res
   upload.end(buffer);
 });
 
-export const readEvidenceDataUrl = async (fileId, roomCode) => {
+const readDataUrl = async (fileId, metadataFilter) => {
+  if (!fileId) return null;
   const bucket = getBucket();
   const id = new mongoose.mongo.ObjectId(fileId);
-  const file = await bucket.find({ _id: id, 'metadata.roomCode': roomCode }).next();
+  const file = await bucket.find({ _id: id, ...metadataFilter }).next();
   if (!file) return null;
 
   const chunks = [];
@@ -32,6 +33,14 @@ export const readEvidenceDataUrl = async (fileId, roomCode) => {
   });
   return `data:${file.contentType};base64,${Buffer.concat(chunks).toString('base64')}`;
 };
+
+export const readEvidenceDataUrl = (fileId, roomCode) => (
+  readDataUrl(fileId, { 'metadata.roomCode': roomCode })
+);
+
+export const readAccountImageDataUrl = (fileId, accountId) => (
+  readDataUrl(fileId, { 'metadata.accountId': String(accountId) })
+);
 
 export const deleteEvidence = async (fileId) => {
   if (!fileId || !mongoose.connection.db) return;

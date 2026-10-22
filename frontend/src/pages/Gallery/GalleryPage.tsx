@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowLeft, ChevronRight, Copy, Download, Image as ImageIcon, Layers, Share2, Sparkles, X } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import type { GalleryAlbum, GalleryPhoto } from '../../context/GameContext';
 import { useGame } from '../../context/useGame';
-import { playerApiRequest } from '../../services/api';
+import { apiRequest, playerApiRequest } from '../../services/api';
 import { sound } from '../../utils/soundEngine';
 
 // Authentic Vector SVG Brand Logos
@@ -62,14 +62,19 @@ const NativeShareIcon = () => (
 
 const GalleryPage = () => {
   const navigate = useNavigate();
-  const { albums, setAlbums, deviceMode, roomCode, currentPlayerId, roomPlayerToken, theme } = useGame();
+  const location = useLocation();
+  const { albums, deviceMode, roomCode, currentPlayerId, roomPlayerToken, theme } = useGame();
 
   const [selectedAlbum, setSelectedAlbum] = useState<GalleryAlbum | null>(null);
   const [selectedPhoto, setSelectedPhoto] = useState<GalleryPhoto | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [galleryError, setGalleryError] = useState<string | null>(null);
+  const [accountAlbums, setAccountAlbums] = useState<GalleryAlbum[]>([]);
+  const [roomAlbum, setRoomAlbum] = useState<GalleryAlbum | null>(null);
+  const displayAlbums = [...accountAlbums, ...(roomAlbum ? [roomAlbum] : []), ...albums];
 
   useEffect(() => {
+    setRoomAlbum(null);
     if (deviceMode !== 'multi_device' || !currentPlayerId) return;
     let cancelled = false;
     void playerApiRequest<{ success: boolean; data?: GalleryPhoto[] }>(
@@ -87,16 +92,54 @@ const GalleryPage = () => {
         coverImage: photos[0]?.image ?? '',
         photos,
       };
-      setAlbums((previous) => [
-        syncedAlbum,
-        ...previous.filter((album) => album.roomCode !== roomCode),
-      ]);
+      setRoomAlbum(syncedAlbum);
       setGalleryError(null);
     }).catch((error: unknown) => {
       if (!cancelled) setGalleryError(error instanceof Error ? error.message : 'Không thể đồng bộ thư viện phòng.');
     });
     return () => { cancelled = true; };
-  }, [currentPlayerId, deviceMode, roomCode, roomPlayerToken, setAlbums, theme.icon, theme.name]);
+  }, [currentPlayerId, deviceMode, roomCode, roomPlayerToken, theme.icon, theme.name]);
+
+  useEffect(() => {
+    const token = localStorage.getItem('snapdeck-account-token');
+    if (!token) {
+      setAccountAlbums([]);
+      return undefined;
+    }
+    let cancelled = false;
+    void apiRequest<{ success: boolean; data?: Array<{
+      id: string; roomCode: string; title: string; themeName: string; themeIcon: string; date: string;
+      photos: GalleryPhoto[];
+    }> }>('/api/account/albums', {
+      headers: { Authorization: `Bearer ${token}` },
+    }).then((response) => {
+      if (cancelled || !response.success || !response.data) return;
+      setAccountAlbums(response.data.map((album) => ({
+        id: `account-${album.id}`,
+        roomCode: album.roomCode,
+        themeName: album.title || album.themeName,
+        themeIcon: album.themeIcon,
+        date: album.date,
+        coverImage: album.photos[0]?.image ?? '',
+        photos: album.photos.filter((photo) => Boolean(photo.image)),
+      })));
+    }).catch((error: unknown) => {
+      if (!cancelled) setGalleryError(error instanceof Error ? error.message : 'Không thể tải album tài khoản.');
+    });
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    const photoId = new URLSearchParams(location.search).get('photo');
+    if (!photoId) return;
+    const allAlbums = displayAlbums;
+    const matchAlbum = allAlbums.find((album) => album.photos.some((photo) => photo.id === photoId));
+    const matchPhoto = matchAlbum?.photos.find((photo) => photo.id === photoId);
+    if (matchAlbum && matchPhoto) {
+      setSelectedAlbum(matchAlbum);
+      setSelectedPhoto(matchPhoto);
+    }
+  }, [accountAlbums, albums, roomAlbum, location.search]);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -113,17 +156,39 @@ const GalleryPage = () => {
     setSelectedPhoto(photo);
   };
 
+  const handleDownloadPhoto = async (photo: GalleryPhoto) => {
+    sound.playClick();
+    try {
+      const response = await fetch(photo.image);
+      if (!response.ok) throw new Error('Không thể đọc dữ liệu ảnh.');
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = `snapdeck-${photo.cardTitle.trim().replace(/[^a-z0-9À-ỹ-]+/gi, '-').slice(0, 50) || 'anh-ky-niem'}.jpg`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 30_000);
+      showToast('Đã tải ảnh về thiết bị.');
+    } catch {
+      showToast('Không thể tải ảnh này. Hãy thử lại.');
+    }
+  };
+
   // Social Share Handlers
   const handleShareFacebook = (photo: GalleryPhoto) => {
     sound.playClick();
-    const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.origin)}&quote=${encodeURIComponent(`Khoảnh khắc ván chơi SNAPDECK - "${photo.cardTitle}" nhận ${photo.score} điểm!`)}`;
+    const photoUrl = `${window.location.origin}${window.location.pathname}#/gallery?photo=${encodeURIComponent(photo.id)}`;
+    const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(photoUrl)}&quote=${encodeURIComponent(`Khoảnh khắc ván chơi SNAPDECK - "${photo.cardTitle}" nhận ${photo.score} điểm!`)}`;
     window.open(shareUrl, '_blank', 'width=600,height=400');
     showToast('Đã mở cửa sổ chia sẻ lên Facebook!');
   };
 
   const handleShareTwitter = (photo: GalleryPhoto) => {
     sound.playClick();
-    const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(`📸 Khoảnh khắc đỉnh cao tại SNAPDECK! Bài thử thách: "${photo.cardTitle}" nhận ${photo.score} điểm! #SNAPDECK #Phygital`)}&url=${encodeURIComponent(window.location.origin)}`;
+    const photoUrl = `${window.location.origin}${window.location.pathname}#/gallery?photo=${encodeURIComponent(photo.id)}`;
+    const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(`📸 Khoảnh khắc đỉnh cao tại SNAPDECK! Bài thử thách: "${photo.cardTitle}" nhận ${photo.score} điểm! #SNAPDECK #Phygital`)}&url=${encodeURIComponent(photoUrl)}`;
     window.open(shareUrl, '_blank', 'width=600,height=400');
     showToast('Đã mở cửa sổ chia sẻ lên Twitter / X!');
   };
@@ -131,7 +196,7 @@ const GalleryPage = () => {
   const handleShareInstagram = (photo: GalleryPhoto) => {
     sound.playClick();
     handleCopyLink(photo);
-    showToast('📸 Đã tải thẻ HD & sao chép link! Mở Instagram để đăng Story / Bài viết.');
+    showToast('📸 Đã sao chép liên kết. Hãy tải ảnh về máy trước khi đăng lên Instagram.');
   };
 
   const handleShareZalo = (photo: GalleryPhoto) => {
@@ -143,14 +208,13 @@ const GalleryPage = () => {
   const handleShareTikTok = (photo: GalleryPhoto) => {
     sound.playClick();
     handleCopyLink(photo);
-    showToast('🎵 Đã lưu thẻ kỉ niệm! Đăng ngay lên TikTok Story / Video.');
+    showToast('🎵 Đã sao chép liên kết. Hãy tải ảnh về máy trước khi đăng lên TikTok.');
   };
 
   const handleCopyLink = (photo: GalleryPhoto) => {
     sound.playClick();
-    const link = `${window.location.origin}${window.location.pathname}#/gallery?photo=${photo.id}`;
-    navigator.clipboard.writeText(link);
-    showToast('✓ Đã sao chép liên kết ảnh kỉ niệm!');
+    const link = `${window.location.origin}${window.location.pathname}#/gallery?photo=${encodeURIComponent(photo.id)}`;
+    void navigator.clipboard.writeText(link).then(() => showToast('✓ Đã sao chép liên kết ảnh kỉ niệm!')).catch(() => showToast('Trình duyệt không cho sao chép tự động. Hãy thử lại trong trình duyệt chính.'));
   };
 
   const handleNativeShare = async (photo: GalleryPhoto) => {
@@ -160,7 +224,7 @@ const GalleryPage = () => {
         await navigator.share({
           title: `SNAPDECK - ${photo.cardTitle}`,
           text: `Khoảnh khắc kỉ niệm ván chơi SNAPDECK! Điểm thử thách: ${photo.score}`,
-          url: window.location.href,
+          url: `${window.location.origin}${window.location.pathname}#/gallery?photo=${encodeURIComponent(photo.id)}`,
         });
         showToast('Chia sẻ hệ thống thành công!');
       } catch (err) {
@@ -214,13 +278,13 @@ const GalleryPage = () => {
             <div>
               <h1 className="text-3xl font-black text-white sm:text-4xl">Bộ Sưu Tập Album Ván Chơi</h1>
               <p className="mt-1 text-sm text-slate-300">
-                Chọn 1 trong 3 Album ván chơi dưới đây để xem lại danh sách nhiều ảnh chụp kỉ niệm và lưu HD / chia sẻ.
+                Chọn album ván chơi để xem lại ảnh kỷ niệm, tải ảnh hoặc chia sẻ.
               </p>
             </div>
 
-            {/* 3 Distinct Album Cards Grid */}
+            {/* Local albums plus albums saved to the signed-in account */}
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {albums.slice(0, 3).map((album) => (
+              {displayAlbums.filter((album) => album.coverImage).map((album) => (
                 <motion.div
                   key={album.id}
                   whileHover={{ y: -6, scale: 1.02 }}
@@ -291,8 +355,8 @@ const GalleryPage = () => {
                           <div className="absolute top-2 left-2 rounded-full bg-slate-950/80 px-2.5 py-0.5 text-[10px] font-bold text-cyan-300 border border-cyan-400/30">
                             Vòng {photo.round}
                           </div>
-                          <div className="absolute top-2 right-2 rounded-full bg-emerald-500/80 px-2.5 py-0.5 text-[10px] font-black text-slate-950">
-                            {photo.score} điểm
+                          <div className={`absolute top-2 right-2 rounded-full px-2.5 py-0.5 text-[10px] font-black text-slate-950 ${photo.passed === false ? 'bg-rose-400/90' : 'bg-emerald-500/80'}`}>
+                            {photo.passed === false ? 'Chưa đạt' : 'Đạt'} · {photo.score} điểm
                           </div>
                         </div>
 
@@ -420,11 +484,7 @@ const GalleryPage = () => {
                     </button>
 
                     <button
-                      onClick={() => {
-                        sound.playSuccess();
-                        showToast('✓ Đã tải thẻ kỉ niệm HD chất lượng cao!');
-                        setSelectedPhoto(null);
-                      }}
+                      onClick={() => { void handleDownloadPhoto(selectedPhoto); }}
                       className="flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-fuchsia-600 to-pink-600 py-3 text-xs font-bold text-white shadow-xl shadow-fuchsia-500/30 transition hover:scale-102"
                     >
                       <Download size={14} /> Tải Thẻ HD

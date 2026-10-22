@@ -3,6 +3,7 @@ import { ArrowLeft, Crown, PlayCircle, Share2, Trophy } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useGame } from '../../context/useGame';
 import { sound } from '../../utils/soundEngine';
+import EndGameAlbumPrompt from '../../components/gallery/EndGameAlbumPrompt';
 
 const LeaderboardPage = () => {
   const navigate = useNavigate();
@@ -140,6 +141,7 @@ const LeaderboardPage = () => {
           </div>
         </div>
       </div>
+      <EndGameAlbumPrompt />
     </div>
   );
 };

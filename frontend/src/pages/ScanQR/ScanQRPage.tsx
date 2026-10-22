@@ -37,7 +37,6 @@ interface JoinedRoomResponse {
     theme?: string;
     mode?: 'casual' | 'speedrun' | 'spicy';
     verificationMethod?: 'ai' | 'group';
-    photoEvidence?: 'off' | 'optional' | 'required';
     photoBonusEnabled?: boolean;
     currentRound?: number;
     totalRounds?: number;
@@ -111,7 +110,6 @@ const ScanQRPage = () => {
     setRoomPlayerToken,
     setDeviceMode,
     setVerificationMethod,
-    setPhotoEvidence,
     setPhotoBonusEnabled,
     deviceMode,
     currentPlayerId,
@@ -265,23 +263,10 @@ const ScanQRPage = () => {
             navigate('/leaderboard', { replace: true });
           }
         } else if (room.currentTurnIndex !== undefined && room.currentTurnIndex !== entryTurnIndexRef.current) {
-          const resolvedTurn = room.turnHistory?.find((turn) => turn.turnIndex === entryTurnIndexRef.current);
-          await stopScanner('stopped');
-          if (resolvedTurn) {
-            navigate('/result', {
-              replace: true,
-              state: {
-                round: resolvedTurn.round,
-                playerId: resolvedTurn.playerId,
-                passed: resolvedTurn.status === 'completed',
-                timedOut: resolvedTurn.status === 'timed_out',
-                skipped: resolvedTurn.status === 'skipped',
-                score: resolvedTurn.score,
-              },
-            });
-          } else {
-            setErrorMessage('Lượt chơi vừa được chuyển tiếp. Hãy quét khi đến lượt của bạn.');
-            setScanStatus('error');
+          entryTurnIndexRef.current = room.currentTurnIndex;
+          if (room.activePlayerId !== currentPlayerId) {
+            await stopScanner('stopped');
+            navigate('/challenge', { replace: true, state: { round: room.currentRound } });
           }
         }
       } catch (error) {
@@ -483,9 +468,6 @@ const ScanQRPage = () => {
       if (selectedTheme) setTheme(selectedTheme);
       if (room.mode === 'casual' || room.mode === 'speedrun' || room.mode === 'spicy') setGameMode(room.mode);
       if (room.verificationMethod === 'group' || room.verificationMethod === 'ai') setVerificationMethod(room.verificationMethod);
-      if (room.photoEvidence === 'off' || room.photoEvidence === 'optional' || room.photoEvidence === 'required') {
-        setPhotoEvidence(room.photoEvidence);
-      }
       if (typeof room.photoBonusEnabled === 'boolean') setPhotoBonusEnabled(room.photoBonusEnabled);
       if (typeof room.currentRound === 'number') setCurrentRound(room.currentRound);
       setScanStatus('success');

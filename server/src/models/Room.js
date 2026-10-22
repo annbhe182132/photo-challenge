@@ -7,7 +7,6 @@ const roomSchema = new mongoose.Schema(
     mode: { type: String, enum: ['casual', 'speedrun', 'spicy'], default: 'spicy' },
     deviceMode: { type: String, enum: ['single_device', 'multi_device'], default: 'multi_device' },
     verificationMethod: { type: String, enum: ['ai', 'group'], default: 'group' },
-    photoEvidence: { type: String, enum: ['off', 'optional', 'required'], default: 'optional' },
     photoBonusEnabled: { type: Boolean, default: true },
     status: { type: String, enum: ['waiting', 'active', 'completed'], default: 'waiting' },
     currentRound: { type: Number, default: 1 },
