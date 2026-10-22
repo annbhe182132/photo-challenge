@@ -22,14 +22,12 @@ export interface ThemeOption {
 export type GameMode = 'casual' | 'speedrun' | 'spicy';
 export type DeviceMode = 'single_device' | 'multi_device';
 export type VerificationMethod = 'ai' | 'group';
-export type PhotoEvidenceSetting = 'off' | 'optional' | 'required';
 export type TurnDurationSeconds = 0 | 15 | 30 | 60;
 export type RoundLimit = 0 | 3 | 5 | 10;
 
 export interface GameSettings {
   deviceMode: DeviceMode;
   verificationMethod: VerificationMethod;
-  photoEvidence: PhotoEvidenceSetting;
   photoBonusEnabled: boolean;
 }
 
@@ -42,7 +40,6 @@ export interface Punishment {
 
 export const DEFAULT_DEVICE_MODE: DeviceMode = 'single_device';
 export const DEFAULT_VERIFICATION_METHOD: VerificationMethod = 'group';
-export const DEFAULT_PHOTO_EVIDENCE: PhotoEvidenceSetting = 'optional';
 export const DEFAULT_TURN_DURATION: TurnDurationSeconds = 30;
 export const DEFAULT_ROUND_LIMIT: RoundLimit = 5;
 

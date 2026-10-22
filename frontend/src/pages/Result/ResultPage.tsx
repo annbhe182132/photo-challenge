@@ -28,6 +28,8 @@ interface RoomAdvanceResponse {
     currentRound: number;
     totalRounds: number;
     status: 'waiting' | 'active' | 'completed';
+    currentTurnIndex?: number;
+    activePlayerId?: string | null;
   };
 }
 
@@ -45,6 +47,7 @@ const ResultPage = () => {
     roomPlayerToken,
     players,
     currentTurnIndex,
+    activePlayerId,
     gameStatus,
     advanceLocalTurn,
     syncRoom,
@@ -140,7 +143,8 @@ const ResultPage = () => {
     if (advancing) return;
     sound.playClick();
     if (showRoundSummary) {
-      navigate(showFinalSummary ? '/leaderboard' : '/scan', { state: { round: currentRound } });
+      if (showFinalSummary) navigate('/leaderboard');
+      else navigate(deviceMode === 'multi_device' && activePlayerId !== currentPlayerId ? '/challenge' : '/scan', { state: { round: currentRound } });
       return;
     }
     setAdvancing(true);
@@ -180,7 +184,7 @@ const ResultPage = () => {
           return;
         }
       }
-      navigate('/scan', { state: { round: currentRound } });
+      navigate(deviceMode === 'multi_device' && activePlayerId !== currentPlayerId ? '/challenge' : '/scan', { state: { round: currentRound } });
     } catch (error) {
       setProgressError(error instanceof Error ? error.message : 'Không thể tiến sang vòng tiếp theo.');
     } finally {

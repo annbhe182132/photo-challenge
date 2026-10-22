@@ -24,7 +24,6 @@ import { createPlayerToken, hashPlayerToken, verifyPlayerToken } from '../utils/
 
 const validDeviceModes = ['single_device', 'multi_device'];
 const validVerificationMethods = ['ai', 'group'];
-const validPhotoEvidenceModes = ['off', 'optional', 'required'];
 const validGameModes = ['casual', 'speedrun', 'spicy'];
 const turnState = (room) => {
   const turnIndex = Number.isInteger(room.currentTurnIndex) ? room.currentTurnIndex : 0;
@@ -211,6 +210,7 @@ const sanitizeRoom = (room) => {
     totalRounds: data.totalRounds === 24 ? 5 : data.totalRounds ?? 5,
     turnDurationSeconds: isValidTurnDuration(data.turnDurationSeconds) ? data.turnDurationSeconds : 30,
     activePlayerId,
+    serverNow: new Date().toISOString(),
     players: data.players.map(({ authTokenHash, ...player }) => player),
   };
 };
@@ -238,7 +238,7 @@ export const createRoom = async (req, res) => {
   try {
     const {
       roomCode, theme, mode, hostName, deviceMode, verificationMethod,
-      photoEvidence, photoBonusEnabled, turnDurationSeconds, totalRounds,
+      photoBonusEnabled, turnDurationSeconds, totalRounds,
     } = req.body;
     if (turnDurationSeconds !== undefined && !isValidTurnDuration(turnDurationSeconds)) {
       return res.status(400).json({ success: false, message: 'Thời lượng lượt không hợp lệ.' });
@@ -249,15 +249,7 @@ export const createRoom = async (req, res) => {
     const code = normalizeRoomCode(roomCode);
     const chosenDeviceMode = validDeviceModes.includes(deviceMode) ? deviceMode : 'multi_device';
     const chosenVerificationMethod = validVerificationMethods.includes(verificationMethod) ? verificationMethod : 'group';
-    const chosenPhotoEvidence = validPhotoEvidenceModes.includes(photoEvidence) ? photoEvidence : 'optional';
     const chosenMode = validGameModes.includes(mode) ? mode : 'spicy';
-
-    if (chosenVerificationMethod === 'ai') {
-      return res.status(400).json({
-        success: false,
-        message: 'Xác thực AI chưa khả dụng vì chưa có dịch vụ phân tích ảnh thật. Hãy chọn xác thực nhóm.',
-      });
-    }
 
     const hostPlayerId = randomUUID();
     const playerToken = createPlayerToken();
@@ -267,7 +259,6 @@ export const createRoom = async (req, res) => {
       mode: chosenMode,
       deviceMode: chosenDeviceMode,
       verificationMethod: chosenVerificationMethod,
-      photoEvidence: chosenPhotoEvidence,
       photoBonusEnabled: typeof photoBonusEnabled === 'boolean' ? photoBonusEnabled : true,
       turnDurationSeconds: turnDurationSeconds ?? 30,
       totalRounds: totalRounds ?? 5,
@@ -355,24 +346,21 @@ export const startRoom = async (req, res) => {
       return res.status(409).json({ success: false, message: 'Ván chơi đã bắt đầu.' });
     }
     const {
-      theme, mode, verificationMethod, photoEvidence, photoBonusEnabled,
+      theme, mode, verificationMethod, photoBonusEnabled,
       turnDurationSeconds, totalRounds,
     } = req.body;
     const selectedVerification = verificationMethod ?? room.verificationMethod;
-    if (selectedVerification === 'ai' || !validVerificationMethods.includes(selectedVerification)) {
-      return res.status(400).json({ success: false, message: 'AI verification chưa được tích hợp; hãy chọn xác thực nhóm.' });
+    if (!validVerificationMethods.includes(selectedVerification)) {
+      return res.status(400).json({ success: false, message: 'Phương thức xác thực không hợp lệ.' });
     }
-    if (room.players.length < 2 && selectedVerification === 'group') {
-      return res.status(409).json({ success: false, message: 'Xác thực nhóm cần ít nhất 2 người chơi. Hãy thêm người chơi trước khi bắt đầu.' });
+    if (room.deviceMode === 'multi_device' && room.players.length < 2) {
+      return res.status(409).json({ success: false, message: 'Cần ít nhất 2 người chơi trong chế độ nhiều thiết bị. Hãy đợi người chơi khác tham gia trước khi bắt đầu.' });
     }
     if (theme !== undefined && (typeof theme !== 'string' || theme.length > 40)) {
       return res.status(400).json({ success: false, message: 'Chủ đề không hợp lệ.' });
     }
     if (mode !== undefined && !validGameModes.includes(mode)) {
       return res.status(400).json({ success: false, message: 'Chế độ chơi không hợp lệ.' });
-    }
-    if (photoEvidence !== undefined && !validPhotoEvidenceModes.includes(photoEvidence)) {
-      return res.status(400).json({ success: false, message: 'Cấu hình ảnh bằng chứng không hợp lệ.' });
     }
     if (photoBonusEnabled !== undefined && typeof photoBonusEnabled !== 'boolean') {
       return res.status(400).json({ success: false, message: 'Cấu hình thưởng ảnh không hợp lệ.' });
@@ -388,7 +376,6 @@ export const startRoom = async (req, res) => {
     if (theme !== undefined) room.theme = theme;
     if (mode !== undefined) room.mode = mode;
     room.verificationMethod = selectedVerification;
-    if (photoEvidence !== undefined) room.photoEvidence = photoEvidence;
     if (photoBonusEnabled !== undefined) room.photoBonusEnabled = photoBonusEnabled;
     room.turnDurationSeconds = turnDurationSeconds ?? room.turnDurationSeconds ?? 30;
     room.totalRounds = totalRounds ?? (room.totalRounds === 24 ? 5 : room.totalRounds ?? 5);
@@ -521,6 +508,13 @@ export const pauseRoomTurn = async (req, res) => {
     const current = turnState(room);
     if (room.status !== 'active' || requestedTurnIndex !== current.turnIndex || current.activePlayerId !== playerId) {
       return res.status(409).json({ success: false, message: 'Lượt chơi đã thay đổi; đồng bộ phòng trước khi tạm dừng.' });
+    }
+
+    // Once a submission exists, the timed action is over; validation must not keep or pause the camera timer.
+    if (room.activeSubmissionId || await Submission.exists({
+      roomCode, turnIndex: requestedTurnIndex, playerId, status: 'pending',
+    })) {
+      return res.json({ success: true, data: sanitizeRoom(room) });
     }
 
     // With a disabled timer, there is no countdown to pause. Keep turnStartedAt so submissions remain valid.
@@ -658,11 +652,8 @@ export const createSubmission = async (req, res) => {
     if (evidence != null && !parsedEvidence) {
       return res.status(400).json({ success: false, message: 'Ảnh phải là JPEG, PNG hoặc WebP hợp lệ và không lớn hơn 1 MiB.' });
     }
-    if (room.photoEvidence === 'required' && !parsedEvidence) {
-      return res.status(400).json({ success: false, message: 'Cần chụp hoặc tải ảnh bằng chứng trước khi gửi thử thách.' });
-    }
-    if (room.photoEvidence === 'off' && parsedEvidence) {
-      return res.status(400).json({ success: false, message: 'Phòng này đã tắt ảnh bằng chứng.' });
+    if (room.verificationMethod === 'ai' && !parsedEvidence) {
+      return res.status(400).json({ success: false, message: 'Xác thực AI yêu cầu ảnh bằng chứng. Hãy chụp ảnh trước khi gửi thử thách.' });
     }
 
     const isAi = room.verificationMethod === 'ai';
@@ -675,7 +666,7 @@ export const createSubmission = async (req, res) => {
         message: 'Xác thực nhóm cần người đánh giá khác. Thêm người chơi; không thể tự duyệt thử thách.',
       });
     }
-    if (parsedEvidence && room.photoEvidence !== 'off') {
+    if (parsedEvidence) {
       storedEvidenceId = await storeEvidence(parsedEvidence.buffer, parsedEvidence.contentType, {
         roomCode,
         playerId,
@@ -700,7 +691,12 @@ export const createSubmission = async (req, res) => {
           },
           {
             $addToSet: { usedCardCodes: cardCode },
-            $set: { activeSubmissionId: submissionId },
+            $set: {
+              activeSubmissionId: submissionId,
+              turnStartedAt: null,
+              turnDeadline: null,
+              turnRemainingSeconds: null,
+            },
           },
           { session }
         );
@@ -899,7 +895,6 @@ export const voteOnSubmission = async (req, res) => {
       if (decision === 'approved') {
         const scoreBreakdown = buildApprovedScore({
           photoBonusEnabled: room.photoBonusEnabled,
-          photoEvidence: room.photoEvidence,
           hasEvidence: votedSubmission.hasEvidence,
         });
         update.status = 'approved';
@@ -971,18 +966,21 @@ export const getRoomGallery = async (req, res) => {
     if (!authenticatePlayer(room, req.query.playerId, req.get('x-player-token'))) {
       return res.status(403).json({ success: false, message: 'Phiên người chơi không hợp lệ. Hãy tham gia lại phòng.' });
     }
-    const approved = await Submission.find({ roomCode, status: 'approved', hasEvidence: true })
+    const finished = await Submission.find({ roomCode, status: { $in: ['approved', 'rejected'] }, hasEvidence: true })
       .select('+evidenceFileId')
       .sort({ decisionAt: -1 })
       .lean();
-    const data = await Promise.all(approved.map(async (submission) => ({
+    const dataWithImages = await Promise.all(finished.map(async (submission) => ({
       id: String(submission._id),
       round: submission.round,
       image: await readEvidenceDataUrl(submission.evidenceFileId, roomCode),
       cardTitle: submission.cardTitle,
       score: submission.scoreBreakdown.total,
       mission: submission.mission,
+      passed: submission.status === 'approved',
+      playerName: room.players.find((player) => player.id === submission.playerId)?.name ?? 'Người chơi',
     })));
+    const data = dataWithImages.filter((photo) => Boolean(photo.image));
     res.json({ success: true, data });
   } catch (error) {
     sendError(res, error);

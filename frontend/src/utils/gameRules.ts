@@ -78,9 +78,8 @@ export const buildScoreBreakdown = ({
 
 export const buildApprovedScore = (
   photoBonusEnabled: boolean,
-  photoEvidence: 'off' | 'optional' | 'required',
   hasEvidence: boolean,
 ): ScoreBreakdown => buildScoreBreakdown({
   basePoints: 100,
-  photoBonus: photoBonusEnabled && photoEvidence !== 'off' && hasEvidence ? 20 : 0,
+  photoBonus: photoBonusEnabled && hasEvidence ? 20 : 0,
 });

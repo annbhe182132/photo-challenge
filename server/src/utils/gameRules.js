@@ -132,9 +132,9 @@ export const buildScoreBreakdown = ({
   };
 };
 
-export const buildApprovedScore = ({ photoBonusEnabled, photoEvidence, hasEvidence }) => (
+export const buildApprovedScore = ({ photoBonusEnabled, hasEvidence }) => (
   buildScoreBreakdown({
     basePoints: 100,
-    photoBonus: photoBonusEnabled && photoEvidence !== 'off' && hasEvidence ? 20 : 0,
+    photoBonus: photoBonusEnabled && hasEvidence ? 20 : 0,
   })
 );

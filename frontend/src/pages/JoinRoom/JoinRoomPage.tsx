@@ -24,7 +24,6 @@ export default function JoinRoomPage() {
     mode,
     deviceMode,
     verificationMethod,
-    photoEvidence,
     photoBonusEnabled,
     setRoomCode,
     setPlayers,
@@ -46,8 +45,7 @@ export default function JoinRoomPage() {
           mode,
           deviceMode,
           verificationMethod,
-          photoEvidence,
-          photoBonusEnabled,
+                photoBonusEnabled,
           hostName: 'Host',
         }),
       });

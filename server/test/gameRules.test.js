@@ -80,18 +80,11 @@ test('player tokens authenticate only the player who holds the secret', () => {
   assert.equal(verifyPlayerToken(undefined, storedHash), false);
 });
 
-test('photo bonus follows off, optional, and required evidence rules', () => {
-  const score = (photoEvidence, hasEvidence, photoBonusEnabled = true) => buildApprovedScore({
-    photoBonusEnabled,
-    photoEvidence,
-    hasEvidence,
-  });
-
-  assert.equal(score('off', true).total, 100);
-  assert.equal(score('optional', false).total, 100);
-  assert.equal(score('optional', true).total, 120);
-  assert.equal(score('required', true).total, 120);
-  assert.equal(score('required', true, false).total, 100);
+test('photo bonus depends only on the enabled bonus and an actual evidence photo', () => {
+  const score = (hasEvidence, photoBonusEnabled = true) => buildApprovedScore({ photoBonusEnabled, hasEvidence });
+  assert.equal(score(false).total, 100);
+  assert.equal(score(true).total, 120);
+  assert.equal(score(true, false).total, 100);
 });
 
 test('turn timer and round presets accept only supported choices including unlimited', () => {
