@@ -23,7 +23,7 @@ export type GameMode = 'casual' | 'speedrun' | 'spicy';
 export type DeviceMode = 'single_device' | 'multi_device';
 export type VerificationMethod = 'ai' | 'group';
 export type TurnDurationSeconds = 0 | 15 | 30 | 60;
-export type RoundLimit = 0 | 3 | 5 | 10;
+export type RoundLimit = 0 | 1 | 3 | 5 | 10;
 
 export interface GameSettings {
   deviceMode: DeviceMode;
@@ -41,7 +41,7 @@ export interface Punishment {
 export const DEFAULT_DEVICE_MODE: DeviceMode = 'single_device';
 export const DEFAULT_VERIFICATION_METHOD: VerificationMethod = 'group';
 export const DEFAULT_TURN_DURATION: TurnDurationSeconds = 30;
-export const DEFAULT_ROUND_LIMIT: RoundLimit = 5;
+export const DEFAULT_ROUND_LIMIT: RoundLimit = 1;
 
 export const THEMES: ThemeOption[] = [
   { id: 'pose', name: 'Solo Pose & Style', icon: '📸', description: 'Thể hiện thần thái và tạo dáng trước ống kính', color: 'from-rose-500 to-pink-600' },
@@ -340,7 +340,4 @@ export interface Player {
 
 export const INITIAL_PLAYERS: Player[] = [
   { id: 'p1', name: 'Alex Nguyễn', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80', score: 140, streak: 3, badges: ['👑 MVP', '📸 Photo Master'] },
-  { id: 'p2', name: 'Minh Anh', avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80', score: 115, streak: 2, badges: ['⚡ Speedster'] },
-  { id: 'p3', name: 'Trần Gia Bảo', avatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop&q=80', score: 95, streak: 1, badges: ['😜 Meme God'] },
-  { id: 'p4', name: 'Hoàng Yến', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80', score: 80, streak: 0, badges: ['🔥 Party Animal'] },
 ];

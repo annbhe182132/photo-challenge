@@ -1,5 +1,5 @@
 export const TURN_DURATIONS = [0, 15, 30, 60];
-export const ROUND_LIMITS = [0, 3, 5, 10];
+export const ROUND_LIMITS = [0, 1, 3, 5, 10];
 
 export const isValidTurnDuration = (seconds) => TURN_DURATIONS.includes(seconds);
 export const isValidRoundLimit = (rounds) => ROUND_LIMITS.includes(rounds);

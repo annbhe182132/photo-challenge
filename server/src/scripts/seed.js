@@ -55,7 +55,7 @@ const seedDatabase = async () => {
       console.log(`✓ Đã nạp ${dbData.cards.length} thẻ bài vật lý SNAPDECK!`);
     }
 
-    // 3. Missions (96 nhiệm vụ biến thể)
+    // 3. Missions (97 nhiệm vụ biến thể)
     if (Array.isArray(dbData.missions) && dbData.missions.length > 0) {
       await Mission.insertMany(dbData.missions);
       console.log(`✓ Đã nạp ${dbData.missions.length} nhiệm vụ AI tương ứng!`);

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Sparkles, Hand } from 'lucide-react';
 import { sound } from '../utils/soundEngine';
@@ -41,6 +41,20 @@ interface ThemeCardsShowcaseProps { isLight?: boolean; }
 
 export const ThemeCardsShowcase: React.FC<ThemeCardsShowcaseProps> = ({ isLight = false }) => {
   const [flippedCards, setFlippedCards] = useState<Record<string, boolean>>({});
+  const [canHover, setCanHover] = useState(() => (
+    typeof window !== 'undefined'
+    && window.matchMedia('(hover: hover) and (pointer: fine)').matches
+  ));
+
+  useEffect(() => {
+    // Chỉ kích hoạt hiệu ứng hover nếu thiết bị có chuột (pointer fine), vô hiệu hóa trên màn hình cảm ứng để vuốt siêu mượt
+    if (typeof window !== 'undefined') {
+      const mediaQuery = window.matchMedia('(hover: hover) and (pointer: fine)');
+      const handler = (e: MediaQueryListEvent) => setCanHover(e.matches);
+      mediaQuery.addEventListener('change', handler);
+      return () => mediaQuery.removeEventListener('change', handler);
+    }
+  }, []);
 
   const toggleFlip = (cardId: string) => {
     try { sound.playCardFlip(); } catch { /* safe fallback */ }
@@ -49,8 +63,9 @@ export const ThemeCardsShowcase: React.FC<ThemeCardsShowcaseProps> = ({ isLight 
 
   return (
     <section id="card-themes" className="relative py-16 sm:py-24">
+      {/* Background glow tối ưu kích thước cho mobile */}
       <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-        <div className={`absolute top-1/4 left-1/2 -translate-x-1/2 h-[500px] w-[1000px] rounded-full blur-3xl opacity-25 ${isLight ? 'bg-gradient-to-r from-amber-200 via-sky-200 to-rose-200' : 'bg-gradient-to-r from-amber-600/30 via-cyan-600/20 to-fuchsia-600/30'}`} />
+        <div className={`absolute top-1/4 left-1/2 -translate-x-1/2 h-[320px] sm:h-[500px] w-[320px] sm:w-[700px] lg:w-[1000px] rounded-full blur-2xl sm:blur-3xl opacity-20 sm:opacity-25 ${isLight ? 'bg-gradient-to-r from-amber-200 via-sky-200 to-rose-200' : 'bg-gradient-to-r from-amber-600/30 via-cyan-600/20 to-fuchsia-600/30'}`} />
       </div>
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -58,7 +73,7 @@ export const ThemeCardsShowcase: React.FC<ThemeCardsShowcaseProps> = ({ isLight 
           <div className="flex justify-center">
             <span className={`inline-flex items-center gap-2 rounded-full px-5 py-2 text-xs sm:text-sm font-bold uppercase tracking-widest backdrop-blur-xl ${isLight ? 'border border-amber-300 bg-amber-50 text-amber-800 shadow-sm' : 'border border-amber-500/30 bg-amber-500/10 text-amber-300 shadow-[0_0_20px_rgba(245,158,11,0.2)]'}`}>
               <Sparkles className="h-4 w-4 text-amber-400 animate-spin-slow" />
-              Bo Bai Vat Ly SNAPDECK � 6 Chu De Chinh
+              Bộ Bài Vật Lý SNAPDECK — 6 Chủ Đề Chính
             </span>
           </div>
           <h2 className={`text-3xl font-black sm:text-4xl lg:text-5xl tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
@@ -79,21 +94,74 @@ export const ThemeCardsShowcase: React.FC<ThemeCardsShowcaseProps> = ({ isLight 
           {PHYSICAL_CARDS.map((card, index) => {
             const isFlipped = !!flippedCards[card.id];
             return (
-              <motion.div key={card.id} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.15 }} transition={{ duration: 0.5, delay: index * 0.08 }} className="flex justify-center">
-                <div className="w-full max-w-[340px] sm:max-w-[360px] aspect-[486/758] select-none cursor-pointer" style={{ perspective: '1400px' }} onClick={() => toggleFlip(card.id)}>
+              <motion.div
+                key={card.id}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.15 }}
+                transition={{ duration: 0.45, delay: index * 0.06 }}
+                className="flex justify-center"
+              >
+                <div
+                  className="w-full max-w-[340px] sm:max-w-[360px] aspect-[486/758] select-none cursor-pointer touch-pan-y"
+                  style={{ perspective: '1200px' }}
+                  onClick={() => toggleFlip(card.id)}
+                >
                   <motion.div
                     animate={{ rotateY: isFlipped ? 180 : 0 }}
-                    transition={{ duration: 0.72, ease: [0.25, 0.46, 0.45, 0.94] }}
-                    whileHover={{ scale: 1.04, y: -10 }}
-                    whileTap={{ scale: 0.97 }}
-                    style={{ transformStyle: 'preserve-3d', position: 'relative', width: '100%', height: '100%', willChange: 'transform' }}
+                    transition={{ duration: 0.58, ease: [0.22, 1, 0.36, 1] }}
+                    whileHover={canHover ? { scale: 1.035, y: -8 } : undefined}
+                    whileTap={{ scale: 0.98 }}
+                    style={{
+                      transformStyle: 'preserve-3d',
+                      position: 'relative',
+                      width: '100%',
+                      height: '100%'
+                    }}
                   >
-                    <div style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden', position: 'absolute', inset: 0, boxShadow: `0 20px 50px -10px ${card.glowColor}, 0 0 0 1px rgba(255,255,255,0.18) inset` }} className="rounded-[1.75rem] overflow-hidden border-[3px] border-white/20 bg-slate-900">
-                      <img src={card.frontImage} alt={card.themeName} className="w-full h-full object-cover rounded-[1.6rem] block pointer-events-none select-none" loading="lazy" draggable={false} />
+                    {/* Mặt trước */}
+                    <div
+                      style={{
+                        backfaceVisibility: 'hidden',
+                        WebkitBackfaceVisibility: 'hidden',
+                        position: 'absolute',
+                        inset: 0,
+                        boxShadow: `0 14px 32px -6px ${card.glowColor}, 0 0 0 1px rgba(255,255,255,0.18) inset`,
+                        transform: 'translateZ(0)'
+                      }}
+                      className="rounded-[1.75rem] overflow-hidden border-[3px] border-white/20 bg-slate-900"
+                    >
+                      <img
+                        src={card.frontImage}
+                        alt={card.themeName}
+                        className="w-full h-full object-cover rounded-[1.6rem] block pointer-events-none select-none"
+                        loading="lazy"
+                        decoding="async"
+                        draggable={false}
+                      />
                       <div className="absolute inset-0 rounded-[1.6rem] bg-gradient-to-tr from-transparent via-white/[0.07] to-transparent pointer-events-none" />
                     </div>
-                    <div style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden', transform: 'rotateY(180deg)', position: 'absolute', inset: 0, boxShadow: `0 20px 50px -10px ${card.glowColor}, 0 0 0 1px rgba(255,255,255,0.18) inset` }} className="rounded-[1.75rem] overflow-hidden border-[3px] border-white/20 bg-slate-950">
-                      <img src={card.backImage} alt={`Mặt sau lá bài ${card.themeName}`} className="w-full h-full object-cover rounded-[1.6rem] block pointer-events-none select-none" loading="lazy" draggable={false} />
+
+                    {/* Mặt sau */}
+                    <div
+                      style={{
+                        backfaceVisibility: 'hidden',
+                        WebkitBackfaceVisibility: 'hidden',
+                        transform: 'rotateY(180deg) translateZ(0)',
+                        position: 'absolute',
+                        inset: 0,
+                        boxShadow: `0 14px 32px -6px ${card.glowColor}, 0 0 0 1px rgba(255,255,255,0.18) inset`
+                      }}
+                      className="rounded-[1.75rem] overflow-hidden border-[3px] border-white/20 bg-slate-950"
+                    >
+                      <img
+                        src={card.backImage}
+                        alt={`Mặt sau lá bài ${card.themeName}`}
+                        className="w-full h-full object-cover rounded-[1.6rem] block pointer-events-none select-none"
+                        loading="lazy"
+                        decoding="async"
+                        draggable={false}
+                      />
                       <div className="absolute inset-0 rounded-[1.6rem] bg-gradient-to-tr from-transparent via-white/[0.07] to-transparent pointer-events-none" />
                     </div>
                   </motion.div>
@@ -106,5 +174,4 @@ export const ThemeCardsShowcase: React.FC<ThemeCardsShowcaseProps> = ({ isLight 
     </section>
   );
 };
-
 export default ThemeCardsShowcase;

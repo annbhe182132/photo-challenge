@@ -90,8 +90,8 @@ test('photo bonus depends only on the enabled bonus and an actual evidence photo
 test('turn timer and round presets accept only supported choices including unlimited', () => {
   for (const seconds of [0, 15, 30, 60]) assert.equal(isValidTurnDuration(seconds), true);
   for (const seconds of [-1, 10, 45, '30']) assert.equal(isValidTurnDuration(seconds), false);
-  for (const rounds of [0, 3, 5, 10]) assert.equal(isValidRoundLimit(rounds), true);
-  for (const rounds of [1, 4, 24, '5']) assert.equal(isValidRoundLimit(rounds), false);
+  for (const rounds of [0, 1, 3, 5, 10]) assert.equal(isValidRoundLimit(rounds), true);
+  for (const rounds of [2, 4, 24, '5']) assert.equal(isValidRoundLimit(rounds), false);
 });
 
 test('round-robin turn order gives every player one turn before repeating', () => {

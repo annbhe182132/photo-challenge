@@ -16,11 +16,23 @@ import {
   Users,
   Volume2,
   VolumeX,
-  Zap,
+  Lightbulb,
 } from 'lucide-react';
 import { useGame } from '../../context/useGame';
+import { apiRequest } from '../../services/api';
+import type { Player } from '../../data/gameData';
 import { sound } from '../../utils/soundEngine';
 import ThemeToggle from '../../components/ThemeToggle';
+
+interface CreatedRoomResponse {
+  success: boolean;
+  data?: {
+    roomCode?: string;
+    players?: Player[];
+  };
+  playerToken?: string;
+  message?: string;
+}
 
 interface StepDetail {
   number: string;
@@ -165,21 +177,97 @@ const stepsData: StepDetail[] = [
 
 const HowToPlayPage = () => {
   const navigate = useNavigate();
-  const { soundEnabled, toggleSound, setDeviceMode, themeMode } = useGame();
+  const {
+    soundEnabled,
+    toggleSound,
+    setDeviceMode,
+    themeMode,
+    theme,
+    mode,
+    photoBonusEnabled,
+    turnDurationSeconds,
+    totalRounds,
+    setRoomCode,
+    setPlayers,
+    setCurrentPlayerId,
+    setRoomPlayerToken,
+    setCurrentRound,
+    setTotalRounds,
+    beginLocalGame,
+  } = useGame();
   const isLight = themeMode === 'light';
   const [activeTab, setActiveTab] = useState<'single' | 'multi'>('multi');
+  const [isCreatingRoom, setIsCreatingRoom] = useState(false);
+  const [roomError, setRoomError] = useState<string | null>(null);
 
-  const handleStartGame = (mode: 'single_device' | 'multi_device') => {
+  const handleStartGame = async (selectedMode: 'single_device' | 'multi_device') => {
+    if (isCreatingRoom) return;
     sound.playClick();
-    setDeviceMode(mode);
-    navigate('/');
+    setDeviceMode(selectedMode);
+    setRoomError(null);
+
+    if (selectedMode === 'single_device') {
+      const localRoomCode = `LOCAL-${Date.now().toString().slice(-6)}`;
+      const localPlayers = [
+        { id: 'player-1', name: 'Người chơi 1', avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=player-1', score: 0, streak: 0, badges: ['🏠 Local'] },
+      ];
+      setRoomCode(localRoomCode);
+      beginLocalGame();
+      setPlayers(localPlayers);
+      setCurrentPlayerId(null);
+      setRoomPlayerToken(null);
+      setCurrentRound(1);
+      setTotalRounds(totalRounds);
+      sound.playSuccess();
+      navigate('/lobby', { state: { isHost: true, deviceMode: 'single_device' } });
+      return;
+    }
+
+    setIsCreatingRoom(true);
+    try {
+      const response = await apiRequest<CreatedRoomResponse>('/api/rooms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          theme: theme.id,
+          mode,
+          deviceMode: 'multi_device',
+          verificationMethod: 'ai',
+          photoBonusEnabled,
+          turnDurationSeconds,
+          totalRounds,
+          hostName: 'Host',
+        }),
+      });
+      if (
+        response.success !== true ||
+        !response.data?.roomCode ||
+        !Array.isArray(response.data.players) ||
+        typeof response.playerToken !== 'string'
+      ) {
+        throw new Error(response.message || 'Máy chủ không xác nhận được phòng mới.');
+      }
+      setRoomCode(response.data.roomCode);
+      setPlayers(response.data.players);
+      setCurrentPlayerId(response.data.players[0]?.id ?? null);
+      setRoomPlayerToken(response.playerToken);
+      setCurrentRound(1);
+      sound.playSuccess();
+      navigate('/lobby', { state: { isHost: true } });
+    } catch (error) {
+      setRoomError(
+        error instanceof Error
+          ? error.message
+          : 'Không thể tạo phòng chơi. Vui lòng kiểm tra kết nối và thử lại.'
+      );
+    } finally {
+      setIsCreatingRoom(false);
+    }
   };
 
   return (
     <div className={`min-h-screen transition-colors duration-300 ${
-      isLight
-        ? 'text-slate-900'
-        : 'bg-[radial-gradient(circle_at_top_left,_rgba(7,89,133,0.35),_transparent_40%),linear-gradient(135deg,_#030712_0%,_#0f172a_45%,_#111827_100%)] text-slate-100'
+      isLight ? 'text-slate-900' : 'text-slate-100'
     }`}>
       {/* Header */}
       <header className={`sticky top-0 z-40 border-b px-4 py-3.5 backdrop-blur-xl sm:px-8 ${
@@ -257,8 +345,8 @@ const HowToPlayPage = () => {
             ? 'border-sky-300 bg-sky-50 text-sky-700'
             : 'border-cyan-400/40 bg-cyan-500/10 text-cyan-300'
         }`}>
-          <Zap className="h-4 w-4 text-amber-500 animate-bounce" />
-          Cẩm Nang Hướng Dẫn Cách Chơi Phygital
+          <Lightbulb className="h-4 w-4 text-amber-500 animate-pulse" />
+          Hiểu cách chơi trong 30 giây
         </div>
 
         <h1 className={`mt-4 text-3xl font-black tracking-tight sm:text-5xl lg:text-6xl ${
@@ -271,6 +359,41 @@ const HowToPlayPage = () => {
         }`}>
           Trò chơi tiệc tùng kết hợp hoàn hảo giữa <strong className={isLight ? 'text-slate-900' : 'text-white'}>24 Thẻ bài vật lý cầm tay</strong> và <strong className={isLight ? 'text-sky-700 font-bold' : 'text-cyan-300'}>Trợ lý ảo AI Vision</strong> trên điện thoại. Không cần tải app, mở trình duyệt là bắt đầu ngay!
         </p>
+
+        <div className={`mx-auto mt-7 max-w-4xl overflow-hidden rounded-3xl border p-4 text-left shadow-xl sm:p-5 ${
+          isLight
+            ? 'border-amber-200 bg-gradient-to-br from-amber-50 via-white to-sky-50 text-slate-900 shadow-amber-500/10'
+            : 'border-amber-400/25 bg-gradient-to-br from-amber-500/10 via-slate-900/90 to-cyan-500/10 text-white'
+        }`}>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-400 text-sm font-black text-slate-950">30s</span>
+              <div>
+                <p className="text-sm font-black">Ví dụ trọn vẹn một lượt của Linh</p>
+                <p className={`text-xs ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>Cần bộ bài SNAPDECK thật và điện thoại có camera.</p>
+              </div>
+            </div>
+            <span className={`rounded-full border px-3 py-1 text-[11px] font-bold ${
+              isLight ? 'border-amber-300 bg-white text-amber-800' : 'border-amber-400/30 bg-amber-500/10 text-amber-200'
+            }`}>Lá SD-CARD-007</span>
+          </div>
+          <div className="mt-4 grid gap-2 sm:grid-cols-4">
+            {[
+              ['1', 'Rút & quét', 'Linh rút lá 07 rồi quét QR in trên lá.'],
+              ['2', 'Nhận nhiệm vụ', 'Màn hình hiện: tạo dáng runway cùng một bạn.'],
+              ['3', 'Chụp bằng chứng', 'Linh và Mai vào khung hình, chụp trước khi hết 24 giây.'],
+              ['4', 'Nhận kết quả', 'AI chấm khớp 92% → đạt, cộng XP và lưu ảnh.'],
+            ].map(([number, title, description]) => (
+              <div key={number} className={`rounded-2xl border p-3 ${
+                isLight ? 'border-slate-200 bg-white/90' : 'border-white/10 bg-slate-950/50'
+              }`}>
+                <span className="text-xs font-black text-amber-500">0{number}</span>
+                <p className="mt-1 text-xs font-black">{title}</p>
+                <p className={`mt-1 text-[11px] leading-relaxed ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>{description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
 
         {/* Quick Specs */}
         <div className="mx-auto mt-8 grid max-w-3xl grid-cols-2 gap-3 sm:grid-cols-4">
@@ -488,6 +611,62 @@ const HowToPlayPage = () => {
         </div>
       </section>
 
+      {/* Game rules and recovery paths */}
+      <section className="mx-auto max-w-6xl px-4 pb-4 pt-4 sm:px-6 sm:pb-10">
+        <div className={`rounded-[2rem] border p-5 sm:p-8 ${
+          isLight ? 'border-sky-200 bg-white/90 shadow-lg shadow-sky-950/5' : 'border-cyan-400/20 bg-slate-900/70'
+        }`}>
+          <div className="text-center">
+            <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-bold ${
+              isLight ? 'bg-sky-100 text-sky-800' : 'bg-cyan-500/10 text-cyan-300'
+            }`}>
+              <ShieldCheck className="h-3.5 w-3.5" /> LUẬT NHANH CẦN BIẾT
+            </span>
+            <h2 className={`mt-3 text-2xl font-black sm:text-3xl ${isLight ? 'text-slate-900' : 'text-white'}`}>
+              Tính điểm, kết thúc ván và khi AI chưa nhận diện được
+            </h2>
+          </div>
+          <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              {
+                icon: Sparkles,
+                title: 'Khi nào được điểm?',
+                desc: 'AI đạt từ 50% trở lên, hoặc lượt được nhóm duyệt. Điểm kết quả gồm điểm cơ bản và các thưởng hợp lệ.',
+              },
+              {
+                icon: Camera,
+                title: 'Ảnh thưởng thế nào?',
+                desc: 'Khi bật Thưởng ảnh và có ảnh bằng chứng hợp lệ, điểm thưởng ảnh được cộng vào tổng XP.',
+              },
+              {
+                icon: Crown,
+                title: 'Khi nào hết ván?',
+                desc: 'Mỗi người hoàn thành đủ lượt của số vòng đã chọn thì hệ thống mở bảng xếp hạng. Chế độ không giới hạn do nhóm tự dừng.',
+              },
+              {
+                icon: Brain,
+                title: 'AI chưa nhận diện?',
+                desc: 'Giữ ảnh rõ, đủ sáng và chụp lại nếu cần rồi thử lại. Chơi một máy có thể chuyển sang bình chọn nhóm; nhiều máy cần AI xác minh.',
+              },
+            ].map((rule) => {
+              const Icon = rule.icon;
+              return (
+                <div key={rule.title} className={`rounded-2xl border p-4 ${
+                  isLight ? 'border-slate-200 bg-slate-50' : 'border-white/10 bg-slate-950/40'
+                }`}>
+                  <Icon className={`h-5 w-5 ${isLight ? 'text-sky-600' : 'text-cyan-300'}`} />
+                  <h3 className={`mt-3 text-sm font-black ${isLight ? 'text-slate-900' : 'text-white'}`}>{rule.title}</h3>
+                  <p className={`mt-1 text-xs leading-relaxed ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>{rule.desc}</p>
+                </div>
+              );
+            })}
+          </div>
+          <p className={`mt-4 text-center text-xs ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>
+            Không đạt, hết giờ hoặc bỏ lượt sẽ không bị trừ XP; nhóm chỉ thực hiện hình phạt vui nếu đã chọn chế độ Spicy.
+          </p>
+        </div>
+      </section>
+
       {/* Penalty Wheel Spotlight */}
       <section className="mx-auto max-w-5xl px-4 py-16 sm:px-6">
         <div className={`relative overflow-hidden rounded-[2.5rem] border p-8 sm:p-12 shadow-2xl backdrop-blur-xl ${
@@ -579,19 +758,21 @@ const HowToPlayPage = () => {
           </p>
           <div className="flex flex-wrap items-center justify-center gap-4">
             <button
-              onClick={() => handleStartGame('multi_device')}
-              className={`inline-flex items-center gap-2 rounded-2xl px-7 py-3.5 text-sm font-bold text-white transition hover:scale-105 ${
+              onClick={() => { void handleStartGame('multi_device'); }}
+              disabled={isCreatingRoom}
+              className={`inline-flex items-center gap-2 rounded-2xl px-7 py-3.5 text-sm font-bold text-white transition hover:scale-105 disabled:cursor-wait disabled:opacity-70 ${
                 isLight
                   ? 'btn-blue-gradient shadow-xl shadow-sky-500/25'
                   : 'bg-gradient-to-r from-violet-600 via-fuchsia-500 to-cyan-500 shadow-xl shadow-cyan-500/25'
               }`}
             >
               <PlayCircle className="h-5 w-5" />
-              <span>Tạo phòng Multi-device (Có AI)</span>
+              <span>{isCreatingRoom ? 'Đang tạo phòng...' : 'Tạo phòng Multi-device (Có AI)'}</span>
             </button>
             <button
-              onClick={() => handleStartGame('single_device')}
-              className={`inline-flex items-center gap-2 rounded-2xl border px-6 py-3.5 text-sm font-bold backdrop-blur-xl transition hover:scale-105 ${
+              onClick={() => { void handleStartGame('single_device'); }}
+              disabled={isCreatingRoom}
+              className={`inline-flex items-center gap-2 rounded-2xl border px-6 py-3.5 text-sm font-bold backdrop-blur-xl transition hover:scale-105 disabled:opacity-70 ${
                 isLight
                   ? 'border-slate-300 bg-white text-slate-800 shadow-sm hover:bg-slate-50'
                   : 'border-white/20 bg-white/10 text-white hover:bg-white/20'
@@ -601,6 +782,11 @@ const HowToPlayPage = () => {
               <span>Chơi chung 1 máy (Single)</span>
             </button>
           </div>
+          {roomError && (
+            <p role="alert" className="mx-auto max-w-xl rounded-xl border border-red-400/40 bg-red-500/10 px-4 py-3 text-center text-xs sm:text-sm font-semibold text-red-300">
+              {roomError}
+            </p>
+          )}
         </div>
       </footer>
     </div>

@@ -10,7 +10,7 @@ const roomSchema = new mongoose.Schema(
     photoBonusEnabled: { type: Boolean, default: true },
     status: { type: String, enum: ['waiting', 'active', 'completed'], default: 'waiting' },
     currentRound: { type: Number, default: 1 },
-    totalRounds: { type: Number, default: 5, enum: [0, 3, 5, 10] },
+    totalRounds: { type: Number, default: 1, enum: [0, 1, 3, 5, 10] },
     turnDurationSeconds: { type: Number, default: 30, enum: [0, 15, 30, 60] },
     currentTurnIndex: { type: Number, default: 0, min: 0 },
     activePlayerId: { type: String, default: null },

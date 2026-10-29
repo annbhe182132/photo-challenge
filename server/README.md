@@ -23,7 +23,7 @@ Chỉ cần chạy lệnh seed sau khi máy bạn đã bật MongoDB:
 ```bash
 npm run seed
 ```
-> Lệnh này sẽ tự động đọc file `snapdeck_seed_data.json` ở thư mục gốc và nạp 24 thẻ bài SNAPDECK, 6 themes, 96 nhiệm vụ thử thách, 6 hình phạt và albums mẫu vào MongoDB!
+> Lệnh này sẽ tự động đọc file `snapdeck_seed_data.json` ở thư mục gốc và nạp 24 thẻ bài SNAPDECK, 6 themes, 97 nhiệm vụ thử thách, 6 hình phạt và albums mẫu vào MongoDB!
 
 ### 4. Khởi chạy máy chủ:
 ```bash

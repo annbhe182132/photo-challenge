@@ -77,7 +77,7 @@
       "xp": 20,
       "mediaType": "photo",
       "isActive": true,
-      "missionCount": 4
+      "missionCount": 5
     },
     {
       "id": "card-03",
@@ -460,6 +460,18 @@
       "mediaType": "photo",
       "difficulty": 2,
       "xp": 25,
+      "isOriginal": false,
+      "isActive": true
+    },
+    {
+      "missionCode": "SD-CARD-002-M05",
+      "cardCode": "SD-CARD-002",
+      "themeId": "solo-pose-style",
+      "title": "Góc Nghiêng Thần Thánh — Biến thể 4",
+      "instruction": "Tạo bộ đôi hai góc nghiêng: bên trái với ánh mắt bí ẩn, bên phải cùng một nụ cười rạng rỡ. Đặt hai ảnh cạnh nhau để kể câu chuyện “hai thần thái, một nhân vật”.",
+      "mediaType": "photo",
+      "difficulty": 3,
+      "xp": 30,
       "isOriginal": false,
       "isActive": true
     },

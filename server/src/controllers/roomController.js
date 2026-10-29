@@ -208,7 +208,7 @@ const sanitizeRoom = (room) => {
   const { activePlayerId } = turnState(data);
   return {
     ...data,
-    totalRounds: data.totalRounds === 24 ? 5 : data.totalRounds ?? 5,
+    totalRounds: data.totalRounds === 24 ? 5 : data.totalRounds ?? 1,
     turnDurationSeconds: isValidTurnDuration(data.turnDurationSeconds) ? data.turnDurationSeconds : 30,
     activePlayerId,
     serverNow: new Date().toISOString(),
@@ -274,7 +274,7 @@ export const createRoom = async (req, res) => {
       verificationMethod: chosenVerificationMethod,
       photoBonusEnabled: typeof photoBonusEnabled === 'boolean' ? photoBonusEnabled : true,
       turnDurationSeconds: turnDurationSeconds ?? 30,
-      totalRounds: totalRounds ?? 5,
+      totalRounds: totalRounds ?? 1,
       hostName: typeof hostName === 'string' && hostName.trim() ? hostName.trim().slice(0, 40) : 'Host',
       hostPlayerId,
       players: [{
@@ -394,7 +394,7 @@ export const startRoom = async (req, res) => {
     room.verificationMethod = selectedVerification;
     if (photoBonusEnabled !== undefined) room.photoBonusEnabled = photoBonusEnabled;
     room.turnDurationSeconds = turnDurationSeconds ?? room.turnDurationSeconds ?? 30;
-    room.totalRounds = totalRounds ?? (room.totalRounds === 24 ? 5 : room.totalRounds ?? 5);
+    room.totalRounds = totalRounds ?? (room.totalRounds === 24 ? 5 : room.totalRounds ?? 1);
     room.status = 'active';
     room.currentRound = 1;
     room.currentTurnIndex = 0;

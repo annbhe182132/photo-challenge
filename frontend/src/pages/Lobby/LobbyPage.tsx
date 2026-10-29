@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowLeft, CheckCircle2, Clock3, Copy, PlayCircle, Sparkles, UserPlus, Users, Volume2, VolumeX } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Clock3, Copy, PlayCircle, Sparkles, UserPlus, Users } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useGame } from '../../context/useGame';
 import QRCodeImage from '../../components/QRCodeImage';
@@ -44,8 +44,6 @@ const LobbyPage = () => {
     setTotalRounds,
     turnDurationSeconds,
     setTurnDurationSeconds,
-    soundEnabled,
-    toggleSound,
     gameStatus,
     players,
     setPlayers,
@@ -480,7 +478,7 @@ const LobbyPage = () => {
               {/* 3. Duration & Rounds */}
               <div>
                 <h3 className={`text-base font-bold mb-3 ${isLight ? 'text-slate-900' : 'text-white'}`}>3. Cài Đặt Thời Gian & Vòng Chơi</h3>
-                <section className={`grid gap-4 rounded-2xl border p-4 sm:grid-cols-3 ${
+                <section className={`grid gap-4 rounded-2xl border p-4 sm:grid-cols-2 ${
                   isLight
                     ? 'border-slate-200 bg-slate-50/70'
                     : 'border-white/10 bg-slate-950/60'
@@ -511,7 +509,7 @@ const LobbyPage = () => {
                     </span>
                     <select
                       value={totalRounds}
-                      onChange={(event) => setTotalRounds(Number(event.target.value) as 0 | 3 | 5 | 10)}
+                      onChange={(event) => setTotalRounds(Number(event.target.value) as 0 | 1 | 3 | 5 | 10)}
                       disabled={!isSingleDevice && (!isHost || roomStatus !== 'waiting')}
                       className={`w-full rounded-xl border px-3 py-2 disabled:opacity-50 ${
                         isLight
@@ -519,27 +517,13 @@ const LobbyPage = () => {
                           : 'border-white/15 bg-slate-900 text-white'
                       }`}
                     >
+                      <option value={1}>1 vòng (mặc định)</option>
                       <option value={3}>3 vòng</option>
-                      <option value={5}>5 vòng (mặc định)</option>
+                      <option value={5}>5 vòng</option>
                       <option value={10}>10 vòng</option>
                       <option value={0}>Không giới hạn</option>
                     </select>
                   </label>
-                  <div className="flex items-end">
-                    <button
-                      type="button"
-                      aria-pressed={soundEnabled}
-                      onClick={toggleSound}
-                      className={`inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold transition ${
-                        isLight
-                          ? 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50 shadow-sm'
-                          : 'border-white/15 bg-white/5 text-white hover:bg-white/10'
-                      }`}
-                    >
-                      {soundEnabled ? <Volume2 size={17} /> : <VolumeX size={17} />}
-                      Âm thanh {soundEnabled ? 'bật' : 'tắt'}
-                    </button>
-                  </div>
                 </section>
               </div>
 

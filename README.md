@@ -66,7 +66,7 @@ Khi đã bật dịch vụ MongoDB (qua MongoDB Compass, Docker hoặc service n
 cd server
 npm run seed
 ```
-> Lệnh này sẽ tự động đọc file `snapdeck_seed_data.json` ở thư mục gốc và nạp toàn bộ 24 thẻ bài SNAPDECK, 6 chủ đề, 96 nhiệm vụ AI, 6 hình phạt và các album mẫu vào MongoDB.
+> Lệnh này sẽ tự động đọc file `snapdeck_seed_data.json` ở thư mục gốc và nạp toàn bộ 24 thẻ bài SNAPDECK, 6 chủ đề, 97 nhiệm vụ AI, 6 hình phạt và các album mẫu vào MongoDB.
 
 
 ### Tài khoản và album cá nhân

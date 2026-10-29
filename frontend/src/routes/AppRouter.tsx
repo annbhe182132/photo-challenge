@@ -13,7 +13,6 @@ import AdminPage from '../pages/Admin/AdminPage';
 import JoinRoomPage from '../pages/JoinRoom/JoinRoomPage';
 import HowToPlayPage from '../pages/HowToPlay/HowToPlayPage';
 import FloatingBackground from '../components/layout/FloatingBackground';
-import ThemeToggle from '../components/ThemeToggle';
 import { useGame } from '../context/useGame';
 import { apiRequest, playerApiRequest } from '../services/api';
 import { THEMES } from '../data/gameData';
@@ -234,29 +233,37 @@ const MultiplayerSync = () => {
   return null;
 };
 
+const ScrollToTop = () => {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, [pathname]);
+  return null;
+};
+
 const AppRouter = () => (
   <HashRouter>
+    <ScrollToTop />
     <FloatingBackground />
     <BackgroundMusic />
-    <div className="fixed bottom-5 right-20 z-[100]">
-      <ThemeToggle />
+    <div className="relative z-10">
+      <MultiplayerSync />
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/join" element={<JoinRoomPage />} />
+        <Route path="/lobby" element={<LobbyPage />} />
+        <Route path="/challenge" element={<ChallengePage />} />
+        <Route path="/result" element={<ResultPage />} />
+        <Route path="/leaderboard" element={<LeaderboardPage />} />
+        <Route path="/scan" element={<ScanQRPage />} />
+        <Route path="/camera" element={<CameraPage />} />
+        <Route path="/verify" element={<AIVerifyPage />} />
+        <Route path="/gallery" element={<GalleryPage />} />
+        <Route path="/how-to-play" element={<HowToPlayPage />} />
+        <Route path="/admin" element={<AdminPage />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
     </div>
-    <MultiplayerSync />
-    <Routes>
-      <Route path="/" element={<HomePage />} />
-      <Route path="/join" element={<JoinRoomPage />} />
-      <Route path="/lobby" element={<LobbyPage />} />
-      <Route path="/challenge" element={<ChallengePage />} />
-      <Route path="/result" element={<ResultPage />} />
-      <Route path="/leaderboard" element={<LeaderboardPage />} />
-      <Route path="/scan" element={<ScanQRPage />} />
-      <Route path="/camera" element={<CameraPage />} />
-      <Route path="/verify" element={<AIVerifyPage />} />
-      <Route path="/gallery" element={<GalleryPage />} />
-      <Route path="/how-to-play" element={<HowToPlayPage />} />
-      <Route path="/admin" element={<AdminPage />} />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
   </HashRouter>
 );
 

@@ -348,9 +348,12 @@ const AIVerifyPage = () => {
   useEffect(() => {
     hasTriggeredAi.current = false;
     aiRequestInProgress.current = false;
-    setAiResult(null);
-    setAiError(null);
-    setAiState('idle');
+    const resetTimer = window.setTimeout(() => {
+      setAiResult(null);
+      setAiError(null);
+      setAiState('idle');
+    }, 0);
+    return () => window.clearTimeout(resetTimer);
   }, [submissionId]);
 
   // Auto trigger AI evaluation once the current submission is loaded.
@@ -831,9 +834,20 @@ const AIVerifyPage = () => {
                     }`}>
                       <AlertTriangle className="mx-auto text-rose-500" size={30} />
                       <h3 className={`text-sm font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>Chưa thể hoàn tất chấm điểm AI</h3>
-                      <div className={`whitespace-pre-line text-xs leading-relaxed ${isLight ? 'text-rose-800' : 'text-rose-200'}`}>
-                        {aiError}
-                      </div>
+                       <div className={`whitespace-pre-line text-xs leading-relaxed ${isLight ? 'text-rose-800' : 'text-rose-200'}`}>
+                         {aiError}
+                       </div>
+
+                       <div className={`rounded-xl border p-3 text-left text-[11px] leading-relaxed ${
+                         isLight ? 'border-rose-200 bg-white/80 text-slate-700' : 'border-rose-400/20 bg-slate-950/30 text-slate-200'
+                       }`}>
+                         <p className="font-black">Để AI nhận diện tốt hơn:</p>
+                         <ol className="mt-1 list-decimal space-y-0.5 pl-4">
+                           <li>Dùng ảnh đủ sáng, không bị mờ và thấy rõ người thực hiện.</li>
+                           <li>Để các đạo cụ, tư thế hoặc bạn chơi theo đúng nhiệm vụ vào khung hình.</li>
+                           <li>Nhấn thử lại; lượt này không tự bị trừ điểm khi AI gặp lỗi.</li>
+                         </ol>
+                       </div>
 
                       {Boolean(aiError?.includes('console.developers.google.com') || aiError?.includes('BẬT')) && (
                         <div className="flex flex-col items-center gap-2 pt-1">
@@ -851,7 +865,7 @@ const AIVerifyPage = () => {
                         </div>
                       )}
 
-                      <div className="grid gap-2 pt-2 sm:grid-cols-2">
+                      <div className={`grid gap-2 pt-2 ${deviceMode === 'single_device' ? 'sm:grid-cols-2' : ''}`}>
                         <button
                           onClick={() => { void triggerAiEvaluation(submission); }}
                           className={`flex items-center justify-center gap-2 rounded-xl border px-4 py-2.5 text-xs font-bold transition active:scale-98 ${
@@ -860,14 +874,22 @@ const AIVerifyPage = () => {
                         >
                           <RefreshCw size={14} /> Thử lại phân tích AI
                         </button>
-                        <button
-                          onClick={() => { setVerificationMethod('group'); }}
-                          className={`flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold transition active:scale-98 ${
-                            isLight ? 'bg-amber-100 text-amber-800 hover:bg-amber-200' : 'bg-amber-500/20 text-amber-200 hover:bg-amber-500/30'
-                          }`}
-                        >
-                          <Users size={14} /> Đổi sang Bỏ phiếu nhóm
-                        </button>
+                        {deviceMode === 'single_device' ? (
+                          <button
+                            onClick={() => { setVerificationMethod('group'); }}
+                            className={`flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold transition active:scale-98 ${
+                              isLight ? 'bg-amber-100 text-amber-800 hover:bg-amber-200' : 'bg-amber-500/20 text-amber-200 hover:bg-amber-500/30'
+                            }`}
+                          >
+                            <Users size={14} /> Đổi sang Bỏ phiếu nhóm
+                          </button>
+                        ) : (
+                          <p className={`rounded-xl px-3 py-2 text-center text-[11px] ${
+                            isLight ? 'bg-sky-50 text-sky-800' : 'bg-cyan-500/10 text-cyan-200'
+                          }`}>
+                            Chế độ nhiều máy cần AI xác minh để giữ kết quả công bằng cho cả phòng.
+                          </p>
+                        )}
                       </div>
                     </div>
                   )}

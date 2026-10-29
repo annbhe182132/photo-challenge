@@ -221,7 +221,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [investorMode, setInvestorMode] = useState(true);
   const [currentRound, setCurrentRound] = useState<number>(persisted.currentRound ?? 1);
   const [totalRounds, setTotalRounds] = useState<RoundLimit>(
-    [0, 3, 5, 10].includes(persisted.totalRounds ?? -1)
+    [0, 1, 3, 5, 10].includes(persisted.totalRounds ?? -1)
       ? persisted.totalRounds as RoundLimit
       : DEFAULT_ROUND_LIMIT
   );
@@ -554,7 +554,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setPlayers(room.players);
     setCurrentRound(room.currentRound);
     if (room.status !== 'waiting') {
-      setTotalRounds(([0, 3, 5, 10].includes(room.totalRounds) ? room.totalRounds : DEFAULT_ROUND_LIMIT) as RoundLimit);
+      setTotalRounds(([0, 1, 3, 5, 10].includes(room.totalRounds) ? room.totalRounds : DEFAULT_ROUND_LIMIT) as RoundLimit);
       if (room.turnDurationSeconds !== undefined) setTurnDurationSeconds(room.turnDurationSeconds);
     }
     if (room.currentTurnIndex !== undefined) setCurrentTurnIndex(room.currentTurnIndex);

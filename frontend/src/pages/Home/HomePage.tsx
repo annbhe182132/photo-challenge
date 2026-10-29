@@ -117,7 +117,6 @@ const HomePage = () => {
     const localRoomCode = `LOCAL-${Date.now().toString().slice(-6)}`;
     const localPlayers = [
       { id: 'player-1', name: 'Người chơi 1', avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=player-1', score: 0, streak: 0, badges: ['🏠 Local'] },
-      { id: 'player-2', name: 'Người chơi 2', avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=player-2', score: 0, streak: 0, badges: ['🔥 Ready'] },
     ];
     setRoomCode(localRoomCode);
     beginLocalGame();
@@ -189,7 +188,7 @@ const HomePage = () => {
   };
 
   return (
-    <div className={`min-h-screen overflow-hidden transition-colors duration-300 ${isLight ? 'bg-gradient-to-br from-slate-50 via-sky-50/50 to-emerald-50/40 text-slate-900' : 'bg-[radial-gradient(circle_at_top_left,_rgba(7,89,133,0.3),_transparent_40%),linear-gradient(135deg,_#030712_0%,_#0f172a_45%,_#111827_100%)] text-slate-100'}`}>
+    <div className={`min-h-screen overflow-hidden transition-colors duration-300 ${isLight ? 'text-slate-900' : 'text-slate-100'}`}>
       <div className="relative isolate min-h-screen">
         {/* Ambient Particles in Dark Mode */}
         {!isLight && (
@@ -246,7 +245,7 @@ const HomePage = () => {
         </div>
 
         {/* Header */}
-        <header className="relative z-10 mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-4 sm:px-8 sm:py-6 lg:px-10">
+        <header className="relative z-10 mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-3 sm:px-8 sm:py-3.5 lg:px-10">
           <a href="#home" className={`flex items-center gap-2.5 sm:gap-3 text-base sm:text-lg font-black tracking-[0.2em] sm:tracking-[0.25em] ${isLight ? 'text-slate-900' : 'text-white'}`}>
             <div className={`flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-2xl border backdrop-blur-xl shadow-sm ${isLight ? 'border-sky-200 bg-sky-100/70 text-sky-600' : 'border-cyan-400/30 bg-cyan-500/20 text-cyan-300 shadow-[0_0_15px_rgba(34,211,238,0.3)]'}`}>
               <Camera className={`h-4 w-4 sm:h-5 sm:w-5 ${isLight ? 'text-sky-600' : 'text-cyan-300'}`} />
@@ -280,14 +279,14 @@ const HomePage = () => {
 
         {/* Main Hero */}
         <main id="home" className="relative z-10 mx-auto flex max-w-7xl flex-col px-4 pb-16 sm:px-8 sm:pb-20 lg:px-10">
-          <section className="mx-auto grid w-full max-w-3xl items-center gap-8 py-8 sm:gap-12 sm:py-12 lg:py-16">
+          <section className="mx-auto grid w-full max-w-3xl items-center gap-6 pt-2 pb-8 sm:gap-10 sm:pt-3 sm:pb-12 lg:pt-4 lg:pb-14">
             <motion.div
               initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
               className="space-y-6 sm:space-y-8"
             >
-              <div className={`inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm backdrop-blur-xl shadow-sm ${isLight ? 'border-sky-200 bg-sky-50 text-sky-800' : 'border-cyan-500/30 bg-cyan-500/10 text-cyan-200'}`}>
+              <div className={`inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm backdrop-blur-xl shadow-sm ${isLight ? 'border-sky-200 bg-sky-50/95 text-sky-800' : 'border-cyan-500/35 bg-slate-900/90 text-cyan-200'}`}>
                 <Zap className="h-4 w-4 text-amber-500 animate-bounce" />
                 Board Game Phygital · Xác thực bằng AI hoặc bình chọn nhóm
               </div>
@@ -304,7 +303,7 @@ const HomePage = () => {
                 </p>
               </div>
 
-              <div className={`rounded-3xl border p-5 backdrop-blur-xl transition-all ${isLight ? 'border-slate-200/90 bg-white/95 text-slate-900 shadow-xl shadow-sky-950/5' : 'border-cyan-500/30 bg-slate-900/60 text-slate-100 shadow-xl shadow-cyan-500/10'}`}>
+              <div className={`rounded-3xl border p-5 backdrop-blur-xl transition-all ${isLight ? 'border-slate-200/90 bg-white/95 text-slate-900 shadow-xl shadow-sky-950/5' : 'border-cyan-500/35 bg-slate-900/95 text-slate-100 shadow-2xl shadow-cyan-500/10'}`}>
                 <p className={`mb-3 text-xs font-bold uppercase tracking-[0.2em] ${isLight ? 'text-sky-700' : 'text-cyan-300'}`}>Chọn cách chơi</p>
                 <div className="grid gap-3 sm:grid-cols-2">
                   {[
@@ -377,20 +376,49 @@ const HomePage = () => {
                 </div>
               </div>
 
+              <div className={`rounded-2xl border p-4 backdrop-blur-xl shadow-xl ${
+                isLight
+                  ? 'border-amber-200 bg-amber-50/95 text-slate-800 shadow-amber-950/5'
+                  : 'border-amber-400/35 bg-slate-900/95 text-slate-100 shadow-black/40'
+              }`}>
+                <div className="flex items-center gap-2">
+                  <QrCode className={`h-4 w-4 shrink-0 ${isLight ? 'text-amber-700' : 'text-amber-300'}`} />
+                  <p className="text-sm font-black">Chuẩn bị trước khi bắt đầu</p>
+                </div>
+                <div className="mt-3 grid gap-2 text-xs leading-relaxed sm:grid-cols-2">
+                  <div className={`rounded-xl border p-3 ${
+                    isLight ? 'border-amber-200 bg-white/95' : 'border-amber-400/20 bg-slate-950/90'
+                  }`}>
+                    <span className="font-bold">1. Bộ bài SNAPDECK thật</span>
+                    <p className={`mt-1 ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>
+                      Cần 24 lá bài có mã QR để kích hoạt nhiệm vụ.
+                    </p>
+                  </div>
+                  <div className={`rounded-xl border p-3 ${
+                    isLight ? 'border-amber-200 bg-white/95' : 'border-amber-400/20 bg-slate-950/90'
+                  }`}>
+                    <span className="font-bold">2. Điện thoại có camera</span>
+                    <p className={`mt-1 ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>
+                      Dùng để quét QR và chụp ảnh bằng chứng cho lượt chơi.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               <div className="flex flex-col gap-4 sm:flex-row">
                 <motion.button
                   whileHover={{ scale: 1.03, y: -2 }}
                   whileTap={{ scale: 0.97 }}
                   onClick={() => { void handleStartGame(); }}
                   disabled={isCreatingRoom}
-                  className={`group inline-flex items-center justify-center gap-3 rounded-2xl px-7 py-4 font-bold text-white transition disabled:cursor-wait disabled:opacity-70 ${
+                  className={`group inline-flex items-center justify-center gap-3 rounded-2xl px-7 py-4 font-bold text-white transition disabled:cursor-wait disabled:opacity-70 sm:min-w-[290px] ${
                     isLight
-                      ? 'btn-blue-gradient text-lg shadow-xl shadow-sky-500/25'
-                      : 'bg-gradient-to-r from-violet-600 via-fuchsia-500 to-cyan-500 shadow-2xl shadow-fuchsia-500/30 hover:shadow-cyan-500/40'
+                      ? 'btn-blue-gradient text-lg shadow-xl shadow-sky-500/25 ring-4 ring-sky-100'
+                      : 'bg-gradient-to-r from-violet-600 via-fuchsia-500 to-cyan-500 shadow-2xl shadow-fuchsia-500/30 ring-2 ring-cyan-300/40 hover:shadow-cyan-500/40'
                   }`}
                 >
                   <PlayCircle className="h-6 w-6 transition group-hover:rotate-12" />
-                  {isCreatingRoom ? 'Đang tạo phòng...' : deviceMode === 'single_device' ? 'Bắt đầu chơi' : 'Tạo phòng & Bắt đầu chơi'}
+                  {isCreatingRoom ? 'Đang tạo phòng...' : deviceMode === 'single_device' ? 'Bắt đầu — đã có bộ bài' : 'Tạo phòng — đã có bộ bài'}
                 </motion.button>
                 <motion.button
                   whileHover={{ scale: 1.03, y: -2 }}
@@ -399,7 +427,7 @@ const HomePage = () => {
                   className={`inline-flex items-center justify-center gap-3 rounded-2xl border px-7 py-4 font-bold backdrop-blur-xl transition ${
                     isLight
                       ? 'border-sky-300 bg-white text-sky-800 hover:bg-sky-50 shadow-sm'
-                      : 'border-cyan-400/30 bg-cyan-500/10 text-cyan-200 hover:bg-cyan-500/20'
+                      : 'border-cyan-400/35 bg-slate-900/95 text-cyan-200 hover:bg-slate-800 shadow-lg'
                   }`}
                 >
                   <QrCode className={`h-6 w-6 ${isLight ? 'text-sky-600' : 'text-cyan-400'}`} />
@@ -611,7 +639,7 @@ const HomePage = () => {
                     className={`rounded-[2rem] border p-6 shadow-xl backdrop-blur-xl ${
                       isLight
                         ? 'border-slate-200/90 bg-white/95 text-slate-900 shadow-sky-950/5'
-                        : 'border-white/15 bg-white/10 text-white shadow-xl'
+                        : 'border-white/15 bg-slate-900/90 text-white shadow-xl'
                     }`}
                   >
                     <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${
@@ -656,7 +684,7 @@ const HomePage = () => {
                   className={`relative flex flex-col justify-between rounded-[1.75rem] border p-6 text-left backdrop-blur-xl transition ${
                     isLight
                       ? 'border-slate-200/90 bg-white/95 text-slate-900 shadow-xl shadow-sky-950/5 hover:border-sky-300'
-                      : 'border-white/15 bg-white/10 text-white hover:border-cyan-400/40'
+                      : 'border-white/15 bg-slate-900/90 text-white hover:border-cyan-400/40'
                   }`}
                 >
                   <div>
